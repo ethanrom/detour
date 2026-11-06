@@ -27,7 +27,11 @@ export interface Literature {
     M: Range;
     /** Homing between keyboard and mouse. */
     H: Range;
+    /** Pointing with a mouse when no layout is available (fallback for Fitts). */
+    P: Range;
   };
+  /** Silent reading speed for sighted users reading a target passage. */
+  reading: { wpm: Range };
   /** Fitts's law, Shannon formulation: MT = a + b * log2(D / W + 1). */
   fitts: {
     mouse: { a: Range; b: Range };
@@ -65,6 +69,10 @@ export const LITERATURE: Literature = {
     B: { value: 0.1, low: 0.08, high: 0.15, dist: "triangular", unit: "s", source: "TODO verify: Card, Moran & Newell 1980" },
     M: { value: 1.35, low: 0.6, high: 2.0, dist: "triangular", unit: "s", source: "TODO verify: Card, Moran & Newell 1980" },
     H: { value: 0.4, low: 0.3, high: 0.5, dist: "triangular", unit: "s", source: "TODO verify: Card, Moran & Newell 1980" },
+    P: { value: 1.1, low: 0.8, high: 1.5, dist: "triangular", unit: "s", source: "TODO verify: Card, Moran & Newell 1980" },
+  },
+  reading: {
+    wpm: { value: 238, low: 175, high: 320, dist: "triangular", unit: "words/min", source: "TODO verify: Brysbaert 2019 (silent reading, non-fiction)" },
   },
   fitts: {
     mouse: {
