@@ -2,14 +2,14 @@
 //
 // score(task, heading) = soft overlap coefficient of the two stemmed, stop-word-free token sets:
 //   take the smaller set (ties: the heading), and for each of its tokens find the best match in the
-//   other set (exact stem = 1, same synonym cluster = 0.8, related cluster = 0.5); average, clip to [0,1].
+//   other set (exact stem = 1, same synonym cluster = 0.8, related cluster = 0.3); average, clip to [0,1].
 // The overlap coefficient (|A n B| / min(|A|,|B|)) is used instead of Jaccard because headings are short
 // and task text is long: a heading "Returns" fully matches a long sentence about returning an item.
 
 import type { ScentScorer } from "./scorer";
 
 export const SYNONYM_WEIGHT = 0.8;
-export const RELATED_WEIGHT = 0.5;
+export const RELATED_WEIGHT = 0.3;
 
 const STOP_WORDS = new Set(
   (
@@ -46,7 +46,7 @@ const SYNONYM_CLUSTERS: string[][] = [
   ["benefit", "assistance", "aid", "program", "subsidy", "coverage"],
 ];
 
-/** Weaker, one-directional-feeling associations that still share a cluster edge (weight 0.5). */
+/** Weaker associations between clusters (weight 0.3): topically adjacent, not interchangeable. */
 const RELATED_CLUSTERS: Array<[string, string]> = [
   ["return", "delivery"], // "Shipping & returns" is where customers look for return windows
   ["return", "price"], // refunds and fees
@@ -114,7 +114,7 @@ for (const [a, b] of RELATED_CLUSTERS) {
   relatedPairs.add(`${ib}|${ia}`);
 }
 
-/** Match strength between two stems: 1 exact, 0.8 same cluster, 0.5 related clusters, else 0. */
+/** Match strength between two stems: 1 exact, 0.8 same cluster, 0.3 related clusters, else 0. */
 export function matchWeight(a: string, b: string): number {
   if (a === b) return 1;
   const ca = clusterOf.get(a);

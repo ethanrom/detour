@@ -6,7 +6,7 @@ import { announce } from "@/lib/a11y/announce";
 import type { NodeId, PageModel, Task } from "@/lib/contracts";
 import { buildPage, type Spec } from "@/fixtures/pagemodels/builder";
 
-const words = (n: number, seed = "word"): string => Array.from({ length: n }, (_, i) => (i === 0 ? seed : "word")).join(" ");
+const words = (n: number): string => Array.from({ length: n }, () => "word").join(" ");
 
 export interface SectionSpec {
   heading: string;
