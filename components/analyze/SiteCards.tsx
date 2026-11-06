@@ -2,19 +2,24 @@
 
 import { CheckIcon } from "@/components/icons";
 import type { SiteInfo } from "@/lib/ui/datasource";
+import { UrlCard } from "./UrlCard";
 
 interface Props {
   sites: SiteInfo[];
   value: string;
   onChange: (id: string) => void;
+  /** A public page the proxy accepted: add it as a site and select it. */
+  onAddUrl: (site: SiteInfo) => void;
 }
 
-export function SiteCards({ sites, value, onChange }: Props) {
+export function SiteCards({ sites, value, onChange, onAddUrl }: Props) {
+  const fixed = sites.filter((s) => s.kind !== "url");
+  const urlSite = sites.find((s) => s.kind === "url");
   return (
     <fieldset>
       <legend className="sr-only">Choose a page to analyze</legend>
-      <div className="grid gap-3 md:grid-cols-3 md:gap-4">
-        {sites.map((s) => {
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
+        {fixed.map((s) => {
           const selected = s.id === value;
           return (
             <label key={s.id} className="group relative block cursor-pointer">
@@ -51,6 +56,7 @@ export function SiteCards({ sites, value, onChange }: Props) {
             </label>
           );
         })}
+        <UrlCard urlSite={urlSite} selected={!!urlSite && urlSite.id === value} onSelect={onChange} onAdd={onAddUrl} />
       </div>
     </fieldset>
   );
