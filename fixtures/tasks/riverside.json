@@ -1,0 +1,46 @@
+[
+  {
+    "id": "apply",
+    "siteId": "riverside",
+    "label": "Start a food assistance application",
+    "grounding": "fixture",
+    "steps": [
+      {
+        "target": "apply-link",
+        "action": "activate",
+        "note": "Activate Start your application"
+      }
+    ]
+  },
+  {
+    "id": "income-3",
+    "siteId": "riverside",
+    "label": "Find the monthly income limit for a household of 3",
+    "grounding": "fixture",
+    "steps": [
+      {
+        "target": "income-row-3",
+        "action": "read",
+        "note": "Read the limit for 3 people"
+      }
+    ]
+  },
+  {
+    "id": "spanish",
+    "siteId": "riverside",
+    "label": "Switch the page to Spanish",
+    "grounding": "fixture",
+    "steps": [
+      {
+        "target": "lang-toggle",
+        "action": "activate",
+        "note": "Open the language menu"
+      },
+      {
+        "target": "lang-es",
+        "action": "select",
+        "note": "Choose Español"
+      }
+    ]
+  }
+]

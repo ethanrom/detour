@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The Northwind Trail Jacket: a fully seam-taped, packable 3-layer shell for changeable mountain weather.">
+<title>Trail Jacket | Northwind Outfitters</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Shared SVG art: the jacket in a few views, a scene, and a few other products -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="jk-shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity=".16"/>
+      <stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".22"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bcd6df"/>
+      <stop offset=".7" stop-color="#eef0e6"/>
+      <stop offset="1" stop-color="#f6efe0"/>
+    </linearGradient>
+
+    <g id="jk-sleeve">
+      <path class="jk-body" d="M128 104 C104 110 88 124 82 152 L62 328 C60 346 62 366 66 380 L108 388 C112 374 112 358 116 342 L146 198 Z"/>
+      <path class="jk-accent" d="M128 104 C104 110 88 124 82 152 L72 214 L142 226 L146 198 Z"/>
+      <path class="jk-shade" d="M61 340 L116 352 L108 388 L66 380 C62 366 60 354 61 340 Z"/>
+      <path d="M98 214 L108 252" stroke="#000" stroke-opacity=".28" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <symbol id="jk-front" viewBox="0 0 400 440">
+      <ellipse cx="200" cy="424" rx="132" ry="9" fill="#000" opacity=".10"/>
+      <path class="jk-body" d="M140 104 C124 36 276 36 260 104 Z"/>
+      <use href="#jk-sleeve"/>
+      <g transform="translate(400 0) scale(-1 1)"><use href="#jk-sleeve"/></g>
+      <path class="jk-body" stroke="#000" stroke-opacity=".18" stroke-width="2" d="M130 100 C165 86 235 86 270 100 L288 130 L294 396 C294 408 290 414 280 416 L120 416 C110 414 106 408 106 396 L112 130 Z"/>
+      <path class="jk-accent" d="M130 100 C165 86 235 86 270 100 L288 130 L291 192 C250 182 150 182 109 192 L112 130 Z"/>
+      <path class="jk-shade" d="M106 396 L294 396 C294 408 290 414 280 416 L120 416 C110 414 106 408 106 396 Z"/>
+      <path fill="url(#jk-shine)" d="M130 100 C165 86 235 86 270 100 L288 130 L294 396 C294 408 290 414 280 416 L120 416 C110 414 106 408 106 396 L112 130 Z"/>
+      <path class="jk-shade" d="M150 98 C158 66 242 66 250 98 C240 110 225 114 200 114 C175 114 160 110 150 98 Z"/>
+      <path fill="#0b1411" opacity=".75" d="M160 92 C172 74 228 74 240 92 C228 101 172 101 160 92 Z"/>
+      <path d="M186 112 L200 114 L200 416 L186 416 Z" fill="#000" opacity=".10"/>
+      <path d="M200 114 L200 414" stroke="#0d1512" stroke-width="5"/>
+      <path d="M200 114 L200 414" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-dasharray="2 3"/>
+      <rect x="195.5" y="112" width="9" height="20" rx="3" fill="#0d1512"/>
+      <path d="M236 152 L272 156" stroke="#0d1512" stroke-width="4" stroke-linecap="round"/>
+      <path d="M236 152 L272 156" stroke="#fff" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="2 3"/>
+      <path d="M124 264 L152 322" stroke="#0d1512" stroke-width="4" stroke-linecap="round"/>
+      <path d="M276 264 L248 322" stroke="#0d1512" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="152" cy="322" r="4" fill="#0d1512"/>
+      <circle cx="248" cy="322" r="4" fill="#0d1512"/>
+      <path d="M140 168 l12 -17 l8 10 l6 -7 l12 14 z" fill="#fff" opacity=".92"/>
+    </symbol>
+
+    <symbol id="jk-back" viewBox="0 0 400 440">
+      <ellipse cx="200" cy="424" rx="132" ry="9" fill="#000" opacity=".10"/>
+      <use href="#jk-sleeve"/>
+      <g transform="translate(400 0) scale(-1 1)"><use href="#jk-sleeve"/></g>
+      <path class="jk-body" stroke="#000" stroke-opacity=".18" stroke-width="2" d="M130 100 C165 86 235 86 270 100 L288 130 L294 396 C294 408 290 414 280 416 L120 416 C110 414 106 408 106 396 L112 130 Z"/>
+      <path class="jk-accent" d="M130 100 C165 86 235 86 270 100 L288 130 L291 192 C250 182 150 182 109 192 L112 130 Z"/>
+      <path class="jk-shade" d="M106 396 L294 396 C294 408 290 414 280 416 L120 416 C110 414 106 408 106 396 Z"/>
+      <path class="jk-shade" d="M138 104 C124 30 276 30 262 104 C240 118 160 118 138 104 Z"/>
+      <path class="jk-body" d="M150 100 C142 46 258 46 250 100 C232 110 168 110 150 100 Z"/>
+      <path d="M200 52 L200 108" stroke="#000" stroke-opacity=".25" stroke-width="3"/>
+      <path fill="url(#jk-shine)" d="M130 100 C165 86 235 86 270 100 L288 130 L294 396 C294 408 290 414 280 416 L120 416 C110 414 106 408 106 396 L112 130 Z"/>
+      <path d="M170 232 h60 v26 h-60 z" fill="#000" opacity=".16"/>
+      <path d="M186 238 l14 -14 l14 14 z M180 258 h40" fill="#fff" opacity=".85"/>
+    </symbol>
+
+    <symbol id="scene" viewBox="0 0 400 440">
+      <rect width="400" height="440" fill="url(#sky)"/>
+      <circle cx="310" cy="96" r="30" fill="#f7e2b8" opacity=".9"/>
+      <path d="M0 300 L70 190 L120 250 L180 150 L250 260 L300 200 L400 310 L400 440 L0 440 Z" fill="#9db7bd"/>
+      <path d="M180 150 L204 188 L188 184 L176 196 L160 182 Z" fill="#fff" opacity=".9"/>
+      <path d="M70 190 L88 216 L74 212 L62 222 L52 208 Z" fill="#fff" opacity=".85"/>
+      <path d="M0 350 L90 270 L160 340 L240 280 L330 350 L400 300 L400 440 L0 440 Z" fill="#5f8279"/>
+      <path d="M0 400 C100 372 200 392 400 366 L400 440 L0 440 Z" fill="#37584c"/>
+      <g fill="#274539"><path d="M40 400 l14 -52 l14 52z M62 404 l10 -38 l10 38z M330 392 l16 -58 l16 58z M360 398 l11 -40 l11 40z"/></g>
+    </symbol>
+
+    <symbol id="pr-pack" viewBox="0 0 400 440">
+      <ellipse cx="200" cy="420" rx="110" ry="9" fill="#000" opacity=".10"/>
+      <path d="M130 92 C140 50 260 50 270 92 Z" fill="#1d4034"/>
+      <rect x="118" y="86" width="164" height="326" rx="46" fill="#c4502a"/>
+      <rect x="118" y="86" width="164" height="326" rx="46" fill="url(#jk-shine)"/>
+      <rect x="140" y="250" width="120" height="104" rx="16" fill="#9e3b1a"/>
+      <path d="M150 262 h100" stroke="#0d1512" stroke-width="4" stroke-linecap="round"/>
+      <rect x="138" y="130" width="124" height="72" rx="14" fill="#a8401d"/>
+      <path d="M118 200 C80 210 76 320 118 340" fill="none" stroke="#2b2f33" stroke-width="14" stroke-linecap="round"/>
+      <path d="M282 200 C320 210 324 320 282 340" fill="none" stroke="#2b2f33" stroke-width="14" stroke-linecap="round"/>
+      <rect x="178" y="58" width="44" height="22" rx="10" fill="none" stroke="#2b2f33" stroke-width="8"/>
+      <path d="M160 160 l14 -20 l9 12 l7 -9 l14 17 z" fill="#fff" opacity=".9"/>
+    </symbol>
+
+    <symbol id="pr-beanie" viewBox="0 0 400 440">
+      <ellipse cx="200" cy="404" rx="120" ry="9" fill="#000" opacity=".10"/>
+      <path d="M92 300 C84 150 160 96 200 96 C240 96 316 150 308 300 Z" fill="#4a7ea8"/>
+      <path d="M92 300 C84 150 160 96 200 96 C240 96 316 150 308 300 Z" fill="url(#jk-shine)"/>
+      <g stroke="#000" stroke-opacity=".12" stroke-width="3"><path d="M150 112 L136 296"/><path d="M200 98 L200 298"/><path d="M250 112 L264 296"/></g>
+      <rect x="84" y="290" width="232" height="70" rx="26" fill="#e9eef2"/>
+      <rect x="84" y="290" width="232" height="70" rx="26" fill="url(#jk-shine)"/>
+      <g stroke="#9db7c8" stroke-width="4" stroke-linecap="round"><path d="M112 304 v42"/><path d="M142 304 v42"/><path d="M172 304 v42"/><path d="M202 304 v42"/><path d="M232 304 v42"/><path d="M262 304 v42"/><path d="M292 304 v42"/></g>
+      <circle cx="200" cy="88" r="26" fill="#e9eef2"/>
+    </symbol>
+
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="promo" data-detour-id="promo">
+  <div class="promo-inner">
+    <span><strong>Fall Gear Sale:</strong> up to 30% off outerwear</span>
+    <span class="promo-sep"></span>
+    <span>Free shipping on orders over $75</span>
+    <span class="promo-sep"></span>
+    <a href="#" class="promo-link">Shop the sale</a>
+  </div>
+</div>
+
+<div class="header" data-detour-id="header">
+  <div class="header-top">
+    <a class="logo" href="#" data-detour-id="logo">
+      <svg class="logo-mark" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#1b4a3a"/><path d="M6 31 L16 14 L21 22 L25 16 L34 31 Z" fill="#fff"/><path d="M16 14 L19 19 L16 18 L13 19 Z" fill="#d35a2a"/></svg>
+      <span class="logo-text"><span class="logo-name">Northwind</span><span class="logo-sub">Outfitters</span></span>
+    </a>
+    <div class="header-links">
+      <a href="#">Find a store</a>
+      <a href="#">Help</a>
+      <a href="#">Sign in</a>
+    </div>
+    <div class="header-icons">
+      <button class="icon-btn icon-search" type="button" data-detour-id="search-button"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+      <button class="icon-btn icon-wishlist" type="button" data-detour-id="wishlist-button"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.4-7 10-7 10z"/></svg></button>
+      <button class="icon-btn icon-cart" type="button" data-detour-id="cart-button"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="cart-count" aria-hidden="true" hidden></span></button>
+    </div>
+  </div>
+
+  <nav class="megamenu" data-detour-id="nav">
+    <div class="mm-inner">
+      <div class="mm-col">
+        <a class="mm-title" href="#">Outerwear</a>
+        <ul>
+          <li><a href="#">Rain jackets</a></li>
+          <li><a href="#">Insulated jackets</a></li>
+          <li><a href="#">Fleece</a></li>
+          <li><a href="#">Vests</a></li>
+          <li><a href="#">Softshells</a></li>
+          <li><a href="#">Parkas</a></li>
+          <li><a href="#">Ski &amp; snow</a></li>
+          <li><a href="#">Rain pants</a></li>
+          <li><a href="#">Shop all outerwear</a></li>
+        </ul>
+      </div>
+      <div class="mm-col">
+        <a class="mm-title" href="#">Men</a>
+        <ul>
+          <li><a href="#">New arrivals</a></li>
+          <li><a href="#">Jackets &amp; vests</a></li>
+          <li><a href="#">Shirts</a></li>
+          <li><a href="#">Pants &amp; shorts</a></li>
+          <li><a href="#">Base layers</a></li>
+          <li><a href="#">Underwear</a></li>
+          <li><a href="#">Hats &amp; gloves</a></li>
+          <li><a href="#">Swim</a></li>
+          <li><a href="#">Men's sale</a></li>
+        </ul>
+      </div>
+      <div class="mm-col">
+        <a class="mm-title" href="#">Women</a>
+        <ul>
+          <li><a href="#">New arrivals</a></li>
+          <li><a href="#">Jackets &amp; vests</a></li>
+          <li><a href="#">Tops</a></li>
+          <li><a href="#">Pants &amp; leggings</a></li>
+          <li><a href="#">Base layers</a></li>
+          <li><a href="#">Dresses &amp; skirts</a></li>
+          <li><a href="#">Hats &amp; gloves</a></li>
+          <li><a href="#">Swim</a></li>
+          <li><a href="#">Women's sale</a></li>
+        </ul>
+      </div>
+      <div class="mm-col">
+        <a class="mm-title" href="#">Footwear</a>
+        <ul>
+          <li><a href="#">Hiking boots</a></li>
+          <li><a href="#">Trail runners</a></li>
+          <li><a href="#">Approach shoes</a></li>
+          <li><a href="#">Winter boots</a></li>
+          <li><a href="#">Sandals</a></li>
+          <li><a href="#">Camp shoes</a></li>
+          <li><a href="#">Socks</a></li>
+          <li><a href="#">Insoles</a></li>
+          <li><a href="#">Laces &amp; care</a></li>
+        </ul>
+      </div>
+      <div class="mm-col">
+        <a class="mm-title" href="#">Packs &amp; Camp</a>
+        <ul>
+          <li><a href="#">Daypacks</a></li>
+          <li><a href="#">Backpacking packs</a></li>
+          <li><a href="#">Tents</a></li>
+          <li><a href="#">Sleeping bags</a></li>
+          <li><a href="#">Sleeping pads</a></li>
+          <li><a href="#">Stoves</a></li>
+          <li><a href="#">Cookware</a></li>
+          <li><a href="#">Headlamps</a></li>
+          <li><a href="#">Water filters</a></li>
+        </ul>
+      </div>
+      <div class="mm-col">
+        <a class="mm-title" href="#">Climb &amp; Snow</a>
+        <ul>
+          <li><a href="#">Harnesses</a></li>
+          <li><a href="#">Helmets</a></li>
+          <li><a href="#">Ropes</a></li>
+          <li><a href="#">Carabiners</a></li>
+          <li><a href="#">Climbing shoes</a></li>
+          <li><a href="#">Ski touring</a></li>
+          <li><a href="#">Snowshoes</a></li>
+          <li><a href="#">Gift cards</a></li>
+          <li><a href="#">Clearance</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</div>
+
+<div class="page" data-detour-id="content">
+  <div class="wrap">
+
+    <div class="crumbs" data-detour-id="crumbs">
+      <a href="#">Home</a><span class="crumb-sep">/</span><a href="#">Outerwear</a><span class="crumb-sep">/</span><a href="#">Rain jackets</a><span class="crumb-sep">/</span><span class="crumb-current">Trail Jacket</span>
+    </div>
+
+    <div class="product">
+      <div class="gallery" id="gallery" data-detour-id="gallery">
+        <div class="thumbs" data-detour-id="thumbs">
+          <div class="thumb is-active" data-view="front" data-detour-id="thumb-front"><svg viewBox="0 0 400 440"><use href="#jk-front" width="400" height="440"/></svg></div>
+          <div class="thumb" data-view="back" data-detour-id="thumb-back"><svg viewBox="0 0 400 440"><use href="#jk-back" width="400" height="440"/></svg></div>
+          <div class="thumb" data-view="detail" data-detour-id="thumb-detail"><svg viewBox="100 60 200 220"><use href="#jk-front" width="400" height="440"/></svg></div>
+          <div class="thumb" data-view="trail" data-detour-id="thumb-trail"><svg viewBox="0 0 400 440"><use href="#scene" width="400" height="440"/><use href="#jk-front" x="110" y="150" width="180" height="198"/></svg></div>
+        </div>
+        <div class="stage" data-detour-id="stage">
+          <span class="stage-badge">New for fall</span>
+          <svg id="stage-svg" viewBox="0 0 400 440" role="img" aria-label="Trail Jacket in Forest, front view">
+            <use id="stage-bg" href="#jk-front" width="0" height="0"/>
+            <use id="stage-fg" href="#jk-front" width="400" height="440"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="buybox" data-detour-id="buybox">
+        <div class="eyebrow">Waterproof shell &middot; Unisex</div>
+        <h1 data-detour-id="product-title">Trail Jacket</h1>
+        <div class="rating-row">
+          <span class="stars" style="--p:94%" role="img" aria-label="4.7 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="rating-num">4.7</span>
+          <a class="rating-link" href="#">128 reviews</a>
+        </div>
+        <div class="price-row">
+          <span class="price" data-detour-id="price">$189.00</span>
+          <span class="price-note">Free shipping &amp; 60-day returns</span>
+        </div>
+        <p class="lead" data-detour-id="desc">Our everyday shell for changeable mountain weather. Fully seam-taped 3-layer recycled nylon keeps rain and wind out, while pit zips and a helmet-compatible hood let you dial in comfort on the climb. Packs into its own chest pocket.</p>
+
+        <div class="opt-label"><span>Colour: <b id="color-name">Forest</b></span></div>
+        <div class="swatches" data-detour-id="swatches">
+          <div class="swatch is-selected" data-color="Forest" data-detour-id="swatch-forest" style="--sw:#2e5e4e"></div>
+          <div class="swatch" data-color="Ember" data-detour-id="swatch-ember" style="--sw:#c4502a"></div>
+          <div class="swatch" data-color="Glacier" data-detour-id="swatch-glacier" style="--sw:#4a7ea8"></div>
+          <div class="swatch" data-color="Charcoal" data-detour-id="swatch-charcoal" style="--sw:#3a4046"></div>
+          <div class="swatch" data-color="Sand" data-detour-id="swatch-sand" style="--sw:#c8b48a"></div>
+        </div>
+
+        <div class="opt-label opt-label-split">
+          <span>Size: <b id="size-name">Select a size</b></span>
+          <div class="size-guide" data-detour-id="size-guide">Size guide</div>
+        </div>
+        <div class="sizes" data-detour-id="sizes">
+          <div class="size-opt" data-size="XS" data-detour-id="size-xs">XS</div>
+          <div class="size-opt" data-size="S" data-detour-id="size-s">S</div>
+          <div class="size-opt" data-size="M" data-detour-id="size-m">M</div>
+          <div class="size-opt" data-size="L" data-detour-id="size-l">L</div>
+          <div class="size-opt" data-size="XL" data-detour-id="size-xl">XL</div>
+        </div>
+        <div class="size-error" id="size-error" data-detour-id="size-error" hidden>Please choose a size to continue.</div>
+
+        <div class="cta-row">
+          <button class="btn btn-primary" type="button" data-detour-id="add-to-cart">Add to cart</button>
+          <div class="btn-wish" data-detour-id="wish-toggle"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.4-7 10-7 10z"/></svg></div>
+        </div>
+
+        <ul class="perks">
+          <li><svg viewBox="0 0 24 24"><path d="M3 6h11v9H3z"/><path d="M14 9h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>Free standard shipping over $75</li>
+          <li><svg viewBox="0 0 24 24"><path d="M4 9h11a5 5 0 0 1 0 10H8"/><path d="M8 5L4 9l4 4"/></svg>Free returns within 60 days</li>
+          <li><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>Lifetime repair guarantee</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section" data-detour-id="details">
+      <div class="section-title" data-detour-id="details-title">Product details</div>
+      <div class="details-grid">
+        <div>
+          <p class="body-copy" data-detour-id="details-body">The Trail Jacket has been our best-selling shell for six seasons running. This year we rebuilt it with a quieter, softer 40D recycled nylon face fabric, a laminated hood visor that stays out of your eyes, and two-way pit zips that open and close without taking your pack off.</p>
+          <ul class="feature-list">
+            <li>3-layer 40D recycled nylon with a PFC-free DWR finish</li>
+            <li>Fully seam-taped; 20,000 mm waterproof and 20,000 g breathable</li>
+            <li>Helmet-compatible hood with a one-pull adjuster and laminated visor</li>
+            <li>Two-way pit zips, two zippered hand pockets and one chest pocket</li>
+            <li>Packs into its own chest pocket and weighs 11.4 oz (323 g) in size M</li>
+            <li>Bluesign&reg; approved fabric, sewn in a Fair Trade Certified&trade; factory</li>
+          </ul>
+        </div>
+        <div class="specs" data-detour-id="specs">
+          <div class="spec"><span>Fit</span><span>Regular</span></div>
+          <div class="spec"><span>Fabric</span><span>3L 40D recycled nylon</span></div>
+          <div class="spec"><span>Weight</span><span>11.4 oz (323 g)</span></div>
+          <div class="spec"><span>Back length</span><span>28.5 in (size M)</span></div>
+          <div class="spec"><span>Care</span><span>Machine wash cold</span></div>
+          <div class="spec"><span>Style</span><span>NW-24118</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-detour-id="reviews">
+      <div class="section-title" data-detour-id="reviews-title">Customer reviews</div>
+      <div class="reviews-layout">
+        <div class="review-summary" data-detour-id="review-summary">
+          <div class="big-rating">4.7</div>
+          <span class="stars stars-lg" style="--p:94%" role="img" aria-label="4.7 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <div class="summary-count">Based on 128 reviews</div>
+          <div class="bars">
+            <div class="bar-row"><span>5</span><div class="bar"><i style="width:82%"></i></div><span>105</span></div>
+            <div class="bar-row"><span>4</span><div class="bar"><i style="width:12%"></i></div><span>15</span></div>
+            <div class="bar-row"><span>3</span><div class="bar"><i style="width:4%"></i></div><span>5</span></div>
+            <div class="bar-row"><span>2</span><div class="bar"><i style="width:2%"></i></div><span>2</span></div>
+            <div class="bar-row"><span>1</span><div class="bar"><i style="width:1%"></i></div><span>1</span></div>
+          </div>
+          <div class="fit-meter">
+            <div class="fit-label">Fit: runs slightly large</div>
+            <div class="fit-track"><i style="left:62%"></i></div>
+          </div>
+          <button class="btn btn-outline" type="button" data-detour-id="write-review">Write a review</button>
+        </div>
+
+        <div class="review-list" data-detour-id="review-list">
+          <div class="review" data-detour-id="review-1">
+            <div class="review-head"><span class="stars" style="--p:100%" role="img" aria-label="5 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="review-date">Oct 2, 2026</span></div>
+            <div class="review-title">Kept me dry through three days of Patagonia rain</div>
+            <p>Wore this on the W Trek in sideways rain and wind and never felt a drop inside. The hood cinches down well and the pit zips are a lifesaver on the climbs. It runs slightly large, so I would size down if you are between sizes.</p>
+            <div class="review-by"><b>Marta K.</b> Portland, OR <span class="verified">Verified buyer</span></div>
+          </div>
+          <div class="review" data-detour-id="review-2">
+            <div class="review-head"><span class="stars" style="--p:80%" role="img" aria-label="4 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="review-date">Sep 24, 2026</span></div>
+            <div class="review-title">Great shell, tight hood over a helmet</div>
+            <p>Fabric is quiet and the zippers are smooth. The hood fits my head perfectly but is snug over a climbing helmet, so I leave it down on routes. Otherwise this is the best shell I have owned.</p>
+            <div class="review-by"><b>Devon R.</b> Boulder, CO <span class="verified">Verified buyer</span></div>
+          </div>
+          <div class="review" data-detour-id="review-3">
+            <div class="review-head"><span class="stars" style="--p:100%" role="img" aria-label="5 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="review-date">Sep 19, 2026</span></div>
+            <div class="review-title">Packs down to nothing</div>
+            <p>I carry it in my running vest on every long day in the hills. It stuffs into its own pocket and weighs less than my water bottle. Has held up through two storms in the Cascades so far.</p>
+            <div class="review-by"><b>Priya S.</b> Seattle, WA <span class="verified">Verified buyer</span></div>
+          </div>
+          <div class="review" data-detour-id="review-4">
+            <div class="review-head"><span class="stars" style="--p:60%" role="img" aria-label="3 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="review-date">Sep 11, 2026</span></div>
+            <div class="review-title">Good jacket, but check the size chart</div>
+            <p>The waterproofing is excellent but the sleeves were an inch too long for me and the chart did not warn about it. Exchange was painless. Four stars for the jacket, minus one for the chart.</p>
+            <div class="review-by"><b>Tom H.</b> Burlington, VT <span class="verified">Verified buyer</span></div>
+          </div>
+          <div class="review" data-detour-id="review-5">
+            <div class="review-head"><span class="stars" style="--p:100%" role="img" aria-label="5 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="review-date">Aug 30, 2026</span></div>
+            <div class="review-title">The Ember colour is gorgeous</div>
+            <p>Photos do not do the Ember colourway justice. Very visible on the trail, which my family appreciates. Fits true to size with a fleece underneath, and the two-way zip is a nice touch.</p>
+            <div class="review-by"><b>Aiko N.</b> Anchorage, AK <span class="verified">Verified buyer</span></div>
+          </div>
+          <div class="review" data-detour-id="review-6">
+            <div class="review-head"><span class="stars" style="--p:80%" role="img" aria-label="4 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="review-date">Aug 22, 2026</span></div>
+            <div class="review-title">Solid all-rounder for the price</div>
+            <p>Comparable to jackets that cost $100 more. Breathes better than my old hardshell, though it still gets a bit warm in humid weather. I would like a pocket large enough for a map.</p>
+            <div class="review-by"><b>Luis G.</b> Asheville, NC <span class="verified">Verified buyer</span></div>
+          </div>
+          <div class="review" data-detour-id="review-7">
+            <div class="review-head"><span class="stars" style="--p:100%" role="img" aria-label="5 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="review-date">Aug 8, 2026</span></div>
+            <div class="review-title">Replaced my ten-year-old shell</div>
+            <p>Used the repair programme on my old Northwind jacket and decided it was time to upgrade. This one is lighter, quieter and the hood actually stays up in a gale. Highly recommended.</p>
+            <div class="review-by"><b>Hannah B.</b> Missoula, MT <span class="verified">Verified buyer</span></div>
+          </div>
+          <div class="review" data-detour-id="review-8">
+            <div class="review-head"><span class="stars" style="--p:80%" role="img" aria-label="4 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="review-date">Jul 29, 2026</span></div>
+            <div class="review-title">Light, dry and easy to layer</div>
+            <p>Bought the Charcoal for commuting by bike and weekend hikes. Plenty of room for a midlayer, and the back hem is long enough to cover me on the saddle. The zipper garage could be a bit softer on the chin.</p>
+            <div class="review-by"><b>Chris W.</b> Madison, WI <span class="verified">Verified buyer</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-detour-id="returns">
+      <div class="section-title" data-detour-id="returns-title">Shipping &amp; returns</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <svg viewBox="0 0 24 24"><path d="M3 6h11v9H3z"/><path d="M14 9h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>
+          <div class="info-head">Free standard shipping</div>
+          <p data-detour-id="shipping-body">Orders over $75 ship free within the contiguous United States and arrive in 3 to 5 business days. Need it sooner? Two-day and overnight options are available at checkout.</p>
+        </div>
+        <div class="info-card">
+          <svg viewBox="0 0 24 24"><path d="M4 9h11a5 5 0 0 1 0 10H8"/><path d="M8 5L4 9l4 4"/></svg>
+          <div class="info-head">Easy returns</div>
+          <p data-detour-id="returns-body">You can return unworn items within 60 days for a full refund.</p>
+          <p class="info-fine">Print a prepaid label from your order page or drop the parcel at any Northwind store. Refunds reach your original payment method within 5 business days.</p>
+        </div>
+        <div class="info-card">
+          <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
+          <div class="info-head">Lifetime repairs</div>
+          <p data-detour-id="repairs-body">Rips, torn zippers and worn-out waterproofing are fixed at cost at our Repair Centre in Bozeman. Mail it in or hand it to any store.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-detour-id="related">
+      <div class="section-title" data-detour-id="related-title">You may also like</div>
+      <div class="cards">
+        <a class="pcard" href="#" data-detour-id="related-1">
+          <div class="pimg" style="--jk-body:#4a7ea8;--jk-shade:#2f5a7e;--jk-accent:#e9eef2"><svg viewBox="0 0 400 440"><use href="#jk-front" width="400" height="440"/></svg></div>
+          <div class="pname">Ridgeline Rain Shell</div>
+          <div class="pmeta">Lightweight 2.5L shell</div>
+          <div class="pprice">$149.00</div>
+        </a>
+        <a class="pcard" href="#" data-detour-id="related-2">
+          <div class="pimg" style="--jk-body:#c8b48a;--jk-shade:#9c8a62;--jk-accent:#2e5e4e"><svg viewBox="0 0 400 440"><use href="#jk-front" width="400" height="440"/></svg></div>
+          <div class="pname">Cascade Fleece Jacket</div>
+          <div class="pmeta">Recycled grid fleece</div>
+          <div class="pprice">$119.00</div>
+        </a>
+        <a class="pcard" href="#" data-detour-id="related-3">
+          <div class="pimg"><svg viewBox="0 0 400 440"><use href="#pr-pack" width="400" height="440"/></svg></div>
+          <div class="pname">Basecamp Pack 40L</div>
+          <div class="pmeta">Overnight daypack</div>
+          <div class="pprice">$159.00</div>
+        </a>
+        <a class="pcard" href="#" data-detour-id="related-4">
+          <div class="pimg"><svg viewBox="0 0 400 440"><use href="#pr-beanie" width="400" height="440"/></svg></div>
+          <div class="pname">Tundra Merino Beanie</div>
+          <div class="pmeta">Midweight merino blend</div>
+          <div class="pprice">$34.00</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="newsletter" data-detour-id="newsletter">
+    <div class="wrap newsletter-inner">
+      <div class="newsletter-copy">
+        <div class="newsletter-title">Get 10% off your first order</div>
+        <div class="newsletter-sub">Trail tips, new gear and members-only sales, once a week.</div>
+      </div>
+      <div class="newsletter-form">
+        <input type="email" class="newsletter-input" placeholder="Enter your email address" data-detour-id="newsletter-input">
+        <button class="btn btn-accent" type="button" data-detour-id="newsletter-submit">Sign up</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer" data-detour-id="footer">
+  <div class="wrap">
+    <div class="footer-cols">
+      <div class="f-col">
+        <div class="f-title">Shop</div>
+        <a href="#">Men</a>
+        <a href="#">Women</a>
+        <a href="#">Kids</a>
+        <a href="#">Outerwear</a>
+        <a href="#">Footwear</a>
+        <a href="#">Packs &amp; bags</a>
+        <a href="#">Camp &amp; hike</a>
+        <a href="#">Sale</a>
+      </div>
+      <div class="f-col">
+        <div class="f-title">Customer service</div>
+        <a href="#">Help centre</a>
+        <a href="#">Order status</a>
+        <a href="#">Shipping</a>
+        <a href="#">Returns &amp; exchanges</a>
+        <a href="#">Size guides</a>
+        <a href="#">Product care</a>
+        <a href="#">Warranty &amp; repairs</a>
+        <a href="#">Contact us</a>
+      </div>
+      <div class="f-col">
+        <div class="f-title">Company</div>
+        <a href="#">About Northwind</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+        <a href="#">Sustainability</a>
+        <a href="#">Our factories</a>
+        <a href="#">Affiliates</a>
+        <a href="#">Investors</a>
+        <a href="#">Co-op membership</a>
+      </div>
+      <div class="f-col">
+        <div class="f-title">Community</div>
+        <a href="#">Stores &amp; events</a>
+        <a href="#">Trail guides</a>
+        <a href="#">Gear swap</a>
+        <a href="#">Ambassadors</a>
+        <a href="#">Gift cards</a>
+        <a href="#">Blog</a>
+        <a href="#">Northwind Foundation</a>
+        <a href="#">Wholesale</a>
+      </div>
+      <div class="f-col f-col-social">
+        <div class="f-title">Follow us</div>
+        <div class="social">
+          <a href="#"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/></svg></a>
+          <a href="#"><svg viewBox="0 0 24 24"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H7v4h3v6h4v-6h3l1-4h-4V8z"/></svg></a>
+          <a href="#"><svg viewBox="0 0 24 24"><path d="M4 5l7 8-7 6h2l6-5 4 5h4l-7.5-9L19 5h-2l-5 4.4L8 5z"/></svg></a>
+          <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="4"/><path d="M10 9.5v5l4.5-2.5z"/></svg></a>
+        </div>
+        <div class="f-note">Store credit, gift cards and Northwind Co-op rewards all in one app.</div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="copyright">&copy; 2026 Northwind Outfitters, Inc. All rights reserved.</div>
+      <div class="legal">
+        <a href="#">Privacy</a>
+        <a href="#">Terms of use</a>
+        <a href="#">Accessibility</a>
+        <a href="#">Sitemap</a>
+        <a href="#">Cookie settings</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" data-detour-id="toast" hidden>
+  <svg viewBox="0 0 24 24"><use href="#i-check"/></svg>
+  <span id="toast-text"></span>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay" hidden></div>
+<div class="drawer" id="drawer" data-detour-id="cart-drawer" hidden>
+  <div class="drawer-head">
+    <div class="drawer-title" data-detour-id="cart-title">Your cart</div>
+    <div class="drawer-close" id="drawer-close" data-detour-id="cart-close">&times;</div>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+  <div class="drawer-foot">
+    <div class="subtotal"><span>Subtotal</span><b id="subtotal">$0.00</b></div>
+    <button class="btn btn-primary btn-block" type="button" data-detour-id="checkout">Checkout</button>
+  </div>
+</div>
+
+<script src="app.js" defer></script>
+</body>
+</html>

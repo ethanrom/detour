@@ -1,0 +1,46 @@
+[
+  {
+    "id": "buy-m",
+    "siteId": "alpine",
+    "label": "Add the Summit Jacket in size M to the cart",
+    "grounding": "fixture",
+    "steps": [
+      {
+        "target": "size-m",
+        "action": "select",
+        "note": "Choose size M"
+      },
+      {
+        "target": "add-to-cart",
+        "action": "activate",
+        "note": "Press Add to cart"
+      }
+    ]
+  },
+  {
+    "id": "returns",
+    "siteId": "alpine",
+    "label": "Find out how many days you have to return it",
+    "grounding": "fixture",
+    "steps": [
+      {
+        "target": "returns-body",
+        "action": "read",
+        "note": "Read the returns policy"
+      }
+    ]
+  },
+  {
+    "id": "open-cart",
+    "siteId": "alpine",
+    "label": "Open your cart",
+    "grounding": "fixture",
+    "steps": [
+      {
+        "target": "cart-button",
+        "action": "activate",
+        "note": "Open the cart"
+      }
+    ]
+  }
+]
