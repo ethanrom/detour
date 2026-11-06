@@ -4,9 +4,9 @@ import { HeroTeaser } from "@/components/home/HeroTeaser";
 
 const FACTS = [
   {
-    lead: "95%",
+    lead: "95.9%",
     text: "of home pages fail WCAG checks",
-    cite: "WebAIM Million",
+    cite: "WebAIM Million, 2026",
   },
   {
     lead: "Which?",
