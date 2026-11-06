@@ -6,7 +6,8 @@ most of those seconds. This document specifies the model precisely enough to be 
 criticised. Every number the product shows comes from the deterministic model below; the language model never
 produces a number (section 10).
 
-- Code: `lib/engine` (cost models, graphs, Monte Carlo), `lib/fixes` (optimiser), `lib/llm` (task grounding).
+- Code: `lib/engine` (cost models, graphs, Monte Carlo), `lib/scent` (information-scent search), `lib/fixes`
+  (optimiser), `lib/llm` (task grounding).
 - Parameters: `lib/params/literature.ts`. The table in section 11 is generated from that file and checked by a
   test, so the document and the code cannot drift apart.
 
@@ -192,6 +193,46 @@ Keeping the path fixed is an approximation: a sampled parameter set could make a
 fast speech rate makes listening past items cheaper than jumping), so unlucky draws are slightly
 over-estimated. A test re-runs the shortest-path search per sample on the sample page and compares the medians.
 
+## 7a. Realistic heading search (information scent)
+
+The shortest-path engine charges a heading navigator as if the first guess were right: press H until the heading
+above the target, then arrow down. People who navigate by headings (71.6% of survey respondents, section 6) do not
+know which heading holds the answer; they hear a heading and judge by its words. `lib/scent` models that as an
+**absorbing Markov chain** (information foraging: Pirolli and Card 1999; SNIF-ACT: Fu and Pirolli 2007;
+CogTool-Explorer: Teo, John and Blackmon 2012). It is reported next to the shortest-path number, as a
+`SearchEstimate` on the screen-reader result, and is not part of the optimiser's objective.
+
+For one task step the chain has a state `S(pass, q)` for "just arrived, by H, at the q-th heading of the circular
+heading order that starts at the first heading after the cursor". Pass 1 visits every heading once (NVDA wraps
+past the end); pass 2 visits them all again.
+
+1. **Scent.** A scorer maps the goal text (task label plus step note) and each heading's accessible name to a scent
+   `s` in [0, 1]. The shipped scorer is deterministic and lexical: stemmed, stop-word-free token sets, an overlap
+   coefficient, and a small synonym map (exact stem 1, synonym cluster 0.8, related cluster 0.3). An LLM scorer
+   interface exists (validated, blended with the lexical score, lexical fallback); the shipped pipeline uses the
+   lexical one.
+2. **Decide.** The user enters the section with probability `p = 1 / (1 + exp(-alpha (s - theta)))`, `alpha` = 10,
+   `theta` = 0.35. In pass 2 the probability is at least `pMin2` = 0.5 (a user who has heard every heading once
+   and found nothing becomes willing to try anything).
+3. **Enter.** If the section holds the target, the user presses Down through it and hears the target in full
+   (absorbing state "found"). If it is wrong, the user hears `min(len, ceil(beta len) + 1)` stops (`beta` = 0.4),
+   pays one mental preparation `M`, and presses H again. Skipping costs the H press. After the last heading of
+   pass 2 the user reads linearly from the top.
+4. **Cost.** Every arrival is `K` plus the heading's speech at `listenFraction`; a full hearing of the target is
+   `K` plus its speech; speech uses the same word counts and rates as section 4.3. Let `Q` be the
+   transient-to-transient transition matrix and `c` the expected cost incurred in each state. The expected time is
+   `t = N c` with `N = (I - Q)^-1` (the fundamental matrix; row 0 gives the expected visits to each heading).
+
+`alpha`, `theta`, `beta` and `pMin2` are **modelling assumptions**, not measured constants. The model also reports the
+probability of finding the target on the first pass, the expected number of wrong sections entered, the linear
+reading time from the top, and where the expected seconds go. A vague heading shows up as the cost of the wrong
+sections and of the linear fallback. The claim that a vague heading can be worse than no heading at all (reading
+straight down beats searching) is checked in `lib/scent/vague.test.ts`.
+
+**Verification.** `lib/scent/search.test.ts` compares the analytic solution with an independent reference
+implementation (to 1e-9) and with a seeded simulation of 20,000 users that shares no cost or matrix code with the
+model. Over 100 random pages the worst disagreement in mean seconds was 0.531% (the test bound is 2%).
+
 ## 8. Blocked conditions
 
 Some pages do not merely slow a persona down; they stop it. A strategy is **blocked** at a step when:
@@ -211,25 +252,50 @@ elsewhere.
 
 Candidate fixes are generated deterministically from the page: add a skip link, promote a styled heading to a real
 heading, wrap a region in a landmark, label an unlabeled control, replace a fake button with a real one, remove a
-positive `tabindex`. Each fix is a pure function on the `PageModel` (with an HTML before/after patch for
-display). The **objective** is the sum over tasks of the keyboard-only and screen-reader mixture seconds, with
-blocked personas charged 300 s.
+positive `tabindex`. Fixes that share a component (same `styleKey`: for example the five size options of one
+picker) are grouped into one candidate, so the candidate count stays small. Each fix is a pure function on the
+`PageModel` (with an HTML before/after patch for display). The **objective** is the sum over tasks of the
+keyboard-only and screen-reader mixture seconds, with blocked personas charged 300 s. It is evaluated on point
+estimates only (no Monte Carlo), and every distinct set of fixes is evaluated once (memoised by its sorted
+candidate indices), so the result does not depend on pick order.
 
-Choosing the best set of `k` fixes is a subset-selection problem. The optimiser uses **lazy greedy (CELF,
-Leskovec et al. 2007)**: it keeps an upper bound on each candidate's marginal gain and only re-evaluates the
-candidate currently at the top, which is exact whenever gains do not grow as fixes are added (submodularity).
-Fix gains are *not* guaranteed to be submodular here (a skip link and a heading fix can overlap, or can
-combine to unblock a task neither unblocks alone), so for `k ≤ 3` the plan is **certified by exhaustive
-search**: all subsets of size up to `k` drawn from the best single-fix candidates and the greedy picks are
-evaluated, and the plan reports `optimalityGap = greedy objective - best objective found` (0 means greedy was
-optimal). The search pool is bounded for speed (see `EXHAUSTIVE_POOL_SIZE` in `lib/fixes/plan.ts`), so the
-certificate covers that pool, not every conceivable subset. Optimisation evaluates point estimates only (no
-Monte Carlo).
+Choosing the best set of `k` fixes is a subset-selection problem. The optimiser uses **plain greedy**: in every
+round it re-evaluates the marginal gain of **every** remaining candidate on top of the fixes already chosen, adds
+the best one, and stops after `k` fixes or when the best marginal gain is at most `MIN_GAIN_SECONDS` = 0.01 s.
+Ties go to the lower candidate index.
+
+Greedy is deliberately not lazy. Lazy greedy (Minoux 1978; CELF, Leskovec et al. 2007) keeps an upper bound on each
+candidate's marginal gain and only re-evaluates the top one, which is exact only when gains never grow as fixes are
+added (submodularity; the same property gives greedy its `1 - 1/e` guarantee, Nemhauser et al. 1978). Fix gains
+here are **complementary**, not submodular. The clearest case is the Northwind demo page: a skip link helps a
+keyboard user only after the size picker has become focusable. With the skip link alone the keyboard persona is
+still blocked (300 s charged); with the real-button fix alone it needs 18.4 s; with both it needs 4.4 s. So the
+skip link's marginal gain is slightly negative in round one (it adds one more stop for a screen-reader user to
+pass) and 13 s in round three, so a lazy bound computed in round one would never re-examine it. The optimiser originally used CELF and was changed for this reason. Evaluations are
+cheap (a plan takes a few hundred, memoised), so re-evaluating every candidate each round is affordable.
+
+Because greedy has no guarantee for non-submodular gains, for `k ≤ 3` (`exhaustiveMaxK`) the plan is **certified by
+exhaustive search**: every subset of size 1 to `k` drawn from a **pool** of candidates is evaluated, and the plan
+reports `optimalityGap = greedy objective - best objective found` (0 means greedy was optimal; it is never
+negative, because the empty set and the greedy picks are always searched). The pool is:
+
+- **all candidates** when there are at most 14 (`EXHAUSTIVE_ALL_MAX`); the certificate is then a proof of
+  optimality over every subset of size at most `k`;
+- otherwise the **union** of the top 8 candidates (`EXHAUSTIVE_TOP_PER_ROUND`) by marginal gain in each of the
+  first three greedy rounds (single-fix gains, then gains after the first pick, then after the second), plus the
+  greedy picks themselves. The certificate then covers that pool, not every conceivable subset; the pool size is
+  reported (`exhaustivePoolSize` in `lib/fixes/plan.ts`) so the UI can say so.
+
+For scale: with 14 candidates and `k = 3` the search evaluates 14 + 91 + 364 = 469 subsets. On the demo pages
+greedy was optimal (gap 0) on both inaccessible sites: Northwind (18 candidates, pool of 11) and Riverside (10
+candidates, pool of all 10).
 
 ## 10. What the language model does
 
-**Only task grounding.** A user types a task in plain English; the model maps it to page elements. It never
-produces a time, a weight, a parameter, an explanation or a fix.
+**Two jobs, both about words: task grounding and proposed wording.** A user types a task in plain English; the
+model maps it to page elements. Separately, it proposes clearer text for vague headings and for unlabeled controls
+(see "Proposed wording" below). It never produces a time, a weight, a parameter, an explanation or a fix
+*selection*: every number comes from the models in sections 4 to 9.
 
 1. The server builds a compact listing of the page, one line per reading stop or focusable element in document
    order: `id | role | name (at most 80 characters) | context`, where context is the nearest preceding heading
@@ -247,6 +313,15 @@ produces a time, a weight, a parameter, an explanation or a fix.
 
 The listing and the task text are treated as data, not instructions. Validation checks structure, not intent: a
 valid but wrong element is possible, which is why the UI shows the grounded steps for confirmation.
+
+**Proposed wording (`lib/repair`, POST `/api/repair`).** A heading such as "More information" gives the
+information-scent model nothing to match (section 7a). The language model proposes a replacement from the text of
+the section it heads; the proposal is validated (non-empty, different from the current heading, at most 6 words and
+60 characters) and then **verified by the scent model**: the search is re-run on the renamed page, and the rename is
+accepted only if it saves more than 0.5 s of expected search time across the page's tasks. Unlabeled controls with no visible hint get proposed accessible
+names (validated for length and generic words, not time-verified). Without credentials, or when the model fails
+twice, a deterministic fallback proposes the wording and the same verification applies. The seconds in the UI are
+the scent model's, never the language model's.
 
 ## 11. Parameters
 
@@ -318,9 +393,11 @@ State these when quoting a number.
    and recover from errors. Predictions are best-case times for a practised user.
 2. **NVDA-like phrasing.** Word counts follow NVDA 2024 defaults. JAWS, VoiceOver and Narrator differ in
    verbosity, quick keys and rotor-style navigation.
-3. **No information scent yet.** The model does not predict which heading or link a user would *choose* when
-   several look plausible; the headings strategy assumes the right heading is found. Modelling this (an
-   absorbing Markov chain over scent scores) is planned and will turn the lower bound into a search estimate.
+3. **Scent is lexical and its behaviour parameters are assumptions.** The shortest-path numbers assume the right
+   heading is found. The information-scent search (section 7a) relaxes that for the headings strategy only, with a
+   deterministic word-overlap scorer (no semantics beyond a small synonym map) and four behavioural constants
+   (`alpha`, `theta`, `beta`, `pMin2`) that are modelling assumptions. It does not cover Find, landmarks, links
+   or sighted visual search.
 4. **Speech is word counts.** One constant rate, no prosody, number or URL expansion, punctuation pauses or
    synthesiser start-up latency. The speech rate is a judgement from listening-rate studies (no survey of
    preferred rates exists), and `listenFraction` is a modelling assumption (section 11), both with wide ranges.
@@ -373,6 +450,9 @@ Dijkstra, E. W. (1959). A note on two problems in connexion with graphs. *Numeri
 Fitts, P. M. (1954). The information capacity of the human motor system in controlling the amplitude of movement.
 *Journal of Experimental Psychology, 47*(6), 381-391.
 
+Fu, W.-T., & Pirolli, P. (2007). SNIF-ACT: A cognitive model of user navigation on the World Wide Web.
+*Human-Computer Interaction, 22*(4), 355-412.
+
 Hinckley, K., Cutrell, E., Bathiche, S., & Muss, T. (2002). Quantitative analysis of scrolling techniques.
 *Proceedings of CHI 2002.* doi:10.1145/503376.503389
 
@@ -413,6 +493,8 @@ https://github.com/nvaccess/nvda
 Olson, J. R., & Olson, G. M. (1990). The growth of cognitive modeling in human-computer interaction since GOMS.
 *Human-Computer Interaction, 5*(2-3), 221-265. doi:10.1207/s15327051hci0502&3_4
 
+Pirolli, P., & Card, S. (1999). Information foraging. *Psychological Review, 106*(4), 643-675.
+
 Pouplin, S., Roche, N., Vaugier, I., Cabanilles, S., Hugeron, C., & Bensmail, D. (2016). Text input speed in persons
 with cervical spinal cord injury. *Spinal Cord, 54*(2), 158-162. doi:10.1038/sc.2015.147
 
@@ -422,6 +504,9 @@ doi:10.1016/j.ijhcs.2004.09.001
 
 Stent, A., Syrdal, A., & Mishra, T. (2011). On the intelligibility of fast synthesized speech for individuals with
 early-onset blindness. *Proceedings of ASSETS 2011*, 211-218. doi:10.1145/2049536.2049574
+
+Teo, L., John, B., & Blackmon, M. (2012). CogTool-Explorer: A model of goal-directed user exploration that
+considers information layout. *Proceedings of CHI 2012*, 2479-2488.
 
 Trewin, S. M. (1998). *Towards intelligent, adaptive input devices for users with physical disabilities.* PhD
 thesis, University of Edinburgh. http://hdl.handle.net/1842/34255
