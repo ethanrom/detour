@@ -12,6 +12,7 @@ import type { PageModel, Task } from "@/lib/contracts";
 import { SITES } from "@/fixtures/tasks";
 import { LlmUnavailableError, type Analysis, type DataSource, type PlanOutcome, type RepairReport, type SiteInfo } from "./datasource";
 import { createEngineClient, type EngineClient } from "./engine-client";
+import { normalizeTasks } from "./pipeline";
 
 const FRAME_TIMEOUT_MS = 10_000;
 
@@ -129,7 +130,7 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
         res = await doFetch("/api/repair", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ siteId: site.id, page: analysis.page, tasks: site.tasks }),
+          body: JSON.stringify({ siteId: site.id, page: analysis.page, tasks: normalizeTasks(analysis.page, site.tasks) }),
         });
       } catch {
         return null;
