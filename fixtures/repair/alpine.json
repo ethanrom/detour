@@ -1,0 +1,46 @@
+{
+  "promoted": false,
+  "headings": [
+    {
+      "nodeId": "details-title",
+      "original": "Product details",
+      "proposed": "Summit Jacket materials, fit and specifications",
+      "source": "llm",
+      "before": 44.98177978111973,
+      "after": 45.4535772640307,
+      "savedSeconds": -0.4717974829109721,
+      "accepted": false
+    },
+    {
+      "nodeId": "n325",
+      "original": "Shop",
+      "proposed": "Shop men, women, packs, sale",
+      "source": "llm",
+      "before": 44.98177978111973,
+      "after": 45.06323279287497,
+      "savedSeconds": -0.08145301175524366,
+      "accepted": false
+    },
+    {
+      "nodeId": "n336",
+      "original": "Help",
+      "proposed": "Order status, shipping, returns, contact",
+      "source": "llm",
+      "before": 44.98177978111973,
+      "after": 45.28499934970044,
+      "savedSeconds": -0.3032195685807153,
+      "accepted": false
+    },
+    {
+      "nodeId": "n347",
+      "original": "The Co-op",
+      "proposed": "Membership, story, sustainability, careers",
+      "source": "llm",
+      "before": 44.98177978111973,
+      "after": 45.02250628699734,
+      "savedSeconds": -0.04072650587761473,
+      "accepted": false
+    }
+  ],
+  "labels": []
+}

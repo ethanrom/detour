@@ -15,7 +15,7 @@ export { checkLabel, fallbackLabel, needsProposedLabel, proposeLabels } from "./
 export { isAccepted, MIN_SAVED_SECONDS, verifyRename, type RenameVerification, type TaskDelta } from "./verify";
 export type { HeadingRepair, LabelRepair, LlmOptions, Proposal, ProposalSource, RepairOptions, RepairReport } from "./types";
 
-const MAX_LABELS = 30;
+const MAX_LABELS = 16; // one batched call whose output must fit REPAIR_MAX_TOKENS (about 25 tokens per label)
 
 /**
  * Repairs a page. With fewer than two real headings, every promote-heading fix is applied first (a

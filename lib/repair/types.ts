@@ -49,4 +49,9 @@ export interface RepairReport {
   promoted: boolean;
   headings: HeadingRepair[];
   labels: LabelRepair[];
+  /** Set by POST /api/repair, never by repairPage. True when a demo site's report was recorded from one real
+   *  run (fixtures/repair/<siteId>.json) instead of calling the model. */
+  cached?: true;
+  /** Set by POST /api/repair. True when this IP is over its rate limit, so the proposals are the offline fallback. */
+  limited?: true;
 }

@@ -3,6 +3,7 @@
 
 import { z } from "zod";
 import type { A11yNode, PageModel } from "@/lib/contracts";
+import { MAX_GROUND_TEXT } from "./guard";
 
 const rectSchema = z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() });
 
@@ -56,7 +57,7 @@ export const pageModelSchema = z.object({
   skipLinks: z.array(z.object({ from: z.string(), to: z.string() })),
 }) satisfies z.ZodType<PageModel>;
 
-export const MAX_TASK_TEXT = 500;
+export const MAX_TASK_TEXT = MAX_GROUND_TEXT;
 
 export const groundRequestSchema = z.object({
   siteId: z.string().trim().min(1).max(100),

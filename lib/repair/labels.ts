@@ -4,6 +4,7 @@
 import { z } from "zod";
 import type { A11yNode, NodeId, PageModel } from "@/lib/contracts";
 import { converseTool, isLlmConfigured, LlmError, LlmOutputError } from "@/lib/llm/bedrock";
+import { REPAIR_MAX_TOKENS } from "@/lib/llm/guard";
 import { collapse, stripDecoration, titleCase, truncate, wordsOf } from "./text";
 import type { LlmOptions, Proposal } from "./types";
 
@@ -156,7 +157,7 @@ export async function proposeLabels(page: PageModel, nodeIds: NodeId[], opts: Ll
           description: "Submit an accessible name for each listed control.",
           inputSchema: LABELS_JSON_SCHEMA,
           parse: (x) => labelsSchema.parse(x),
-          maxTokens: 100 + 40 * pending.length,
+          maxTokens: Math.min(REPAIR_MAX_TOKENS, 100 + 25 * pending.length),
           send: opts.send,
           env: opts.env,
         });

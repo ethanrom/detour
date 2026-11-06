@@ -5,6 +5,7 @@
 import { z } from "zod";
 import type { A11yNode, NodeId, PageModel, StepAction, Task, TaskStep } from "@/lib/contracts";
 import { converseTool, LlmOutputError, type ConverseSend, type Env } from "./bedrock";
+import { GROUND_MAX_TOKENS } from "./guard";
 
 // ---------------------------------------------------------------------------------------------
 // Listing
@@ -286,6 +287,7 @@ Call submit_steps again with a corrected answer.`;
         description: "Report the minimal ordered steps (element ids and actions) that complete the user's task on this page.",
         inputSchema: STEPS_JSON_SCHEMA,
         parse: (x) => stepsOutputSchema.parse(x),
+        maxTokens: GROUND_MAX_TOKENS,
         send: opts.send,
         env: opts.env,
       });

@@ -1,0 +1,22 @@
+{
+  "promoted": true,
+  "headings": [
+    {
+      "nodeId": "details-title",
+      "original": "Product details",
+      "proposed": "Trail Jacket fabric, features and specs",
+      "source": "llm",
+      "before": 55.65246489953287,
+      "after": 56.125205874825156,
+      "savedSeconds": -0.47274097529228243,
+      "accepted": false
+    }
+  ],
+  "labels": [
+    {
+      "nodeId": "wish-toggle",
+      "proposed": "Add to wishlist",
+      "source": "llm"
+    }
+  ]
+}

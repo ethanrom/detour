@@ -51,6 +51,10 @@ export class LlmOutputError extends LlmError {
 
 export type Env = Record<string, string | undefined>;
 
+/** Every Converse call sets inferenceConfig.maxTokens: this when the caller gives none, never more than the hard cap. */
+export const DEFAULT_MAX_TOKENS = 512;
+export const HARD_MAX_TOKENS = 1024;
+
 export interface BedrockConfig {
   accessKeyId: string;
   secretAccessKey: string;
@@ -115,6 +119,7 @@ export interface ConverseToolOptions<T> {
   inputSchema: Record<string, unknown>;
   /** Validates the raw tool input, returning the typed value or throwing (e.g. a zod `schema.parse`). */
   parse: (input: unknown) => T;
+  /** Output cap (inferenceConfig.maxTokens). Defaults to DEFAULT_MAX_TOKENS and is clamped to HARD_MAX_TOKENS. */
   maxTokens?: number;
   /** Omitted from the request when undefined (some models reject sampling parameters). */
   temperature?: number;
@@ -170,7 +175,7 @@ export async function converseTool<T>(opts: ConverseToolOptions<T>): Promise<T> 
       toolChoice: { tool: { name: opts.toolName } },
     },
     inferenceConfig: {
-      maxTokens: opts.maxTokens ?? 2048,
+      maxTokens: Math.max(1, Math.min(Math.floor(opts.maxTokens ?? DEFAULT_MAX_TOKENS), HARD_MAX_TOKENS)),
       ...(opts.temperature === undefined ? {} : { temperature: opts.temperature }),
     },
   };
