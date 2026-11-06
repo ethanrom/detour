@@ -2,6 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { miniShop, miniShopTasks } from "@/fixtures/pagemodels/mini-shop";
 import type { PersonaId } from "@/lib/contracts";
+import { LITERATURE } from "@/lib/params/literature";
 import { deriveSeed, evaluate, getIndex, mulberry32, nominalParams, planPersona, quantile, sampleSeconds, sampleSecondsReoptimised, zeroCost, type Planned } from "./index";
 import { longPage } from "./testkit";
 
@@ -59,14 +60,16 @@ describe("Monte Carlo", () => {
   });
 
   it("draws the strategy according to the (renormalised) weights", () => {
-    // Two fake strategies with very different, parameter-free costs: 'headings' 0.7 vs 'linear' 0.08 -> 0.897 / 0.103.
+    // Two fake strategies with very different, parameter-free costs; their prior weights are renormalised over just these two.
+    const { headings, linear } = LITERATURE.screenReaderStrategies;
+    const expectedShare = linear / (headings + linear);
     const result = (strategy: "headings" | "linear") => ({ strategy, seconds: 0, steps: [] });
     const cheap: Planned = { result: result("headings"), total: { ...zeroCost(), M: 1 } };
     const dear: Planned = { result: result("linear"), total: { ...zeroCost(), M: 1000 } };
     const draws = sampleSeconds("screenreader", [cheap, dear], 4000, mulberry32(21));
     const share = Array.from(draws).filter((x) => x > 300).length / draws.length;
-    expect(share).toBeGreaterThan(0.103 - 0.025);
-    expect(share).toBeLessThan(0.103 + 0.025);
+    expect(share).toBeGreaterThan(expectedShare - 0.025);
+    expect(share).toBeLessThan(expectedShare + 0.025);
   });
 
   it("a blocked strategy is never drawn", () => {
