@@ -62,7 +62,7 @@
   // Colour swatches
   $$(".swatch").forEach(function (sw) {
     sw.addEventListener("click", function () {
-      var name = sw.getAttribute("data-color");
+      var name = sw.getAttribute("data-colour");
       var c = COLORS[name];
       state.color = name;
       $$(".swatch").forEach(function (s) { s.classList.toggle("is-selected", s === sw); });
@@ -159,7 +159,7 @@
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
 
   // Wishlist hearts
-  $(".icon-wishlist").addEventListener("click", function () { this.classList.toggle("is-active"); });
+  $(".icon-heart").addEventListener("click", function () { this.classList.toggle("is-active"); });
   $(".btn-wish").addEventListener("click", function () {
     var on = this.classList.toggle("is-active");
     toast(on ? "Saved to your wishlist" : "Removed from your wishlist");

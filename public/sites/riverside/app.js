@@ -26,16 +26,7 @@
     p.hidden = !p.hidden;
   });
 
-  // Language picker (a div dropdown)
-  var menu = $("#lang-menu");
-  $("#lang-toggle").addEventListener("click", function (e) {
-    e.stopPropagation();
-    menu.hidden = !menu.hidden;
-  });
-  document.addEventListener("click", function () { menu.hidden = true; });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") menu.hidden = true; });
-
-  var LABELS = { en: "English", es: "Español", vi: "Tiếng Việt", zh: "中文", tl: "Tagalog" };
+  // Language links: always-visible span options with click listeners
   var translatable = $$("[data-es]");
   translatable.forEach(function (el) { el.setAttribute("data-en", el.innerHTML); });
 
@@ -45,7 +36,6 @@
       el.innerHTML = toSpanish ? el.getAttribute("data-es") : el.getAttribute("data-en");
     });
     document.documentElement.setAttribute("lang", toSpanish || code === "en" ? code : "en");
-    $("#lang-current").textContent = LABELS[code];
     $$(".lang-opt").forEach(function (o) { o.classList.toggle("is-selected", o.getAttribute("data-lang") === code); });
     if (code !== "en" && code !== "es") toast("This translation is still being reviewed. Showing English for now.");
   }
@@ -53,7 +43,6 @@
   $$(".lang-opt").forEach(function (opt) {
     opt.addEventListener("click", function () {
       setLanguage(opt.getAttribute("data-lang"));
-      menu.hidden = true;
     });
   });
 
