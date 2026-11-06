@@ -235,6 +235,12 @@ class Extractor {
       if (!ctx.suppress && ctx.run) ctx.run.parts.push(" ");
       return;
     }
+    if (tag === "label" && !ctx.suppress && this.labelsReadingStop(el)) {
+      // The label text is part of its control's name: browse mode reads control and label as one item.
+      this.flush(ctx);
+      this.walkChildren(el, { items: ctx.items, run: null, suppress: true, cont: ctx.cont });
+      return;
+    }
     if (ctx.suppress) {
       if (!NO_WALK_TAGS.has(tag)) this.walkChildren(el, ctx);
       return;
@@ -260,6 +266,19 @@ class Extractor {
     const label = visualLabelFor(d.el);
     d.node.hints.visualLabel = label.text;
     if (label.weak) this.weakLabels.push(d);
+  }
+
+  /** True when `label` names a rendered form control that will be a reading stop of its own. */
+  private labelsReadingStop(label: Element): boolean {
+    const env = this.env;
+    const forId = label.getAttribute("for");
+    const control = forId ? env.doc.getElementById(forId) : label.querySelector("input:not([type=hidden]), select, textarea, button");
+    if (!control || !["input", "select", "textarea", "button"].includes(control.localName)) return false;
+    if (isSkippedTag(control) || !interactiveRoleOf(control, roleOf(control))) return false;
+    const v = env.style(control).visibility;
+    if (v === "hidden" || v === "collapse") return false;
+    for (let e: Element | null = control; e; e = e.parentElement) if (isHiddenSubtree(e, env)) return false;
+    return true;
   }
 
   private visitInteractive(el: Element, role: string, ctx: Ctx) {
