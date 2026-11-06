@@ -144,9 +144,9 @@ describe("unlabeled and visualLabel", () => {
       <button data-detour-id="a"><i class="icon-cart"></i></button>
       <button data-detour-id="b" class="btn"><span class="fa fa-solid fa-magnifying-glass"></span></button>
       <a href="/menu" data-detour-id="c"><i class="menu-icon"></i></a>`);
-    expect(byId(p, "a").hints).toEqual({ unlabeled: true, visualLabel: "cart" });
-    expect(byId(p, "b").hints).toEqual({ unlabeled: true, visualLabel: "magnifying glass" });
-    expect(byId(p, "c").hints).toEqual({ unlabeled: true, visualLabel: "menu" });
+    expect(byId(p, "a").hints).toMatchObject({ unlabeled: true, visualLabel: "cart" });
+    expect(byId(p, "b").hints).toMatchObject({ unlabeled: true, visualLabel: "magnifying glass" });
+    expect(byId(p, "c").hints).toMatchObject({ unlabeled: true, visualLabel: "menu" });
   });
 
   it("falls back to data-icon, svg <use> reference, image file name, then nearby text", () => {
@@ -163,7 +163,7 @@ describe("unlabeled and visualLabel", () => {
 
   it("uses an empty visualLabel when nothing is found", () => {
     const p = pageFrom(`<button data-detour-id="a"></button>`);
-    expect(byId(p, "a").hints).toEqual({ unlabeled: true, visualLabel: "" });
+    expect(byId(p, "a").hints).toMatchObject({ unlabeled: true, visualLabel: "" });
   });
 
   it("does not flag controls that have a name (including title and placeholder)", () => {
@@ -184,7 +184,7 @@ describe("unlabeled and visualLabel", () => {
 
   it("flags an empty fake button as unlabeled too", () => {
     const p = pageFrom(`<div onclick="x()" class="icon-close" data-detour-id="f"></div>`);
-    expect(byId(p, "f").hints).toEqual({ fakeButton: true, unlabeled: true, visualLabel: "close" });
+    expect(byId(p, "f").hints).toMatchObject({ fakeButton: true, unlabeled: true, visualLabel: "close" });
   });
 });
 

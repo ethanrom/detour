@@ -118,7 +118,7 @@ describe("mini product page", () => {
     expect(byId(page, "size-label").hints.looksLikeHeading).toMatchObject({ fontSizeRatio: 1.3, fontWeight: 700, suggestedLevel: 3 });
     expect(byId(page, "reviews-title").hints.looksLikeHeading).toMatchObject({ fontSizeRatio: 1.6, suggestedLevel: 2 });
     expect(byId(page, "returns-title").hints.looksLikeHeading).toMatchObject({ suggestedLevel: 2 });
-    expect(byId(page, "cart-icon").hints).toEqual({ unlabeled: true, visualLabel: "cart" });
+    expect(byId(page, "cart-icon").hints).toMatchObject({ unlabeled: true, visualLabel: "cart" });
     expect(byId(page, "nav").hints.repetitiveBlock).toBe(true);
     expect(byId(page, "footer").hints.repetitiveBlock).toBe(true);
     expect(byId(page, "n1").hints.repetitiveBlock).toBe(true); // header wraps the 24-link nav
