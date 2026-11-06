@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="FreshStart Food Assistance from Riverside County Department of Social Services: check eligibility, income limits and apply.">
+<title>FreshStart Food Assistance | Riverside County</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <clipPath id="seal-clip"><circle cx="50" cy="50" r="29"/></clipPath>
+    <path id="seal-top" d="M15 50 A35 35 0 0 1 85 50"/>
+    <path id="seal-bot" d="M6 50 A44 44 0 0 0 94 50"/>
+    <linearGradient id="seal-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3cf"/><stop offset="1" stop-color="#ffe29a"/></linearGradient>
+    <linearGradient id="hero-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a8"/><stop offset=".65" stop-color="#fff4d6"/><stop offset="1" stop-color="#fffaf0"/></linearGradient>
+    <radialGradient id="hero-sun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffc83d"/><stop offset=".6" stop-color="#ffb81f"/><stop offset="1" stop-color="#ffb81f" stop-opacity="0"/></radialGradient>
+
+    <symbol id="seal" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="49" fill="#12355b"/>
+      <circle cx="50" cy="50" r="46.5" fill="none" stroke="#f2a900" stroke-width="1"/>
+      <circle cx="50" cy="50" r="31.5" fill="none" stroke="#f2a900" stroke-width="1"/>
+      <text font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="8.2" fill="#fff" letter-spacing="1.2" text-anchor="middle"><textPath href="#seal-top" startOffset="50%">RIVERSIDE COUNTY</textPath></text>
+      <text font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="6.2" fill="#f2a900" letter-spacing="1.4" text-anchor="middle"><textPath href="#seal-bot" startOffset="50%">EST. 1893</textPath></text>
+      <circle cx="9" cy="50" r="1.6" fill="#f2a900"/><circle cx="91" cy="50" r="1.6" fill="#f2a900"/>
+      <g clip-path="url(#seal-clip)">
+        <rect x="20" y="20" width="60" height="60" fill="url(#seal-sky)"/>
+        <circle cx="50" cy="52" r="13" fill="#f2a900"/>
+        <path d="M20 58 L36 42 L46 52 L58 38 L80 60 L80 80 L20 80 Z" fill="#2f7d6d"/>
+        <path d="M20 66 C34 60 44 70 56 64 C66 60 72 64 80 62 L80 80 L20 80 Z" fill="#12355b"/>
+        <path d="M22 70 C34 66 42 74 54 70 C64 67 72 71 80 68" fill="none" stroke="#5fc3d0" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M22 75 C34 71 42 79 54 75 C64 72 72 76 80 73" fill="none" stroke="#5fc3d0" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+      </g>
+    </symbol>
+
+    <symbol id="i-flag" viewBox="0 0 24 16"><rect width="24" height="16" rx="2" fill="#12355b"/><path d="M0 11 C6 7 10 14 16 10 C19 8 21 9 24 8 L24 14 C24 15 23 16 22 16 L2 16 C1 16 0 15 0 14 Z" fill="#5fc3d0"/><circle cx="17" cy="5" r="2.6" fill="#f2a900"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="gov-banner" data-detour-id="gov-banner">
+  <div class="gov-inner">
+    <svg class="gov-flag" viewBox="0 0 24 16"><use href="#i-flag"/></svg>
+    <span class="gov-text" data-es="Un sitio web oficial del Condado de Riverside">An official website of Riverside County government</span>
+    <div class="gov-know" id="gov-know" data-detour-id="gov-know"><span data-es="Así puede saberlo">Here's how you know</span> <i class="gov-caret"></i></div>
+  </div>
+  <div class="gov-panel" id="gov-panel" hidden>
+    <div class="gov-panel-inner">
+      <div class="gov-col"><b>Official websites use .gov</b><span>A .gov website belongs to an official government organization in the United States.</span></div>
+      <div class="gov-col"><b>Secure .gov websites use HTTPS</b><span>A lock or https:// means you have safely connected to the .gov website. Share sensitive information only on official, secure websites.</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="header" data-detour-id="header">
+  <div class="header-main">
+    <a class="brand" href="#" data-detour-id="logo">
+      <svg class="seal" viewBox="0 0 100 100" role="img" aria-label="Riverside County seal"><use href="#seal"/></svg>
+      <span class="brand-text">
+        <span class="brand-county">Riverside County</span>
+        <span class="brand-dept">Department of Social Services</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <div class="utility">
+        <a href="#" data-es="Contáctenos">Contact us</a>
+        <a href="#" data-es="Oficinas y horarios">Locations &amp; hours</a>
+        <a href="#" data-es="Denunciar fraude">Report fraud</a>
+        <a href="#" class="utility-signin" data-es="Mi cuenta">My account</a>
+        <div class="lang" data-detour-id="lang-picker">
+          <div class="lang-toggle" id="lang-toggle" data-detour-id="lang-toggle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span id="lang-current">English</span> &#9662;</div>
+          <div class="lang-menu" id="lang-menu" hidden>
+            <div class="lang-opt" data-lang="en" data-detour-id="lang-en">English</div>
+            <div class="lang-opt" data-lang="es" data-detour-id="lang-es">Espa&ntilde;ol</div>
+            <div class="lang-opt" data-lang="vi" data-detour-id="lang-vi">Ti&#7871;ng Vi&#7879;t</div>
+            <div class="lang-opt" data-lang="zh" data-detour-id="lang-zh">&#20013;&#25991;</div>
+            <div class="lang-opt" data-lang="tl" data-detour-id="lang-tl">Tagalog</div>
+          </div>
+        </div>
+      </div>
+      <div class="search">
+        <input type="text" class="search-input" placeholder="Search programs and services" data-detour-id="site-search">
+        <button class="search-btn" type="button"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav" data-detour-id="nav">
+    <div class="nav-primary">
+      <div class="nav-inner">
+        <ul>
+          <li><a href="#" class="is-current">Home</a></li>
+          <li><a href="#" data-es="Asistencia alimentaria">Food assistance</a></li>
+          <li><a href="#">Health coverage</a></li>
+          <li><a href="#">Cash aid</a></li>
+          <li><a href="#">Housing help</a></li>
+          <li><a href="#">Child care</a></li>
+          <li><a href="#">Jobs &amp; training</a></li>
+          <li><a href="#">Seniors</a></li>
+          <li><a href="#">Veterans</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="nav-secondary">
+      <div class="nav-inner">
+        <div class="nav-row">
+          <span class="nav-label">Services</span>
+          <ul>
+            <li><a href="#">Apply online</a></li>
+            <li><a href="#">Check your case</a></li>
+            <li><a href="#">Renew benefits</a></li>
+            <li><a href="#">Report a change</a></li>
+            <li><a href="#">Find an office</a></li>
+            <li><a href="#">Request a hearing</a></li>
+            <li><a href="#">Replace EBT</a></li>
+            <li><a href="#">Food pantries</a></li>
+            <li><a href="#">Tax help</a></li>
+            <li><a href="#">Interpreters</a></li>
+          </ul>
+        </div>
+        <div class="nav-row">
+          <span class="nav-label">Departments</span>
+          <ul>
+            <li><a href="#">Public Health</a></li>
+            <li><a href="#">Behavioral Health</a></li>
+            <li><a href="#">Veterans Services</a></li>
+            <li><a href="#">Workforce</a></li>
+            <li><a href="#">Child Support</a></li>
+            <li><a href="#">Aging Services</a></li>
+            <li><a href="#">Housing Authority</a></li>
+            <li><a href="#">Public Works</a></li>
+            <li><a href="#">Libraries</a></li>
+            <li><a href="#">Elections</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
+
+<div class="page" data-detour-id="content">
+
+  <div class="hero" data-detour-id="hero">
+    <div class="wrap hero-inner">
+      <div class="hero-copy">
+        <div class="hero-eyebrow" data-es="Servicios Sociales del Condado de Riverside">Riverside County Social Services</div>
+        <h1 data-detour-id="page-title" data-es="Asistencia alimentaria FreshStart">FreshStart Food Assistance</h1>
+        <p class="hero-lead" data-es="Ayuda mensual para comprar alimentos para los residentes del Condado de Riverside con ingresos limitados. La mayoría de los hogares reciben respuesta en 30 días, y la ayuda urgente en 3 días.">Monthly help buying groceries for Riverside County residents with limited income. Most households hear back within 30 days, and urgent help is decided in 3 days.</p>
+        <div class="hero-actions">
+          <a class="btn btn-gold" href="#who-can-apply" data-detour-id="check-eligibility" data-es="Vea si califica">See if you qualify</a>
+          <a class="btn btn-ghost" href="#" data-detour-id="find-pantry" data-es="Encuentre un banco de alimentos">Find a food pantry</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 520 400">
+          <rect width="520" height="400" rx="22" fill="url(#hero-sky)"/>
+          <circle cx="388" cy="118" r="92" fill="url(#hero-sun)"/>
+          <circle cx="388" cy="118" r="44" fill="#ffb81f"/>
+          <path d="M0 236 C70 190 130 200 200 222 C270 244 330 188 400 196 C450 202 490 220 520 232 L520 400 L0 400 Z" fill="#9fcfc4"/>
+          <path d="M0 270 C80 236 160 252 240 266 C320 280 400 238 520 262 L520 400 L0 400 Z" fill="#5fae7d"/>
+          <path d="M0 300 C90 280 150 310 230 300 C330 288 400 316 520 296 L520 400 L0 400 Z" fill="#2b93a6"/>
+          <path d="M30 322 C70 312 100 330 140 322" fill="none" stroke="#bfe9ef" stroke-width="4" stroke-linecap="round"/>
+          <path d="M380 318 C420 308 450 326 490 318" fill="none" stroke="#bfe9ef" stroke-width="4" stroke-linecap="round"/>
+          <!-- crate left -->
+          <g>
+            <rect x="52" y="292" width="210" height="96" rx="8" fill="#b9793b"/>
+            <rect x="52" y="292" width="210" height="20" rx="6" fill="#d69452"/>
+            <path d="M52 330 H262 M52 360 H262" stroke="#8c5a28" stroke-width="3"/>
+            <circle cx="92" cy="282" r="26" fill="#d6372b"/><path d="M92 256 q4 -14 14 -16" stroke="#3d7a35" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="102" cy="246" rx="9" ry="5" fill="#4aa043"/>
+            <circle cx="146" cy="276" r="26" fill="#f08a1c"/><circle cx="140" cy="268" r="6" fill="#f7a94f" opacity=".7"/>
+            <circle cx="198" cy="282" r="26" fill="#e24a3b"/><ellipse cx="208" cy="248" rx="9" ry="5" fill="#4aa043"/>
+            <circle cx="238" cy="288" r="20" fill="#f6c52f"/>
+          </g>
+          <!-- crate right -->
+          <g>
+            <rect x="282" y="306" width="188" height="84" rx="8" fill="#b9793b"/>
+            <rect x="282" y="306" width="188" height="18" rx="6" fill="#d69452"/>
+            <path d="M282 340 H470 M282 366 H470" stroke="#8c5a28" stroke-width="3"/>
+            <path d="M304 304 C300 270 330 262 340 290 C344 262 376 264 372 300 Z" fill="#3f9d4b"/>
+            <path d="M350 304 C348 272 380 262 392 292 C402 266 430 274 424 304 Z" fill="#58b560"/>
+            <path d="M424 304 L436 258 L448 304 Z" fill="#f08a1c"/>
+            <path d="M444 304 L458 266 L468 304 Z" fill="#e8741a"/>
+            <path d="M432 258 l4 -14 l4 14 M452 266 l5 -12 l3 12" stroke="#3f9d4b" stroke-width="4" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats" data-detour-id="stats">
+      <div class="stat"><div class="stat-num">42,300</div><div class="stat-label" data-es="hogares ayudados el año pasado">households helped last year</div></div>
+      <div class="stat"><div class="stat-num">$238</div><div class="stat-label" data-es="beneficio mensual promedio por hogar">average monthly benefit per household</div></div>
+      <div class="stat"><div class="stat-num">3 days</div><div class="stat-label" data-es="para decisiones de ayuda urgente">for urgent-help decisions</div></div>
+    </div>
+
+    <div class="section" data-detour-id="how-helps">
+      <div class="section-title" data-detour-id="how-title" data-es="Cómo ayuda FreshStart">How FreshStart helps</div>
+      <div class="cards3">
+        <div class="card">
+          <div class="card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h4"/></svg></div>
+          <div class="card-title" data-es="Beneficios mensuales">Monthly benefits</div>
+          <p>Receive money on an EBT card each month to spend on groceries at supermarkets, corner stores and many online retailers.</p>
+          <a class="card-link" href="#">How benefits work</a>
+        </div>
+        <div class="card">
+          <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 21c-5 0-8-3-8-7 0-5 4-7 8-11 4 4 8 6 8 11 0 4-3 7-8 7z"/><path d="M12 9v9M12 13l3-2"/></svg></div>
+          <div class="card-title" data-es="Productos frescos">Fresh produce</div>
+          <p>Get a dollar-for-dollar match, up to $20 a day, when you buy fruit and vegetables at participating farmers markets.</p>
+          <a class="card-link" href="#">Find a farmers market</a>
+        </div>
+        <div class="card">
+          <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 10l8-6 8 6v10H4z"/><path d="M9 20v-6h6v6"/></svg></div>
+          <div class="card-title" data-es="Bancos de alimentos de emergencia">Emergency food pantries</div>
+          <p>Need food today? More than 60 pantries across the county offer free groceries while your application is processed.</p>
+          <a class="card-link" href="#">Find a pantry near you</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="who-can-apply" data-detour-id="who-can-apply">
+      <div class="section-title" data-detour-id="who-title" data-es="Quién puede presentar una solicitud">Who can apply</div>
+      <div class="who-layout">
+        <div class="who-text" data-detour-id="who-body">
+          <p class="who-intro" data-es="Usted puede ser elegible para la Asistencia alimentaria FreshStart si vive en el Condado de Riverside y el ingreso mensual bruto de su hogar es igual o inferior al límite para el tamaño de su hogar.">You may be eligible for FreshStart Food Assistance if you live in Riverside County and your household's gross monthly income is at or below the limit for your household size. Most people who apply for the first time are surprised to learn they qualify. If you are not sure, apply anyway: it costs nothing and the county will tell you what you are eligible for.</p>
+
+          <div class="sub-title">Residency</div>
+          <p>You must live in Riverside County at the time you apply. You do not need a permanent address. People staying in shelters, motels, vehicles or with friends and family can apply using the address of any county office as their mailing address. You do not have to live here for any minimum length of time.</p>
+
+          <div class="sub-title">Your household</div>
+          <p>A household is everyone who lives together and buys and prepares food together. Spouses and children under 22 who live with you are always counted as part of your household, even if you eat separately. Roommates who buy and cook their own food can apply as a separate household.</p>
+          <p>Count the income of every person in the household, before taxes and deductions. This includes wages, self-employment income, Social Security, unemployment, child support and pensions. Some income, such as one-time gifts, student loans and most tax refunds, is not counted.</p>
+
+          <div class="sub-title">Citizenship and immigration status</div>
+          <p>U.S. citizens and many lawfully present non-citizens qualify, including refugees, asylees and lawful permanent residents. Children who are citizens can receive benefits even if their parents do not qualify. Household members who are not applying for benefits are not asked about their immigration status.</p>
+
+          <div class="sub-title">Students, older adults and people with disabilities</div>
+          <p>College students enrolled at least half time may qualify if they work 20 hours a week, take part in work-study, care for a young child or receive CalWORKs-style cash aid. Households with a member who is 60 or older, or who has a disability, have a higher resource limit and may deduct certain medical costs from their income.</p>
+
+          <div class="sub-title">Work requirements</div>
+          <p>Most adults aged 18 to 54 without children must work, volunteer or attend training for at least 80 hours a month to receive benefits for more than three months. Exceptions apply if you are pregnant, caring for a child or an incapacitated person, experiencing homelessness, or unable to work for health reasons. Your caseworker will go over the options with you.</p>
+
+          <div class="sub-title">What you will need</div>
+          <ul class="checklist">
+            <li>Proof of identity, such as a driver's license, school ID or passport</li>
+            <li>Proof of where you live, such as a lease, utility bill or a letter from a shelter</li>
+            <li>Recent pay stubs or other proof of income for everyone in your household</li>
+            <li>Your most recent rent or mortgage statement and utility bills</li>
+            <li>Social Security numbers for household members who are applying</li>
+          </ul>
+          <p>Missing a document should not stop you from applying. Submit what you have, and your caseworker will help you get the rest.</p>
+        </div>
+        <div class="who-aside" data-detour-id="who-aside">
+          <div class="aside-title">At a glance</div>
+          <ul class="glance">
+            <li><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Live in Riverside County</li>
+            <li><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Income at or below the limit</li>
+            <li><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>No minimum length of residence</li>
+            <li><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Working households can qualify</li>
+            <li><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Free to apply</li>
+          </ul>
+          <div class="aside-note">Questions? Call <b>1-800-555-0142</b>, Monday to Friday, 8 a.m. to 5 p.m.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-detour-id="income-limits">
+      <div class="section-title" data-detour-id="income-title" data-es="Límites de ingresos">Income limits</div>
+      <p class="section-intro" data-detour-id="income-intro" data-es="Su hogar puede calificar si su ingreso mensual bruto (antes de impuestos) es igual o inferior a la cantidad que se muestra para su tamaño de hogar.">Your household may qualify if its gross monthly income (before taxes) is at or below the amount shown for your household size. Limits are effective October 1, 2026.</p>
+      <div class="limits-wrap">
+        <div class="limits-grid" data-detour-id="income-grid">
+          <div class="limits-head" data-detour-id="income-head"><span>Household size</span><span></span><span>Maximum gross monthly income</span></div>
+          <div class="limits-row" data-detour-id="income-row-1"><span class="hh">1 person</span> <span class="dash">&mdash;</span> <span class="amt">$1,916 per month</span></div>
+          <div class="limits-row" data-detour-id="income-row-2"><span class="hh">2 people</span> <span class="dash">&mdash;</span> <span class="amt">$2,512 per month</span></div>
+          <div class="limits-row" data-detour-id="income-row-3"><span class="hh">3 people</span> <span class="dash">&mdash;</span> <span class="amt">$3,108 per month</span></div>
+          <div class="limits-row" data-detour-id="income-row-4"><span class="hh">4 people</span> <span class="dash">&mdash;</span> <span class="amt">$3,704 per month</span></div>
+          <div class="limits-row" data-detour-id="income-row-5"><span class="hh">5 people</span> <span class="dash">&mdash;</span> <span class="amt">$4,300 per month</span></div>
+          <div class="limits-row" data-detour-id="income-row-6"><span class="hh">6 people</span> <span class="dash">&mdash;</span> <span class="amt">$4,896 per month</span></div>
+        </div>
+        <div class="limits-note" data-detour-id="income-note">
+          <div class="aside-title">Larger household?</div>
+          <p>Add <b>$596</b> per month for each additional person after six.</p>
+          <p class="note-fine">Households with a member who is 60 or older or has a disability are not subject to the gross income limit, but their net income must still be within program limits.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-detour-id="faq">
+      <div class="section-title" data-detour-id="faq-title" data-es="Preguntas frecuentes">Frequently asked questions</div>
+      <div class="faq" data-detour-id="faq-list">
+        <div class="faq-item">
+          <div class="faq-q" data-detour-id="faq-toggle-1"><span data-es="¿Debo ser ciudadano de EE. UU. para presentar una solicitud?">Do I need to be a U.S. citizen to apply?</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="faq-a" data-detour-id="faq-answer-1" hidden>No. Many lawfully present non-citizens qualify, and citizen children can receive benefits even when their parents do not. Household members who are not applying are not asked about their immigration status, and applying will not affect their case.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" data-detour-id="faq-toggle-2"><span>How long does it take to find out if I am approved?</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="faq-a" data-detour-id="faq-answer-2" hidden>Most applications are decided within 30 days. If your household has less than $150 in monthly income and $100 or less in cash, or your rent and utilities are more than your income and cash, you may qualify for expedited service and receive a decision within 3 days.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" data-detour-id="faq-toggle-3"><span>Can I apply if I have a job?</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="faq-a" data-detour-id="faq-answer-3" hidden>Yes. More than half of the households receiving FreshStart benefits include someone who works. What matters is your household's total income compared to the limit for your household size.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" data-detour-id="faq-toggle-4"><span>How do I use my benefits?</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="faq-a" data-detour-id="faq-answer-4" hidden>You will receive an EBT card in the mail within 7 days of approval. Use it like a debit card at grocery stores, corner markets and participating farmers markets. Benefits are loaded onto your card on the same day each month, and unused funds roll over.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" data-detour-id="faq-toggle-5"><span>What if I do not have a permanent address?</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="faq-a" data-detour-id="faq-answer-5" hidden>You can still apply. Use the address of a shelter, a friend or family member, or any county office as your mailing address. Tell your caseworker you are experiencing homelessness so they can speed up your application.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" data-detour-id="faq-toggle-6"><span>What happens after I apply?</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="faq-a" data-detour-id="faq-answer-6" hidden>A caseworker will call you within 10 days to complete a short interview. You will then receive a letter explaining the decision and, if you are approved, how much you will receive each month and how long your benefits last.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="apply-band" data-detour-id="apply-band">
+      <div class="apply-copy">
+        <div class="apply-title" data-detour-id="apply-title" data-es="¿Listo para presentar su solicitud?">Ready to apply?</div>
+        <p data-es="La solicitud en línea toma unos 20 minutos. Puede guardar su avance y volver más tarde.">The online application takes about 20 minutes. You can save your progress and come back later. You can also apply by phone at <b>1-800-555-0142</b> or in person at any of our 14 offices.</p>
+      </div>
+      <div class="apply-action">
+        <a class="btn btn-gold btn-lg" href="#apply-portal" id="apply-link" data-detour-id="apply-link" data-es="Comience su solicitud">Start your application</a>
+        <div class="apply-fine">Takes about 20 minutes</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer" data-detour-id="footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <svg class="seal seal-lg" viewBox="0 0 100 100"><use href="#seal"/></svg>
+        <div class="footer-brand-text">
+          <div class="fb-county">Riverside County</div>
+          <div class="fb-dept">Department of Social Services</div>
+          <div class="fb-addr">1450 River Parkway<br>Riverside, CA 92501<br>1-800-555-0142</div>
+        </div>
+      </div>
+      <div class="footer-cols">
+        <div class="f-col">
+          <div class="f-title" data-es="Programas">Programs</div>
+          <a href="#">Food assistance</a>
+          <a href="#">Health coverage</a>
+          <a href="#">Cash aid</a>
+          <a href="#">Housing help</a>
+          <a href="#">Child care</a>
+          <a href="#">Senior services</a>
+        </div>
+        <div class="f-col">
+          <div class="f-title" data-es="Servicios">Services</div>
+          <a href="#">Apply online</a>
+          <a href="#">Check your case</a>
+          <a href="#">Renew benefits</a>
+          <a href="#">Find an office</a>
+          <a href="#">Report a change</a>
+          <a href="#">Request a hearing</a>
+        </div>
+        <div class="f-col">
+          <div class="f-title" data-es="Departamentos">Departments</div>
+          <a href="#">Public Health</a>
+          <a href="#">Behavioral Health</a>
+          <a href="#">Veterans Services</a>
+          <a href="#">Workforce</a>
+          <a href="#">Child Support</a>
+          <a href="#">Aging Services</a>
+        </div>
+        <div class="f-col">
+          <div class="f-title" data-es="El condado">County</div>
+          <a href="#">About the county</a>
+          <a href="#">Board of Supervisors</a>
+          <a href="#">News &amp; alerts</a>
+          <a href="#">Jobs with the county</a>
+          <a href="#">Public records</a>
+          <a href="#">Meetings &amp; agendas</a>
+        </div>
+        <div class="f-col">
+          <div class="f-title" data-es="Contacto">Connect</div>
+          <a href="#">Call or email us</a>
+          <a href="#">Locations &amp; hours</a>
+          <a href="#">Report fraud</a>
+          <a href="#">Subscribe to updates</a>
+          <a href="#">Give feedback</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="copyright">&copy; 2026 County of Riverside. All rights reserved.</div>
+      <div class="legal">
+        <a href="#">Privacy policy</a>
+        <a href="#">Accessibility</a>
+        <a href="#">Terms of use</a>
+        <a href="#">Language access</a>
+        <a href="#">Nondiscrimination</a>
+        <a href="#">Site map</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" data-detour-id="toast" hidden><svg viewBox="0 0 24 24"><use href="#i-check"/></svg><span id="toast-text"></span></div>
+
+<div class="chat-panel" id="chat-panel" data-detour-id="chat-panel" hidden>
+  <div class="chat-head"><b>Chat with Riv</b><span>County virtual assistant</span></div>
+  <div class="chat-body">
+    <div class="chat-bubble">Hi, I'm Riv. I can help you check eligibility, find a pantry or start an application. What would you like to do?</div>
+    <div class="chat-chips"><div class="chat-chip">Check eligibility</div><div class="chat-chip">Find a pantry</div><div class="chat-chip">Talk to a person</div></div>
+  </div>
+</div>
+<button class="chat-launcher" id="chat-launcher" type="button" tabindex="1" aria-label="Chat with us" data-detour-id="chat-launcher"><svg viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M8 10h8M8 13h5"/></svg></button>
+<button class="feedback-tab" id="feedback-tab" type="button" tabindex="2" data-detour-id="feedback-tab">Give feedback</button>
+
+<script src="app.js" defer></script>
+</body>
+</html>
