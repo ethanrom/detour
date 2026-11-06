@@ -38,7 +38,7 @@ describe("proposeHeading", () => {
     expect(p).toEqual({ text: "Income limits by household size", source: "llm" });
     expect(calls).toHaveLength(2);
     expect(userTextOf(calls[0])).toContain("3 people");
-    expect(userTextOf(calls[1])).toContain("same as the current one");
+    expect(userTextOf(calls[1])).toContain("is the same as the current heading");
     expect(calls[0].modelId).toBe(TEST_ENV.CLAUDE_AWS_FAST_MODEL);
   });
 

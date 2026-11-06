@@ -2,8 +2,7 @@
 // wording is shown, by re-running the information-scent search on the renamed page.
 
 import type { NodeId, PageModel, Task } from "@/lib/contracts";
-import { buildTree, announceNode } from "@/lib/fixes/graph";
-import { lexicalScorer, searchTask } from "@/lib/scent";
+import { compareRename, lexicalScorer } from "@/lib/scent";
 import { collapse } from "./text";
 
 /** A rename is accepted only when it saves more than this many seconds across the tasks. */
@@ -24,37 +23,22 @@ export interface RenameVerification {
   perTask: TaskDelta[];
 }
 
-/** A copy of the page with the node's accessible name replaced and its announcement rebuilt. */
-export function renameNode(page: PageModel, nodeId: NodeId, newText: string): PageModel {
-  const draft = structuredClone(page);
-  const node = draft.nodes[nodeId];
-  if (!node) throw new RangeError(`renameNode: unknown node ${nodeId}`);
-  node.name = collapse(newText);
-  node.announcement = announceNode(draft, buildTree(draft), nodeId);
-  return draft;
-}
-
-/** Search seconds for one task, or null when a step's target is not a reading stop on this page. */
-function searchSeconds(page: PageModel, task: Task): number | null {
-  try {
-    return searchTask(page, task, lexicalScorer).seconds;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * How much faster a screen-reader user finds each task's targets by heading search when the heading
- * `headingId` reads `newText`. Positive `savedSeconds` means faster. Tasks the page cannot run are skipped.
+ * `headingId` reads `newText`. Positive `savedSeconds` means faster. Tasks whose targets are not on the
+ * page are skipped. Throws RangeError when `headingId` is not a real heading (promote it first).
  */
 export function verifyRename(page: PageModel, tasks: Task[], headingId: NodeId, newText: string): RenameVerification {
-  const renamed = renameNode(page, headingId, newText);
+  if (page.nodes[headingId]?.role !== "heading") throw new RangeError(`verifyRename: ${headingId} is not a heading`);
+  const text = collapse(newText);
   const perTask: TaskDelta[] = [];
   for (const task of tasks) {
-    const before = searchSeconds(page, task);
-    const after = searchSeconds(renamed, task);
-    if (before === null || after === null) continue;
-    perTask.push({ taskId: task.id, before, after, savedSeconds: before - after });
+    try {
+      const c = compareRename(page, task, headingId, text, lexicalScorer);
+      perTask.push({ taskId: task.id, before: c.before, after: c.after, savedSeconds: c.before - c.after });
+    } catch {
+      // A step's target is not a reading stop on this page: this task cannot be evaluated here.
+    }
   }
   const before = perTask.reduce((a, t) => a + t.before, 0);
   const after = perTask.reduce((a, t) => a + t.after, 0);

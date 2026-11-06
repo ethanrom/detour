@@ -177,19 +177,22 @@ export function fallbackHeading(page: PageModel, headingId: NodeId, maxStops = 1
 export const MAX_HEADING_WORDS = 6;
 export const MAX_HEADING_CHARS = 60;
 
-/** Validation of the model's answer; the messages are fed back to the model on the retry. */
+/** Validation of the model's answer. The messages quote the rejected heading and are fed back to the
+ *  model on the retry. */
 function headingSchema(original: string) {
   return z.object({
     heading: z
       .string()
       .transform(stripDecoration)
       .pipe(
-        z
-          .string()
-          .min(1, "The heading is empty.")
-          .max(MAX_HEADING_CHARS, `The heading is longer than ${MAX_HEADING_CHARS} characters.`)
-          .refine((s) => wordsOf(s).length <= MAX_HEADING_WORDS, `The heading has more than ${MAX_HEADING_WORDS} words.`)
-          .refine((s) => s.toLowerCase() !== collapse(original).toLowerCase(), "The heading is the same as the current one; it must be different and more descriptive."),
+        z.string().superRefine((s, ctx) => {
+          const reject = (message: string) => ctx.addIssue({ code: "custom", message });
+          const words = wordsOf(s).length;
+          if (!s) reject("The heading is empty.");
+          else if (s.toLowerCase() === collapse(original).toLowerCase()) reject(`"${s}" is the same as the current heading; it must be different and more descriptive.`);
+          else if (words > MAX_HEADING_WORDS) reject(`"${s}" has ${words} words; the limit is ${MAX_HEADING_WORDS}. Drop the least informative words.`);
+          else if (s.length > MAX_HEADING_CHARS) reject(`"${s}" has ${s.length} characters; the limit is ${MAX_HEADING_CHARS}.`);
+        }),
       ),
   });
 }
@@ -208,7 +211,7 @@ export const HEADING_SYSTEM_PROMPT = `You rewrite vague web page headings. A scr
 
 You receive the current heading and the text of the section under it. Call submit_heading with a better heading that:
 - names what the section actually contains, using the section's own key words (for example "Income limits by household size");
-- has at most ${MAX_HEADING_WORDS} words and at most ${MAX_HEADING_CHARS} characters;
+- has AT MOST ${MAX_HEADING_WORDS} words (count them; 3 to 5 is ideal) and at most ${MAX_HEADING_CHARS} characters;
 - is in sentence case (capital first letter, other words lower case unless they are proper nouns or acronyms);
 - has no quotation marks and no trailing punctuation;
 - is different from the current heading.

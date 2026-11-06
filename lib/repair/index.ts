@@ -3,15 +3,16 @@
 
 import type { NodeId, PageModel, Task } from "@/lib/contracts";
 import { applyFixes, generateCandidates } from "@/lib/fixes";
+import { withHeadingText } from "@/lib/scent";
 import { findVagueHeadings, isGenericHeadingText, proposeHeading } from "./headings";
 import { needsProposedLabel, proposeLabels } from "./labels";
 import { collapse } from "./text";
 import type { HeadingRepair, LabelRepair, RepairOptions, RepairReport } from "./types";
-import { isAccepted, renameNode, verifyRename } from "./verify";
+import { isAccepted, verifyRename } from "./verify";
 
 export { fallbackHeading, findVagueHeadings, isGenericHeadingText, proposeHeading, sectionStops, sectionText } from "./headings";
 export { checkLabel, fallbackLabel, needsProposedLabel, proposeLabels } from "./labels";
-export { isAccepted, MIN_SAVED_SECONDS, renameNode, verifyRename, type RenameVerification, type TaskDelta } from "./verify";
+export { isAccepted, MIN_SAVED_SECONDS, verifyRename, type RenameVerification, type TaskDelta } from "./verify";
 export type { HeadingRepair, LabelRepair, LlmOptions, Proposal, ProposalSource, RepairOptions, RepairReport } from "./types";
 
 const MAX_LABELS = 30;
@@ -50,7 +51,7 @@ export async function repairPage(page: PageModel, tasks: Task[], opts: RepairOpt
     const v = verifyRename(current, tasks, id, text);
     const accepted = isAccepted(v);
     headings.push({ nodeId: id, original, proposed: text, source, before: v.before, after: v.after, savedSeconds: v.savedSeconds, accepted });
-    if (accepted) current = renameNode(current, id, text);
+    if (accepted) current = withHeadingText(current, id, collapse(text));
   });
 
   const needy = Object.keys(work.nodes)
