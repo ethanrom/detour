@@ -174,13 +174,7 @@ export function planScreenReader(page: PageModel, idx: PageIndex, task: Task, st
       const text = idx.announcement(j);
       const keys = e.tag === T_FIND ? 2 + found.query.length : 1;
       const key = e.tag === T_FIND ? `Find “${clip(found.query, 8)}”` : TAG_KEY[e.tag];
-      tb.event(
-        TAG_COMMAND[e.tag],
-        stopId,
-        `${key} → ${text}`,
-        isTarget ? { K: keys, spkFull: words } : { K: keys, spkPart: words },
-        { utterance: { nodeId: stopId, text, truncated: !isTarget } },
-      );
+      tb.heard(TAG_COMMAND[e.tag], stopId, `${key} → ${text}`, keys, words, isTarget, text);
     }
     cur = t;
 

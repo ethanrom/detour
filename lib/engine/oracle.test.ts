@@ -106,7 +106,6 @@ function oracleScreenReader(page: PageModel, strategy: StrategyId, targetId: str
   const dist = new Array<number>(2 * (N + 1)).fill(Infinity);
   dist[idx(0, -1)] = 0;
   for (let round = 0; round < 2 * (N + 1); round++) {
-    let changed = false;
     for (let layer = 0; layer < 2; layer++) {
       for (let pos = -1; pos < N; pos++) {
         const d = dist[idx(layer, pos)];
@@ -114,7 +113,6 @@ function oracleScreenReader(page: PageModel, strategy: StrategyId, targetId: str
         const relax = (toLayer: number, j: number, w: number) => {
           if (j >= 0 && j < N && d + w < dist[idx(toLayer, j)] - 1e-15) {
             dist[idx(toLayer, j)] = d + w;
-            changed = true;
           }
         };
         if (allowed.includes("next")) relax(layer, pos + 1, arrive(pos + 1));

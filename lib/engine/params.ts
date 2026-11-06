@@ -101,7 +101,8 @@ export function triangular(rng: Rng, low: number, mode: number, high: number): n
   const u = rng();
   const span = high - low;
   const f = (m - low) / span;
-  return u < f ? low + Math.sqrt(u * span * (m - low)) : high - Math.sqrt((1 - u) * span * (high - m));
+  const x = u < f ? low + Math.sqrt(u * span * (m - low)) : high - Math.sqrt((1 - u) * span * (high - m));
+  return Math.min(Math.max(x, low), high); // guard against rounding at the edges
 }
 
 /** Standard normal by Box-Muller (always consumes exactly two uniforms, for reproducibility). */

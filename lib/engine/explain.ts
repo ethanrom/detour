@@ -132,6 +132,7 @@ function strategyOf(r: PersonaResult, id: string): StrategyResult | undefined {
 
 /** Deterministic explanation sentences for one task. */
 export function explain(idx: PageIndex, task: Task, personas: Partial<Record<PersonaId, PersonaResult>>): string[] {
+  if (task.steps.length === 0) return ["The task has no steps, so there is nothing to time."];
   const out: string[] = [];
   const final = finalTargetName(idx, task);
 

@@ -118,14 +118,14 @@ export class PageIndex {
   words(j: number): number {
     let w = this.wordsCache[j];
     if (w < 0) {
-      w = cachedWordCount(this.page.nodes[this.page.readingOrder[j]].announcement);
+      w = cachedWordCount(this.announcement(j));
       this.wordsCache[j] = w;
     }
     return w;
   }
 
   announcement(j: number): string {
-    return this.page.nodes[this.page.readingOrder[j]].announcement;
+    return this.page.nodes[this.page.readingOrder[j]]?.announcement ?? "";
   }
 
   /** Lower-cased announcement of the stop at reading position j (for find). */

@@ -75,7 +75,8 @@ export function planKeyboard(page: PageModel, idx: PageIndex, task: Task, p: Par
       }
       for (const e of path) {
         const stopId = page.focusOrder[e.to - 1];
-        const desc = announce(page.nodes[stopId]);
+        const stop = page.nodes[stopId];
+        const desc = stop ? announce(stop) : stopId;
         if (e.tag === TAG_TAB) tb.event("tab", stopId, `Tab → ${desc}`, { Kf: 1 });
         else if (e.tag === TAG_SHIFT_TAB) tb.event("shiftTab", stopId, `Shift+Tab → ${desc}`, { Kf: 1 });
         else {

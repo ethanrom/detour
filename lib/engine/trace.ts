@@ -53,6 +53,23 @@ export class TraceBuilder {
     this.t += dt;
   }
 
+  /**
+   * Fast path for the most frequent screen-reader event: `keys` keystrokes, then speech of `words`
+   * words (heard in full at the target, otherwise only listenFraction of it). Same arithmetic as
+   * `event()` with { K: keys, spkFull | spkPart: words }, without allocating a recipe.
+   */
+  heard(command: CommandId, nodeId: NodeId, label: string, keys: number, words: number, full: boolean, text: string): void {
+    const p = this.p;
+    const seconds = ((full ? words : words * p.listenFraction) * 60) / p.speechWpm;
+    const dt = keys * p.K + seconds;
+    this.total.K += keys;
+    if (full) this.total.spkFull += words;
+    else this.total.spkPart += words;
+    this.events.push({ t: this.t, dt, command, nodeId, utterance: { nodeId, text, seconds, truncated: !full }, label });
+    this.counts.set(command, (this.counts.get(command) ?? 0) + 1);
+    this.t += dt;
+  }
+
   /** Finish the current step. */
   end(): void {
     const commands: CommandUse[] = [];
