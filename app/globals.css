@@ -14,6 +14,7 @@
  *   mouse #0072B2 on paper / white .......... 4.7:1 / 5.2:1
  *   keyboard #B54800 on paper / white ....... 4.9:1 / 5.4:1
  *   screen reader #007A5E on paper / white .. 4.8:1 / 5.3:1
+ *   persona colour on its own tint .......... 4.6:1 / 4.7:1 / 4.7:1
  *   blocked #A4161A on paper ................ 7.0:1
  */
 :root {
@@ -36,9 +37,9 @@
   --add-fg: #14532d;
   --del-bg: #fbe4e1;
   --del-fg: #7f1d1d;
-  --mouse-tint: #dcecf6;
-  --keyboard-tint: #f6e4d6;
-  --screenreader-tint: #d8eee6;
+  --mouse-tint: #e9f3fa;
+  --keyboard-tint: #fbeee3;
+  --screenreader-tint: #e6f5ef;
   --radius: 14px;
 }
 
@@ -252,6 +253,15 @@ a {
 
 .on-ink .btn {
   border-color: var(--lime);
+}
+
+/* A light card nested inside an ink section restores the light-surface styling. */
+.on-ink .on-paper .btn {
+  border-color: var(--ink);
+}
+.on-ink .on-paper :focus-visible {
+  outline-color: var(--ink);
+  box-shadow: 0 0 0 6px var(--lime);
 }
 
 /* ---------- Race ---------- */
