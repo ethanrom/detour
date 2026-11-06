@@ -5,6 +5,7 @@
 import { announce } from "@/lib/a11y/announce";
 import type { NodeId, PageModel, Task } from "@/lib/contracts";
 import { buildPage, type Spec } from "@/fixtures/pagemodels/builder";
+import { withHeadingText } from "./rename";
 
 const words = (n: number): string => Array.from({ length: n }, () => "word").join(" ");
 
@@ -128,10 +129,5 @@ export function promoteHeadings(page: PageModel, ids: NodeId[], level = 2): Page
 
 /** Changes a heading's visible/accessible text and re-announces it. */
 export function renameHeading(page: PageModel, id: NodeId, name: string): PageModel {
-  const out = clonePage(page);
-  const n = out.nodes[id];
-  if (!n || n.role !== "heading") throw new Error(`renameHeading: ${id} is not a heading`);
-  n.name = name;
-  n.announcement = announce(n);
-  return out;
+  return withHeadingText(page, id, name);
 }

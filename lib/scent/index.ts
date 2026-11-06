@@ -4,7 +4,7 @@
 //   const scores = lexicalScorer(stepGoalText(task, i), labels);   // or await an LLM-backed scorer
 //   const r = searchHeadings(page, task, i, scores, opts);    // r.seconds = expected search time
 
-import type { PageModel, Task } from "@/lib/contracts";
+import type { NodeId, PageModel, Task } from "@/lib/contracts";
 import {
   analyze,
   prepareStep,
@@ -12,6 +12,7 @@ import {
   type ScentResult,
   type StepSetup,
 } from "./model";
+import { withHeadingText } from "./rename";
 import { clamp01, type ScentScorer, type SyncScentScorer } from "./scorer";
 
 export { lexicalScorer, tokenize, stem, overlapScore, matchWeight } from "./lexical";
@@ -41,6 +42,7 @@ export {
 } from "./model";
 export { fundamentalMatrix, invert, solve } from "./solver";
 export { simulateSearch, type SimulationResult } from "./simulate";
+export { withHeadingText } from "./rename";
 
 function normaliseScores(raw: number[], n: number): number[] {
   if (!Array.isArray(raw) || raw.length !== n) {
@@ -50,7 +52,7 @@ function normaliseScores(raw: number[], n: number): number[] {
 }
 
 function run(setup: StepSetup, scores: number[]): ScentResult {
-  // Only "search" steps use the scores; local and linear steps never consult them.
+  // Only "search" steps use the scores; local steps never consult them.
   return analyze(setup, setup.mode === "search" ? normaliseScores(scores, setup.headings.length) : setup.headings.map(() => 0));
 }
 
@@ -110,7 +112,39 @@ export function searchTask(
   task: Task,
   scorer: SyncScentScorer,
   opts: ScentOptions = {},
-): { seconds: number; steps: ScentResult[] } {
+): TaskSearch {
   const steps = task.steps.map((_, i) => searchHeadings(page, task, i, scorer, opts));
   return { seconds: steps.reduce((a, s) => a + s.seconds, 0), steps };
+}
+
+export interface TaskSearch {
+  seconds: number;
+  steps: ScentResult[];
+}
+
+export interface RenameComparison {
+  /** searchTask seconds on the page as it is. */
+  before: number;
+  /** searchTask seconds with the heading's text replaced. */
+  after: number;
+  beforeResult: TaskSearch;
+  afterResult: TaskSearch;
+}
+
+/**
+ * What if heading `headingId` read `newText`? Clones the page, renames the heading, rebuilds its
+ * announcement, and runs `searchTask` on both pages. The scorer is re-run on the new label, which is the
+ * point: a repair only helps if the new words smell like the task. Used to verify suggested heading text.
+ */
+export function compareRename(
+  page: PageModel,
+  task: Task,
+  headingId: NodeId,
+  newText: string,
+  scorer: SyncScentScorer,
+  opts: ScentOptions = {},
+): RenameComparison {
+  const beforeResult = searchTask(page, task, scorer, opts);
+  const afterResult = searchTask(withHeadingText(page, headingId, newText), task, scorer, opts);
+  return { before: beforeResult.seconds, after: afterResult.seconds, beforeResult, afterResult };
 }

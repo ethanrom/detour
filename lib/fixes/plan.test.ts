@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { BLOCKED_PENALTY_SECONDS, type Evaluate, type PageModel, type Task, type TaskResult } from "@/lib/contracts";
 import { buildPage, type Spec } from "@/fixtures/pagemodels/builder";
 import { miniShop, miniShopTasks } from "@/fixtures/pagemodels/mini-shop";
-import { applyFixes, defaultObjective, generateCandidates, planFixes } from "./index";
+import { applyFixes, defaultObjective, exhaustivePoolSize, generateCandidates, planFixes } from "./index";
 import { counting, personaResult, toyEvaluate } from "./testing";
 
 const results = (kb: number, sr: number, opts: { kbBlocked?: boolean; srBlocked?: boolean; mouse?: number } = {}): TaskResult[] => [
@@ -155,8 +155,8 @@ describe("planFixes with the toy evaluator on mini-shop", () => {
   });
 });
 
-describe("lazy greedy evaluation count", () => {
-  // Additive costs: every fix saves a fixed amount regardless of the others, so cached marginals stay exact.
+describe("plain greedy", () => {
+  // Additive costs: every fix saves a fixed amount regardless of the others.
   const additive = fromFeatures((p) => {
     let s = 100;
     if (p.nodes["fix-skip-link"]) s -= 8;
@@ -169,24 +169,40 @@ describe("lazy greedy evaluation count", () => {
     return s;
   });
 
-  it("re-evaluates only the current leader each round and finds the optimum", () => {
+  it("evaluates every remaining candidate each round and finds the optimum", () => {
     const c = counting(additive);
     const p = planFixes(miniShop, miniShopTasks, c.evaluate, { k: 3, exhaustiveMaxK: 2 });
     expect(p.method).toBe("greedy");
     expect(p.chosen.map((x) => x.id)).toEqual(["real-button:sizes", "skip-link:main", "add-landmark:content+footer"]);
     expect(p.plannedObjective).toBe(66);
-    // baseline + 7 singles + one refresh for each of picks 2 and 3 (naive greedy would need 1 + 7 + 6 + 5).
-    expect(p.evaluations).toBe(1 + 7 + 2);
-    expect(c.calls()).toBe(10);
+    // baseline + 7 singles + 6 pairs + 5 triples.
+    expect(p.evaluations).toBe(1 + 7 + 6 + 5);
+    expect(c.calls()).toBe(p.evaluations);
 
     const ex = planFixes(miniShop, miniShopTasks, additive, { k: 3 });
     expect(ex.optimalityGap).toBe(0);
     expect(ex.exhaustiveObjective).toBe(66);
+    expect(exhaustivePoolSize(ex)).toBe(7); // 7 <= 14 candidates: all of them
+  });
+
+  it("finds a fix that only pays off after another one (negative single gain)", () => {
+    // The skip link costs a Tab stop on its own, but once the size picker is reachable it saves a lot.
+    const complementary = fromFeatures((p) => {
+      const real = p.nodes["size-m"].focusable;
+      const skip = !!p.nodes["fix-skip-link"];
+      return 100 - (real ? 10 : 0) - (real && skip ? 14 : 0) + (skip ? 0.4 : 0) - 2 * (p.headings.length - 1);
+    });
+    const p = planFixes(miniShop, miniShopTasks, complementary, { k: 2 });
+    expect(p.chosen.map((x) => x.id)).toEqual(["real-button:sizes", "skip-link:main"]);
+    expect(p.gains[0].secondsSaved).toBeCloseTo(10, 9);
+    expect(p.gains[1].secondsSaved).toBeCloseTo(13.6, 9); // single-fix gain of the skip link is -0.4
+    expect(p.plannedObjective).toBeCloseTo(76.4, 9);
+    expect(p.optimalityGap).toBeCloseTo(0, 9);
   });
 });
 
-describe("exhaustive pool cap", () => {
-  it("looks at the 12 best candidates by single-fix gain", () => {
+describe("exhaustive pool", () => {
+  it("is the union of the top 8 per greedy round, plus the picks, when there are more than 14 candidates", () => {
     const heading = (i: number): Spec => ({
       id: `h${i}`,
       role: "generic",
@@ -202,9 +218,11 @@ describe("exhaustive pool cap", () => {
     expect(p.candidates).toHaveLength(15);
     expect(p.chosen.map((x) => x.id)).toEqual(["promote-heading:h15", "promote-heading:h14", "promote-heading:h13"]);
     expect(p.optimalityGap).toBe(0);
-    // baseline + 15 singles + 2 refreshes + the remaining subsets of the 12-candidate pool
-    // (12 + 66 + 220 non-empty subsets of size <= 3, minus 12 singles and 2 chosen sets already evaluated).
-    expect(p.evaluations).toBe(1 + 15 + 2 + (12 + 66 + 220 - 12 - 2));
+    // Top 8 singles h15..h8, after h15: h14..h7, after h15+h14: h13..h6, so the pool is h15..h6.
+    expect(exhaustivePoolSize(p)).toBe(10);
+    // baseline + 15 singles + 14 pairs + 13 triples + the pool subsets not evaluated yet
+    // (10 + 45 + 120 non-empty subsets of size <= 3, minus 10 singles, 9 pairs and 8 triples already seen).
+    expect(p.evaluations).toBe(1 + 15 + 14 + 13 + (10 + 45 + 120 - 10 - 9 - 8));
     expect(c.calls()).toBe(p.evaluations);
   });
 });

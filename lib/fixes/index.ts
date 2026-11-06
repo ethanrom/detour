@@ -3,4 +3,5 @@
 export { generateCandidates } from "./candidates";
 export { applyFix, applyFixes } from "./apply";
 export { validatePage } from "./validate";
-export { planFixes, defaultObjective } from "./plan";
+export { planFixes, defaultObjective, exhaustivePoolSize } from "./plan";
+export type { FixPlanWithPool } from "./plan";

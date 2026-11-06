@@ -1,5 +1,6 @@
-// Fix-set optimiser: lazy greedy (CELF) selection, certified against exhaustive search over the
-// most promising candidates when k is small. The engine is injected, so this file never imports it.
+// Fix-set optimiser: plain greedy selection (every remaining candidate is re-evaluated each round, so
+// complementary fixes are found), certified against exhaustive search when k is small. The engine is
+// injected, so this file never imports it.
 
 import { BLOCKED_PENALTY_SECONDS } from "@/lib/contracts";
 import type { FixGain, FixPlan, Objective, PersonaId, PlanFixes, TaskResult } from "@/lib/contracts";
@@ -8,8 +9,16 @@ import { generateCandidates } from "./candidates";
 
 /** Stop adding fixes once the best marginal gain is no more than this many seconds. */
 export const MIN_GAIN_SECONDS = 0.01;
-/** Exhaustive certification looks at this many candidates, ranked by single-fix gain. */
-export const EXHAUSTIVE_POOL_SIZE = 12;
+/** With at most this many candidates the exhaustive search covers all of them. */
+export const EXHAUSTIVE_ALL_MAX = 14;
+/** Above that, the pool takes this many top candidates from each of the first three greedy rounds. */
+export const EXHAUSTIVE_TOP_PER_ROUND = 8;
+
+/** planFixes also attaches the size of the exhaustive pool (outside the frozen FixPlan contract). */
+export type FixPlanWithPool = FixPlan & { exhaustivePool?: number };
+
+/** Number of candidates the exhaustive search drew its subsets from; undefined when it did not run. */
+export const exhaustivePoolSize = (plan: FixPlan): number | undefined => (plan as FixPlanWithPool).exhaustivePool;
 
 const OBJECTIVE_PERSONAS: PersonaId[] = ["keyboard", "screenreader"];
 
@@ -48,6 +57,14 @@ function* subsets(pool: number[], maxSize: number): Generator<number[]> {
   yield* rec(0, []);
 }
 
+/** Indices of the `n` largest values (ties: lowest index first). */
+function topIndices(values: Map<number, number>, n: number): number[] {
+  return [...values.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, n)
+    .map(([i]) => i);
+}
+
 export const planFixes: PlanFixes = (page, tasks, evaluate, opts = {}) => {
   const objective = opts.objective ?? defaultObjective;
   const k = Math.max(0, Math.floor(opts.k ?? 3));
@@ -73,35 +90,30 @@ export const planFixes: PlanFixes = (page, tasks, evaluate, opts = {}) => {
 
   const baseline = evalSet([]);
 
-  // Single-fix gains: the initial upper bounds.
-  const singleGain = candidates.map((_, i) => (k > 0 ? baseline.value - evalSet([i]).value : 0));
-
-  // CELF: take the candidate with the highest upper bound; if that bound is stale for the current
-  // set, refresh it and look again. A fresh bound at the top is the true best marginal gain.
-  const pool = candidates.map((_, i) => ({ i, ub: singleGain[i], stamp: 0 }));
+  // Plain greedy: every round re-evaluates the marginal gain of every remaining candidate on top of
+  // the current set. Gains can grow as fixes are added (a skip link is worth little until the size
+  // picker is reachable), so cached bounds are not safe; evaluations are cheap and memoised.
   const chosen: number[] = [];
   const gains: FixGain[] = [];
   let current = baseline;
-  while (chosen.length < k && pool.length > 0) {
-    let top = 0;
-    for (let j = 1; j < pool.length; j++) {
-      if (pool[j].ub > pool[top].ub || (pool[j].ub === pool[top].ub && pool[j].i < pool[top].i)) top = j;
+  /** Marginal gain of each candidate in rounds 0 (single-fix gains), 1 and 2 (after the first picks). */
+  const roundGains: Array<Map<number, number>> = [];
+  while (chosen.length < k) {
+    const marginal = new Map<number, number>();
+    for (let i = 0; i < candidates.length; i++) {
+      if (!chosen.includes(i)) marginal.set(i, current.value - evalSet([...chosen, i]).value);
     }
-    const entry = pool[top];
-    if (entry.ub <= MIN_GAIN_SECONDS) break;
-    if (entry.stamp === chosen.length) {
-      chosen.push(entry.i);
-      const next = evalSet(chosen);
-      gains.push({ fixId: candidates[entry.i].id, secondsSaved: current.value - next.value, after: next.after });
-      current = next;
-      pool.splice(top, 1);
-    } else {
-      entry.ub = current.value - evalSet([...chosen, entry.i]).value;
-      entry.stamp = chosen.length;
-    }
+    if (roundGains.length < 3) roundGains.push(marginal);
+    let best = -1;
+    for (const [i, g] of marginal) if (best < 0 || g > (marginal.get(best) as number)) best = i;
+    if (best < 0 || (marginal.get(best) as number) <= MIN_GAIN_SECONDS) break;
+    chosen.push(best);
+    const next = evalSet(chosen);
+    gains.push({ fixId: candidates[best].id, secondsSaved: current.value - next.value, after: next.after });
+    current = next;
   }
 
-  const plan: FixPlan = {
+  const plan: FixPlanWithPool = {
     candidates,
     chosen: chosen.map((i) => candidates[i]),
     gains,
@@ -112,21 +124,24 @@ export const planFixes: PlanFixes = (page, tasks, evaluate, opts = {}) => {
     evaluations: 0,
   };
 
-  // Exhaustive certification over the top candidates by single-fix gain (plus the greedy picks, so the
-  // greedy plan is always one of the subsets compared and the gap cannot be negative).
+  // Exhaustive certification. Small candidate sets are searched in full; larger ones use the union of the
+  // top candidates by single-fix gain and by marginal gain after greedy's first and second picks, plus
+  // the greedy picks themselves (so the greedy plan is always compared and the gap cannot be negative).
   if (k <= exhaustiveMaxK) {
-    const ranked = candidates
-      .map((_, i) => i)
-      .sort((a, b) => singleGain[b] - singleGain[a] || a - b)
-      .slice(0, EXHAUSTIVE_POOL_SIZE);
-    const exPool = [...new Set([...ranked, ...chosen])].sort((a, b) => a - b);
+    const all = candidates.map((_, i) => i);
+    const exPool =
+      candidates.length <= EXHAUSTIVE_ALL_MAX
+        ? all
+        : [...new Set([...roundGains.flatMap((g) => topIndices(g, EXHAUSTIVE_TOP_PER_ROUND)), ...chosen])].sort((a, b) => a - b);
     let best = baseline.value;
     for (const subset of subsets(exPool, k)) best = Math.min(best, evalSet(subset).value);
     plan.method = "greedy+exhaustive";
     plan.exhaustiveObjective = best;
     plan.optimalityGap = current.value - best;
+    plan.exhaustivePool = exPool.length;
   }
 
   plan.evaluations = evaluations;
   return plan;
 };
+

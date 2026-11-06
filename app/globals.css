@@ -1,26 +1,343 @@
 @import "tailwindcss";
 
+/*
+ * Detour design tokens.
+ *
+ * Palette: warm paper, deep ink, one acid-lime accent used as a "highlighter".
+ * Persona colours are Okabe-Ito derived (colour-blind safe) and are always paired with a
+ * distinct shape and fill pattern, so colour is never the only channel.
+ *
+ * Contrast (WCAG 2.2 relative luminance):
+ *   ink #0D1522 on paper #F6F3EC ............ 16.5:1
+ *   muted #4A5565 on paper .................. 6.8:1
+ *   ink on lime #D2F84A ..................... 15.1:1   (lime on ink 15.1:1)
+ *   mouse #0072B2 on paper / white .......... 4.7:1 / 5.2:1
+ *   keyboard #B54800 on paper / white ....... 4.9:1 / 5.4:1
+ *   screen reader #007A5E on paper / white .. 4.8:1 / 5.3:1
+ *   persona colour on its own tint .......... 4.6:1 / 4.7:1 / 4.7:1
+ *   blocked #A4161A on paper ................ 7.0:1
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --paper: #f6f3ec;
+  --paper-2: #eeeae0;
+  --surface: #ffffff;
+  --ink: #0d1522;
+  --ink-2: #1c2638;
+  --muted: #4a5565;
+  --rule: #d9d3c4;
+  --rule-strong: #8c8670;
+  --lime: #d2f84a;
+  --lime-deep: #b9e12a;
+  --mouse: #0072b2;
+  --keyboard: #b54800;
+  --screenreader: #007a5e;
+  --blocked: #a4161a;
+  --add-bg: #e3f6e1;
+  --add-fg: #14532d;
+  --del-bg: #fbe4e1;
+  --del-fg: #7f1d1d;
+  --mouse-tint: #e9f3fa;
+  --keyboard-tint: #fbeee3;
+  --screenreader-tint: #e6f5ef;
+  --radius: 14px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-lime: var(--lime);
+  --color-lime-deep: var(--lime-deep);
+  --color-mouse: var(--mouse);
+  --color-keyboard: var(--keyboard);
+  --color-screenreader: var(--screenreader);
+  --color-blocked: var(--blocked);
+  --color-add-bg: var(--add-bg);
+  --color-add-fg: var(--add-fg);
+  --color-del-bg: var(--del-bg);
+  --color-del-fg: var(--del-fg);
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--paper);
+  color: var(--ink);
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.55;
+  font-feature-settings: "kern", "liga";
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+/* Visible focus on every control: ink ring with a lime halo, readable on paper and on ink. */
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 6px var(--lime);
+}
+
+.on-ink :focus-visible {
+  outline-color: var(--lime);
+  box-shadow: 0 0 0 6px var(--ink);
+}
+
+a {
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+/* ---------- Typography helpers ---------- */
+.display {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.h-section {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
+  text-wrap: balance;
+}
+
+.h-card {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  font-size: 1.25rem;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.lede {
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.3125rem);
+  line-height: 1.5;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* The "highlighter" mark: lime band behind the lower 60% of the text. */
+.mark {
+  background: linear-gradient(transparent 52%, var(--lime) 52%, var(--lime) 92%, transparent 92%);
+  padding: 0 0.08em;
+  margin: 0 -0.08em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.on-ink .mark {
+  background: none;
+  color: var(--lime);
+}
+
+/* ---------- Surfaces ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.rule-top {
+  border-top: 1px solid var(--rule);
+}
+
+.hard-shadow {
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.15rem;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 650;
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.btn:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--paper-2);
+}
+
+.btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 1;
+  color: #5b6472;
+  border-color: #8c8670;
+  background: var(--paper-2);
+}
+
+.btn-primary {
+  background: var(--lime);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--lime-deep);
+}
+
+.btn-primary:active:not(:disabled) {
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.btn-ink {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn-ink:hover:not(:disabled) {
+  background: var(--ink-2);
+}
+
+.btn-sm {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.85rem;
+  font-size: 0.875rem;
+}
+
+.on-ink .btn {
+  border-color: var(--lime);
+}
+
+/* A light card nested inside an ink section restores the light-surface styling. */
+.on-ink .on-paper .btn {
+  border-color: var(--ink);
+}
+.on-ink .on-paper :focus-visible {
+  outline-color: var(--ink);
+  box-shadow: 0 0 0 6px var(--lime);
+}
+
+/* ---------- Race ---------- */
+.pattern-mouse {
+  background-color: var(--mouse);
+}
+
+.pattern-keyboard {
+  background-color: var(--keyboard);
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0 2px, transparent 2px 6px);
+}
+
+.pattern-screenreader {
+  background-color: var(--screenreader);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.65) 1.1px, transparent 1.3px);
+  background-size: 6px 6px;
+}
+
+.pattern-blocked {
+  background-color: var(--blocked);
+  background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.55) 0 3px, transparent 3px 8px);
+}
+
+.ghost-bar {
+  background-color: transparent;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 7px);
+  opacity: 0.35;
+}
+
+/* Hero teaser: plays once, then rests on the final state (also the reduced-motion state). */
+@keyframes teaser-x {
+  from { left: 0%; }
+  to { left: var(--end); }
+}
+@keyframes teaser-w {
+  from { width: 0%; }
+  to { width: var(--end); }
+}
+@keyframes teaser-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.rise-in {
+  animation: rise-in 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Windows high-contrast / forced colours: keep boundaries visible. */
+@media (forced-colors: active) {
+  .card,
+  .btn {
+    border: 1px solid CanvasText;
+  }
+  .pattern-mouse,
+  .pattern-keyboard,
+  .pattern-screenreader,
+  .pattern-blocked {
+    forced-color-adjust: none;
+  }
 }
