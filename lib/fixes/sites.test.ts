@@ -4,9 +4,10 @@ import path from "node:path";
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import type { FixSpec, PageModel } from "@/lib/contracts";
+import { evaluate } from "@/lib/engine";
 import { extractPage } from "@/lib/extract";
 import { SITES } from "@/fixtures/tasks";
-import { applyFix, applyFixes, generateCandidates, validatePage } from "./index";
+import { applyFix, applyFixes, exhaustivePoolSize, generateCandidates, planFixes, validatePage } from "./index";
 
 const SITES_DIR = path.resolve(__dirname, "../../public/sites");
 
@@ -67,4 +68,16 @@ describe.each(SITES.map((s) => s.id))("%s: every fix applies cleanly", (id) => {
     for (const c of cands) expect(validatePage(applyFix(page, c)), c.id).toEqual([]);
     expect(validatePage(applyFixes(page, cands))).toEqual([]);
   });
+});
+
+describe("planFixes on northwind with the real engine", () => {
+  it("finds the skip link that only pays off once the size picker is fixed, and certifies the plan", () => {
+    const plan = planFixes(pages.northwind, tasksOf("northwind"), evaluate);
+    expect(plan.chosen.map((c) => c.kind)).toContain("skip-link");
+    expect(plan.chosen.map((c) => c.kind)).toContain("real-button");
+    expect(plan.plannedObjective).toBeLessThanOrEqual(66);
+    expect(plan.optimalityGap).toBeGreaterThanOrEqual(0);
+    expect(plan.exhaustiveObjective).toBeLessThanOrEqual(plan.plannedObjective);
+    expect(exhaustivePoolSize(plan)).toBeGreaterThanOrEqual(plan.candidates.length > 14 ? 3 : plan.candidates.length);
+  }, 120_000);
 });
