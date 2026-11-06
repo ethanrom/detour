@@ -262,14 +262,14 @@ assumption rather than a measurement, the source column says so.
 | M  mental preparation | 1.2 | 0.6 to 1.35 | triangular | s | Kieras 2001, after Olson & Olson 1990: M = 0.6 to 1.35 s, use 1.2 s (Card, Moran & Newell 1980 used 1.35 s) |
 | H  homing keyboard / mouse | 0.4 | 0.3 to 0.5 | triangular | s | Card, Moran & Newell 1983 via Kieras 2001: H = 0.4 s |
 | P  pointing (no layout) | 1.1 | 0.8 to 1.5 | triangular | s | Kieras 2001 / Card, Moran & Newell 1983: P ranges from 0.8 to 1.5 s with an average of 1.1 s (from Fitts's law) |
-| Fitts intercept a | 0.33 | 0.12 to 0.51 | triangular | s | Soukoreff & MacKenzie 2004, Int. J. Human-Computer Studies 61(6):751-789, Table 3: median of eight Shannon-form mouse-pointing regressions |
+| Fitts intercept a | 0.33 | 0.12 to 0.51 | triangular | s | Soukoreff & MacKenzie 2004, Int. J. Human-Computer Studies 61(6):751-789, Table 3: median (our computation) of eight published Shannon-form mouse-pointing regressions |
 | Fitts slope b | 0.17 | 0.12 to 0.23 | triangular | s/bit | Soukoreff & MacKenzie 2004, Table 3: slope = 1 / throughput; Shannon-form mouse models have 4.3 to 8.4 bits/s, median about 5.9 bits/s (b = 0.17) |
 | Silent reading speed | 238 | 175 to 300 | triangular | words/min | Brysbaert 2019, J. Memory and Language 109:104047: silent reading of English non-fiction, mean 238 wpm (190 studies, 18,573 readers); most adults 175 to 300 wpm |
 | Screen-reader speech rate | 320 | 200 to 450 | lognormal | words/min | Bragg et al. 2018, CHI: mean maximum intelligible rate 334 wpm for visually impaired and 297 wpm for sighted listeners; Stent et al. 2011; Asakawa et al. 2003 (judgement for a typical experienced user) |
 | Listen fraction (non-targets) | 0.5 | 0.25 to 1 | triangular | fraction | Modelling assumption (no measurement exists). Mechanism: NVDA cancels speech on every key press by default (NVDA source, inputCore: speechEffectWhenExecuted = SPEECHEFFECT_CANCEL) |
 | Typing, seconds per character | 0.24 | 0.12 to 0.48 | triangular | s/char | Dhakal et al. 2018, CHI, 136 M keystrokes from 168,960 typists: mean inter-key interval 238.7 ms (SD 111.6); fastest decile about 122 ms, slowest decile about 481 ms |
 | Scroll, seconds per viewport | 0.8 | 0.4 to 1.6 | triangular | s | Modelling assumption anchored on Hinckley, Cutrell, Bathiche & Muss 2002, CHI: standard wheel fit MT = -0.42 + 1.25*log2(D/W+1) s gives 0.83 s for a one-screen scroll (30 lines) and 1.56 s for 60 lines |
-| Keyboard motor factor (x K) | 1 | 1 to 3 | triangular | x | Trewin 1998 (Edinburgh PhD thesis; data of Trewin & Pain 1999, IJHCS 50(2)): copy-typing times of 20 people with motor disabilities were 2.8 to 2.9 times those of 6 non-disabled people |
+| Keyboard motor factor (x K) | 1 | 1 to 3 | triangular | x | Trewin 1998 (Edinburgh PhD thesis; data of Trewin & Pain 1999, IJHCS 50(2)): mean copy-typing times of people with motor disabilities (n = 20 recruited) were 2.8 to 2.9 times those of non-disabled controls (n = 6 recruited), our ratio of the reported group means |
 | Screen-reader strategy weights | headings 0.7161, find 0.1357, linear 0.0635, landmarks 0.0371, tab 0.0477 | fixed | - | share | WebAIM Screen Reader User Survey #10 (Dec 2023 to Jan 2024), 'When trying to find information on a lengthy web page, which of the following are you most likely to do first?', n = 1,511: headings 71.6%, Find 13.6%, read through 6.4%, links 4.8%, landmarks 3.7%. Mapping: headings to headings, Find to find, read through to linear, links to tab, landmarks to landmarks. Weights are counts / 1511. |
 
 Notes on individual parameters:
@@ -279,7 +279,7 @@ Notes on individual parameters:
 - **M  mental preparation.** Charged once per task step. It covers routine decision time for a user who knows the task, not searching an unfamiliar page (see limitations).
 - **H  homing keyboard / mouse.** The nominal value is published; the plus or minus 25% range is a modelling assumption.
 - **P  pointing (no layout).** Fallback only. Used when the page has no layout rectangles; otherwise pointing is computed from Fitts's law.
-- **Fitts intercept a.** Intercepts of those regressions run from 0.12 to 0.51 s (MacKenzie, Sellen & Buxton 1991 report a negative intercept, a regression artefact, excluded from the range). The studies' pointing tasks include a button press, which the engine also charges as 2B, so mouse times are slightly conservative.
+- **Fitts intercept a.** The eight intercepts run from 0.12 to 0.51 s, apart from one negative intercept (MacKenzie, Sellen & Buxton 1991, a regression artefact) that is kept in the median but excluded from the range. The studies' pointing tasks include a button press, which the engine also charges as 2B, so mouse times are slightly conservative.
 - **Fitts slope b.** Cross-check at D/W = 10 (ID = 3.46 bits): a + b*ID = 0.91 s, against 0.71 to 0.94 s from the ISO 9241-9 mouse throughput range of 3.7 to 4.9 bits/s (Table 5) and 0.8 to 1.5 s for the KLM P operator.
 - **Silent reading speed.** Fiction is faster (260 wpm); Detour tasks read short factual passages.
 - **Screen-reader speech rate.** A judgement, not a measured distribution. Preferred rates are below maximum intelligible rates, so 320 sits at the verified means (297 to 334 wpm) and below the advanced users of Asakawa et al. (about 2.1 to 2.4 times a default TTS rate). Low (p05) 200 wpm is about the default rate of a synthesiser (eSpeak NORMAL = 175 wpm; Stent: 500 wpm is 2.5 times real time). High (p95) 450 wpm: Stent et al. tested 300 to 550 wpm, with frequent-user accuracy 0.83 at 350 and 0.66 at 500 wpm. No survey of preferred wpm exists (the WebAIM survey has no such question). Sensitivity runs at 250 and 400 wpm are advised.
@@ -289,7 +289,27 @@ Notes on individual parameters:
 - **Keyboard motor factor (x K).** Nominal 1.0 is an unimpaired keyboard-only user (the persona is defined by input modality, not by an impairment). Other measured ratios: 1.7 (cervical spinal cord injury, Pouplin et al. 2016), 1.15 (early Parkinson's, not significant, Liu et al. 2023). Individuals can be 6 times slower; that tail is not sampled. Applied to K for the keyboard-only persona only.
 <!-- END:parameter-table -->
 
-## 12. Limitations
+## 12. Validation targets
+
+The parameters come from the literature, but Detour's end-to-end predictions have **not yet been compared with
+measured screen-reader task times** (limitation 10 below). Published field studies give targets: blind to sighted
+time ratios that the screen-reader to mouse ratio of comparable Detour tasks should roughly reproduce.
+
+| Study | Participants and setting | Task | Blind (s) | Sighted (s) | Ratio |
+|---|---|---|---|---|---|
+| Bigham et al. 2007 (WebinSitu) | 10 blind (8 JAWS, 2 Window-Eyes), 10 sighted; one week of unscripted browsing | Issue a query on the Google home page | 74.7 | 34.5 | 2.2 |
+| | | Click a result after the results page loads | 155.1 | 34.8 | 4.5 (sighted SD 222 s, soft) |
+| | | Query the user's own web history | 30.4 | 18.4 | 1.65 |
+| | | Leave a comment on a page | 104.6 | 68.7 | 1.5 |
+| Nielsen 2001 (NN/g, Coyne & Nielsen study) | Screen-reader users vs 20 controls; four tasks on 19 live sites | Mean time on task over four goal-level tasks | 1006 | 434 | 2.3 (success 12.5% vs 78.2%) |
+
+Ratios are our arithmetic on the published means. These are the only studies we found with matched blind and
+sighted times; in the same data blind users clicked only 46 of 822 skip links offered (5.6%), which is worth
+keeping in mind when a fix is "add a skip link". Caveats: different tasks and pages from ours; unscripted field
+behaviour includes exploration and errors that Detour's lower bound excludes, so Detour is expected to come in
+*below* these ratios for first-visit tasks and nearer to them for practised ones.
+
+## 13. Limitations
 
 State these when quoting a number.
 
@@ -302,7 +322,9 @@ State these when quoting a number.
    several look plausible; the headings strategy assumes the right heading is found. Modelling this (an
    absorbing Markov chain over scent scores) is planned and will turn the lower bound into a search estimate.
 4. **Speech is word counts.** One constant rate, no prosody, number or URL expansion, punctuation pauses or
-   synthesiser start-up latency. `listenFraction` is a modelling assumption (section 11) with a wide range.
+   synthesiser start-up latency. The speech rate is a judgement from listening-rate studies (no survey of
+   preferred rates exists), and `listenFraction` is a modelling assumption (section 11), both with wide ranges.
+   They are the two parameters that move screen-reader times most; sensitivity runs are advised.
 5. **Independent parameter draws.** Monte Carlo samples each parameter independently, although some are
    correlated in real people (for example the Fitts intercept and slope trade off, and fast listeners are
    often fast typists). Intervals describe parameter uncertainty, not between-person variability in strategy.
@@ -313,12 +335,99 @@ State these when quoting a number.
 8. **Keyboard-only persona uses Tab only.** No access keys, caret browsing or find-in-page.
 9. **Fix gains are model gains.** They are exactly the seconds the model saves, not measured improvements.
    The fix optimiser cannot be better than the model it optimises against.
-10. **Not yet validated end to end.** Parameters are taken from the literature, but predicted task times have not
-    yet been compared with measured screen-reader task times. Published studies of that kind exist and have been
-    collected for later validation.
+10. **Not yet validated end to end.** See section 12.
 11. **Grounding can be wrong.** A grounded task is checked structurally, not semantically.
+12. **Population.** Defaults describe adult, English-language, experienced users on a desktop. Beginners, braille
+    users, mobile screen readers and non-English speech are outside the model.
 
-## 13. References
+## 14. References
 
-<!-- BEGIN:references -->
-<!-- END:references -->
+Card, S. K., English, W. K., & Burr, B. J. (1978). Evaluation of mouse, rate-controlled isometric joystick, step
+keys, and text keys for text selection on a CRT. *Ergonomics, 21*(8), 601-613.
+
+Card, S. K., Moran, T. P., & Newell, A. (1980). The keystroke-level model for user performance time with
+interactive systems. *Communications of the ACM, 23*(7), 396-410. doi:10.1145/358886.358895
+
+Card, S. K., Moran, T. P., & Newell, A. (1983). *The Psychology of Human-Computer Interaction.* Lawrence Erlbaum.
+
+Asakawa, C., Takagi, H., Ino, S., & Ifukube, T. (2003). Maximum listening speeds for the blind. *Proceedings of
+the 9th International Conference on Auditory Display (ICAD 2003)*, 276-279.
+
+Bigham, J. P., Cavender, A. C., Brudvik, J. T., Wobbrock, J. O., & Ladner, R. E. (2007). WebinSitu: A comparative
+analysis of blind and sighted browsing behavior. *Proceedings of ASSETS 2007.* doi:10.1145/1296843.1296854
+
+Borodin, Y., Bigham, J. P., Dausch, G., & Ramakrishnan, I. V. (2010). More than meets the eye: A survey of
+screen-reader browsing strategies. *Proceedings of W4A 2010.*
+
+Bragg, D., Bennett, C., Reinecke, K., & Ladner, R. (2018). A large inclusive study of human listening rates.
+*Proceedings of CHI 2018*, Paper 444. doi:10.1145/3173574.3174018
+
+Brysbaert, M. (2019). How many words do we read per minute? A review and meta-analysis of reading rate.
+*Journal of Memory and Language, 109*, 104047. doi:10.1016/j.jml.2019.104047
+
+Dhakal, V., Feit, A. M., Kristensson, P. O., & Oulasvirta, A. (2018). Observations on typing from 136 million
+keystrokes. *Proceedings of CHI 2018.* doi:10.1145/3173574.3174220
+
+Dijkstra, E. W. (1959). A note on two problems in connexion with graphs. *Numerische Mathematik, 1*, 269-271.
+
+Fitts, P. M. (1954). The information capacity of the human motor system in controlling the amplitude of movement.
+*Journal of Experimental Psychology, 47*(6), 381-391.
+
+Hinckley, K., Cutrell, E., Bathiche, S., & Muss, T. (2002). Quantitative analysis of scrolling techniques.
+*Proceedings of CHI 2002.* doi:10.1145/503376.503389
+
+ISO 9241-9:2000. Ergonomic requirements for office work with visual display terminals (VDTs), Part 9:
+Requirements for non-keyboard input devices. (Superseded by ISO 9241-411:2012.)
+
+Kieras, D. (2001). *Using the Keystroke-Level Model to Estimate Execution Times.* University of Michigan.
+http://web.eecs.umich.edu/~kieras/docs/GOMS/KLM.pdf
+
+Leskovec, J., Krause, A., Guestrin, C., Faloutsos, C., VanBriesen, J., & Glance, N. (2007). Cost-effective outbreak
+detection in networks. *Proceedings of KDD 2007*, 420-429. doi:10.1145/1281192.1281239
+
+Liu, W.-M., Yeh, C.-L., Chen, P.-W., Lin, C.-W., & Liu, A.-B. (2023). Keystroke biometrics as a tool for the early
+diagnosis and clinical assessment of Parkinson's disease. *Diagnostics, 13*(19), 3061. doi:10.3390/diagnostics13193061
+
+MacKenzie, I. S. (1992). Fitts' law as a research and design tool in human-computer interaction.
+*Human-Computer Interaction, 7*(1), 91-139. doi:10.1207/s15327051hci0701_3
+
+MacKenzie, I. S., Sellen, A., & Buxton, W. (1991). A comparison of input devices in elemental pointing and
+dragging tasks. *Proceedings of CHI '91*, 161-166. doi:10.1145/108844.108868
+
+Minoux, M. (1978). Accelerated greedy algorithms for maximizing submodular set functions. In *Optimization
+Techniques*, Lecture Notes in Control and Information Sciences 7, 234-243. Springer.
+
+Moos, A., & Trouvain, J. (2007). Comprehension of ultra-fast speech: blind vs. "normally hearing" persons.
+*Proceedings of the 16th International Congress of Phonetic Sciences (ICPhS 2007)*, 677-680.
+
+Nemhauser, G. L., Wolsey, L. A., & Fisher, M. L. (1978). An analysis of approximations for maximizing submodular
+set functions I. *Mathematical Programming, 14*, 265-294.
+
+Nielsen, J. (2001). Beyond accessibility: Treating users with disabilities as people. *Alertbox*, 10 November 2001,
+Nielsen Norman Group (summarising Coyne, K. P., & Nielsen, J., *Beyond ALT Text: Making the Web Easy to Use for
+Users with Disabilities*, 2001).
+
+NV Access. NVDA source code (`inputCore.py`, speech cancellation on key press) and User Guide.
+https://github.com/nvaccess/nvda
+
+Olson, J. R., & Olson, G. M. (1990). The growth of cognitive modeling in human-computer interaction since GOMS.
+*Human-Computer Interaction, 5*(2-3), 221-265. doi:10.1207/s15327051hci0502&3_4
+
+Pouplin, S., Roche, N., Vaugier, I., Cabanilles, S., Hugeron, C., & Bensmail, D. (2016). Text input speed in persons
+with cervical spinal cord injury. *Spinal Cord, 54*(2), 158-162. doi:10.1038/sc.2015.147
+
+Soukoreff, R. W., & MacKenzie, I. S. (2004). Towards a standard for pointing device evaluation, perspectives on 27
+years of Fitts' law research in HCI. *International Journal of Human-Computer Studies, 61*(6), 751-789.
+doi:10.1016/j.ijhcs.2004.09.001
+
+Stent, A., Syrdal, A., & Mishra, T. (2011). On the intelligibility of fast synthesized speech for individuals with
+early-onset blindness. *Proceedings of ASSETS 2011*, 211-218. doi:10.1145/2049536.2049574
+
+Trewin, S. M. (1998). *Towards intelligent, adaptive input devices for users with physical disabilities.* PhD
+thesis, University of Edinburgh. http://hdl.handle.net/1842/34255
+
+Trewin, S., & Pain, H. (1999). Keyboard and mouse errors due to motor disabilities. *International Journal of
+Human-Computer Studies, 50*(2), 109-144. doi:10.1006/ijhc.1998.0238
+
+WebAIM (2024). *Screen Reader User Survey #10* (December 2023 to January 2024, 1,539 valid responses).
+https://webaim.org/projects/screenreadersurvey10/

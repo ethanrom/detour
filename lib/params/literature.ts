@@ -132,8 +132,8 @@ export const LITERATURE: Literature = {
         high: 0.51,
         dist: "triangular",
         unit: "s",
-        source: "Soukoreff & MacKenzie 2004, Int. J. Human-Computer Studies 61(6):751-789, Table 3: median of eight Shannon-form mouse-pointing regressions",
-        note: "Intercepts of those regressions run from 0.12 to 0.51 s (MacKenzie, Sellen & Buxton 1991 report a negative intercept, a regression artefact, excluded from the range). The studies' pointing tasks include a button press, which the engine also charges as 2B, so mouse times are slightly conservative.",
+        source: "Soukoreff & MacKenzie 2004, Int. J. Human-Computer Studies 61(6):751-789, Table 3: median (our computation) of eight published Shannon-form mouse-pointing regressions",
+        note: "The eight intercepts run from 0.12 to 0.51 s, apart from one negative intercept (MacKenzie, Sellen & Buxton 1991, a regression artefact) that is kept in the median but excluded from the range. The studies' pointing tasks include a button press, which the engine also charges as 2B, so mouse times are slightly conservative.",
       },
       b: {
         value: 0.17,
@@ -195,7 +195,7 @@ export const LITERATURE: Literature = {
     high: 3.0,
     dist: "triangular",
     unit: "x",
-    source: "Trewin 1998 (Edinburgh PhD thesis; data of Trewin & Pain 1999, IJHCS 50(2)): copy-typing times of 20 people with motor disabilities were 2.8 to 2.9 times those of 6 non-disabled people",
+    source: "Trewin 1998 (Edinburgh PhD thesis; data of Trewin & Pain 1999, IJHCS 50(2)): mean copy-typing times of people with motor disabilities (n = 20 recruited) were 2.8 to 2.9 times those of non-disabled controls (n = 6 recruited), our ratio of the reported group means",
     note: "Nominal 1.0 is an unimpaired keyboard-only user (the persona is defined by input modality, not by an impairment). Other measured ratios: 1.7 (cervical spinal cord injury, Pouplin et al. 2016), 1.15 (early Parkinson's, not significant, Liu et al. 2023). Individuals can be 6 times slower; that tail is not sampled. Applied to K for the keyboard-only persona only.",
   },
   screenReaderStrategies: {
