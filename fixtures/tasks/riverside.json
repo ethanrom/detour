@@ -32,11 +32,6 @@
     "grounding": "fixture",
     "steps": [
       {
-        "target": "lang-toggle",
-        "action": "activate",
-        "note": "Open the language menu"
-      },
-      {
         "target": "lang-es",
         "action": "select",
         "note": "Choose Español"

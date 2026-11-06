@@ -126,7 +126,7 @@ describe("northwind inaccessibility patterns", () => {
   });
 
   it("has icon-only buttons with no accessible name, including the cart", () => {
-    for (const cls of ["icon-search", "icon-wishlist", "icon-cart"]) {
+    for (const cls of ["icon-search", "icon-heart", "icon-cart"]) {
       const b = doc.querySelector(`button.icon-btn.${cls}`);
       expect(b, cls).not.toBeNull();
       expect(b!.querySelector("svg")).not.toBeNull();
@@ -161,6 +161,37 @@ describe("northwind inaccessibility patterns", () => {
     expect(doc.querySelectorAll("h2,h3,h4,h5,h6").length).toBe(0);
     const titles = Array.from(doc.querySelectorAll("div.section-title")).map((e) => e.textContent!.trim());
     expect(titles).toEqual(["Product details", "Customer reviews", "Shipping & returns", "You may also like"]);
+  });
+
+  it("gives all four section titles exactly the same class", () => {
+    const sections = Array.from(doc.querySelectorAll("[data-detour-id]")).filter((e) =>
+      /^(details|reviews|returns|related)-title$/.test(e.getAttribute("data-detour-id")!),
+    );
+    expect(sections.length).toBe(4);
+    for (const t of sections) {
+      expect(t.tagName).toBe("DIV");
+      expect(t.className).toBe("section-title");
+      expect(t.hasAttribute("style")).toBe(false);
+    }
+  });
+
+  it("keeps icon controls unlabeled but adds label hooks for the extractor", () => {
+    const swatches = Array.from(doc.querySelectorAll(".swatch"));
+    expect(swatches.map((e) => e.getAttribute("data-colour"))).toEqual(["Forest", "Ember", "Glacier", "Charcoal", "Sand"]);
+    for (const s of swatches) expect(s.hasAttribute("aria-label")).toBe(false);
+    const thumbs = Array.from(doc.querySelectorAll(".thumb"));
+    expect(thumbs.map((e) => e.getAttribute("data-label"))).toEqual([
+      "Front view",
+      "Back view",
+      "Close-up of hood and chest pocket",
+      "On the trail",
+    ]);
+    const social = Array.from(doc.querySelectorAll(".footer .social a"));
+    expect(social.map((a) => a.className)).toEqual(["icon-instagram", "icon-facebook", "icon-x", "icon-youtube"]);
+    for (const a of social) {
+      expect(a.hasAttribute("aria-label")).toBe(false);
+      expect((a.textContent ?? "").trim()).toBe("");
+    }
   });
 
   it("has 8 reviews before the returns section, 4 related cards and a placeholder-only newsletter input", () => {
@@ -212,18 +243,36 @@ describe("riverside inaccessibility patterns", () => {
     expect(doc.querySelectorAll('[tabindex="1"]').length).toBe(1);
   });
 
-  it("has a fake div language picker with Spanish and the other languages", () => {
-    const toggle = doc.querySelector('[data-detour-id="lang-toggle"]')!;
-    expect(toggle.tagName).toBe("DIV");
-    expect(toggle.hasAttribute("role")).toBe(false);
-    expect(toggle.hasAttribute("tabindex")).toBe(false);
-    expect(toggle.textContent).toContain("English");
+  it("has an always-visible row of fake language links, with no hidden dropdown", () => {
+    expect(doc.querySelector('[data-detour-id="lang-toggle"]')).toBeNull();
+    expect(doc.querySelector(".lang-menu")).toBeNull();
     const opts = Array.from(doc.querySelectorAll(".lang-opt"));
     expect(opts.map((o) => o.textContent!.trim())).toEqual(["English", "Español", "Tiếng Việt", "中文", "Tagalog"]);
     for (const o of opts) {
-      expect(o.tagName).toBe("DIV");
+      expect(["SPAN", "DIV"]).toContain(o.tagName);
+      expect(o.closest("[hidden]")).toBeNull();
       expect(o.hasAttribute("role")).toBe(false);
       expect(o.hasAttribute("tabindex")).toBe(false);
+      expect(o.hasAttribute("onclick")).toBe(false);
+    }
+    expect(doc.querySelector('[data-detour-id="lang-es"]')).toBe(opts[1]);
+    const css = read("riverside", "styles.css");
+    expect(css.match(/\.lang-opt\s*\{[^}]*\}/)?.[0]).toMatch(/cursor:\s*pointer/);
+  });
+
+  it("makes the spanish task a single select step on lang-es", () => {
+    const spanish = SITES.find((s) => s.id === "riverside")!.tasks.find((t) => t.id === "spanish")!;
+    expect(spanish.steps).toEqual([{ target: "lang-es", action: "select", note: "Choose Español" }]);
+  });
+
+  it("gives all fake section titles one shared class", () => {
+    const titles = Array.from(doc.querySelectorAll("[data-detour-id]")).filter((e) =>
+      /^(how|who|income|faq|apply)-title$/.test(e.getAttribute("data-detour-id")!),
+    );
+    expect(titles.length).toBe(5);
+    for (const t of titles) {
+      expect(t.tagName).toBe("DIV");
+      expect(t.classList.contains("section-title")).toBe(true);
     }
   });
 
