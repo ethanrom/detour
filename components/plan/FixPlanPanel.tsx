@@ -3,6 +3,7 @@
 import { ArrowRightIcon, CheckIcon } from "@/components/icons";
 import type { TaskResult } from "@/lib/contracts";
 import { fixImpacts } from "@/lib/ui/compare";
+import { exhaustivePoolSize } from "@/lib/fixes";
 import type { PlanOutcome } from "@/lib/ui/datasource";
 import { fmtOptimality } from "@/lib/ui/format";
 import { FixCard } from "./FixCard";
@@ -26,7 +27,7 @@ const KS = [1, 2, 3, 4, 5];
 export function FixPlanPanel({ baseline, k, onK, status, outcome, error, applied, onPlan, onApply }: Props) {
   const plan = outcome?.plan;
   const impacts = plan ? fixImpacts(plan, baseline) : [];
-  const certified = plan ? fmtOptimality(plan.optimalityGap) : null;
+  const certified = plan ? fmtOptimality(plan.optimalityGap, exhaustivePoolSize(plan), plan.candidates.length, plan.k) : null;
   const exactlyOptimal = plan?.optimalityGap !== undefined && Math.abs(plan.optimalityGap) < 1e-9;
 
   return (

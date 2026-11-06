@@ -1,11 +1,12 @@
 // The seam between the UI and everything that produces numbers.
 //
-// The UI only ever talks to a DataSource. `lib/ui/mock-datasource.ts` implements it from hand-written
-// fixtures so the whole product can be built and demoed without the engine. The integrator swaps in a
-// live implementation (extract -> ground -> evaluate -> planFixes) by changing one line in
-// `components/DataSourceProvider.tsx`.
+// The UI only ever talks to a DataSource. `lib/ui/live-datasource.ts` is the real pipeline (extract from the
+// preview iframe -> evaluate and planFixes in a Web Worker, plus /api/ground and /api/repair).
+// `lib/ui/mock-datasource.ts` serves hand-written fixtures: it is the fallback when the iframe cannot be read,
+// and it keeps the UI testable without a browser.
 
 import type { FixPlan, PageModel, Task, TaskResult } from "@/lib/contracts";
+import type { RepairReport } from "@/lib/repair/types";
 
 export interface SiteInfo {
   id: string;
@@ -52,23 +53,8 @@ export interface DataSource {
   suggestRepairs?(site: SiteInfo, analysis: Analysis): Promise<RepairReport | null>;
 }
 
-/** The LLM proposes, the scent model verifies. Mirrors the response of POST /api/repair. */
-export interface RepairReport {
-  /** True when at least one heading rename was accepted and applied to the page used for the verdict. */
-  promoted: boolean;
-  headings: Array<{
-    nodeId: string;
-    original: string;
-    proposed: string;
-    source: "llm" | "fallback";
-    /** Realistic-search seconds before and after the rename. */
-    before: number;
-    after: number;
-    savedSeconds: number;
-    accepted: boolean;
-  }>;
-  labels: Array<{ nodeId: string; proposed: string; source: "llm" | "fallback" }>;
-}
+/** The LLM proposes, the scent model verifies. This is the response of POST /api/repair. */
+export type { RepairReport } from "@/lib/repair/types";
 
 /** Thrown by `groundTask` when the server has no LLM keys configured (HTTP 503). */
 export class LlmUnavailableError extends Error {

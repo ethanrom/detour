@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useMemo, useState } from "react";
+import { SearchInsight } from "@/components/analyze/SearchInsight";
 import { CheckIcon, PersonaIcon } from "@/components/icons";
 import { Race, raceDuration } from "@/components/race/Race";
 import { useRaceClock } from "@/components/race/useRaceClock";
@@ -8,6 +9,7 @@ import type { PersonaId, Task, TaskResult } from "@/lib/contracts";
 import { compareTask, describeComparison, type Change, type PersonaDelta } from "@/lib/ui/compare";
 import { fmtPercentLess, fmtSeconds } from "@/lib/ui/format";
 import { PERSONAS, PERSONA_BY_ID } from "@/lib/ui/personas";
+import { searchInsight } from "@/lib/ui/search-insight";
 import { buildLane, PERSONA_ORDER } from "@/lib/ui/timeline";
 
 interface Props {
@@ -85,6 +87,7 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
   const duration = raceDuration(lanes, ghost);
   const deltas = compareTask(beforeTask, afterTask);
   const [openTable, setOpenTable] = useState(true);
+  const insight = searchInsight(afterTask.personas.screenreader);
 
   return (
     <section aria-labelledby="after-h" className="scroll-mt-24">
@@ -127,6 +130,12 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
           />
         </div>
       </div>
+
+      {insight && (
+        <div className="mt-6">
+          <SearchInsight search={insight} taskLabel={task?.label ?? ""} idBase="after-search" context="After the fixes, for" />
+        </div>
+      )}
 
       <div className="card mt-6 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -34,7 +34,7 @@ const STEPS = [
   },
   {
     title: "Plan the smallest fix set",
-    body: "Re-measure after each candidate code fix, keep the few that win the most seconds, and certify the choice against exhaustive search.",
+    body: "Re-measure after each candidate code fix, keep the few that win the most seconds, and check the choice against an exhaustive search over the most promising fixes.",
   },
 ];
 

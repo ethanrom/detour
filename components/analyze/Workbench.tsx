@@ -9,10 +9,14 @@ import { Race, raceDuration } from "@/components/race/Race";
 import { Transcript } from "@/components/race/Transcript";
 import { useRaceClock } from "@/components/race/useRaceClock";
 import type { Task, TaskResult } from "@/lib/contracts";
-import type { Analysis, PlanOutcome, SiteInfo } from "@/lib/ui/datasource";
+import { LlmUnavailableError, type Analysis, type PlanOutcome, type RepairReport, type SiteInfo } from "@/lib/ui/datasource";
+import { searchInsight } from "@/lib/ui/search-insight";
 import { PERSONAS } from "@/lib/ui/personas";
 import { PERSONA_ORDER, buildLane, type Lane } from "@/lib/ui/timeline";
 import { useReducedMotion } from "@/lib/ui/use-reduced-motion";
+import { CustomTaskBox, type CustomState } from "./CustomTaskBox";
+import { RepairPanel, type RepairStatus } from "./RepairPanel";
+import { SearchInsight } from "./SearchInsight";
 import { SiteCards } from "./SiteCards";
 import { SitePreview } from "./SitePreview";
 import { TaskList } from "./TaskList";
@@ -28,6 +32,12 @@ interface PlanState {
   status: PlanStatus;
   outcome?: PlanOutcome;
   error?: string;
+}
+
+interface RepairState {
+  key: string;
+  status: RepairStatus;
+  report?: RepairReport | null;
 }
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -49,6 +59,8 @@ export function Workbench() {
   const [applied, setApplied] = useState(false);
   const [applyKey, setApplyKey] = useState(0);
   const [afterTaskId, setAfterTaskId] = useState<string | null>(null);
+  const [custom, setCustom] = useState<CustomState>({ siteId: "", status: "idle" });
+  const [repair, setRepair] = useState<RepairState | null>(null);
 
   const frameRef = useRef<HTMLIFrameElement>(null);
   const afterHeading = useRef<HTMLHeadingElement>(null);
@@ -89,6 +101,24 @@ export function Workbench() {
     setPlan({ siteId: id, status: "idle" });
   }, []);
 
+  /** Read the page and evaluate every task of the site. Resolves with the analysis once it is on screen. */
+  const startAnalysis = useCallback(
+    (target: SiteInfo): Promise<Analysis> => {
+      setAnalysis({ siteId: target.id, status: "loading" });
+      return source.analyze(target, frameRef.current).then(
+        (data) => {
+          if (liveSite.current === target.id) setAnalysis({ siteId: target.id, status: "ready", data });
+          return data;
+        },
+        (e) => {
+          if (liveSite.current === target.id) setAnalysis({ siteId: target.id, status: "error", error: errMsg(e) });
+          throw e;
+        },
+      );
+    },
+    [source],
+  );
+
   const run = useCallback(
     (id: string) => {
       if (!site) return;
@@ -98,22 +128,53 @@ export function Workbench() {
         return;
       }
       setPending(id);
-      setAnalysis({ siteId: site.id, status: "loading" });
-      source
-        .analyze(site, frameRef.current)
-        .then((data) => {
+      startAnalysis(site)
+        .then(() => {
           if (liveSite.current !== site.id) return;
-          setAnalysis({ siteId: site.id, status: "ready", data });
           setPending(null);
           setRunKey((n) => n + 1);
         })
-        .catch((e) => {
-          if (liveSite.current !== site.id) return;
-          setAnalysis({ siteId: site.id, status: "error", error: errMsg(e) });
-          setPending(null);
-        });
+        .catch(() => liveSite.current === site.id && setPending(null));
     },
-    [site, ready, source],
+    [site, ready, startAnalysis],
+  );
+
+  /** Ground a sentence on the page with the LLM, add the task to the site and run it. */
+  const runCustom = useCallback(
+    async (text: string) => {
+      if (!site || !source.groundTask) return;
+      const sid = site.id;
+      const mine = (v: CustomState): void => {
+        if (liveSite.current === sid) setCustom(v);
+      };
+      mine({ siteId: sid, status: "working", text });
+      try {
+        let data = ready;
+        if (!data) {
+          setPending("custom");
+          try {
+            data = await startAnalysis(site);
+          } finally {
+            if (liveSite.current === sid) setPending(null);
+          }
+        }
+        const task = await source.groundTask(site, data, text);
+        if (liveSite.current !== sid) return;
+        const next: SiteInfo = { ...site, tasks: [...site.tasks.filter((t) => t.id !== task.id), task] };
+        const withTask = source.addTask ? await source.addTask(next, data, task) : data;
+        if (liveSite.current !== sid) return;
+        setSites((list) => list?.map((s) => (s.id === sid ? next : s)) ?? list);
+        setAnalysis({ siteId: sid, status: "ready", data: withTask });
+        setPlan({ siteId: sid, status: "idle" });
+        setApplied(false);
+        setTaskId(task.id);
+        setRunKey((n) => n + 1);
+        mine({ siteId: sid, status: "done", text, task });
+      } catch (e) {
+        mine(e instanceof LlmUnavailableError ? { siteId: sid, status: "unavailable", text } : { siteId: sid, status: "error", text, error: errMsg(e) });
+      }
+    },
+    [site, ready, source, startAnalysis],
   );
 
   const doPlan = useCallback(() => {
@@ -141,6 +202,25 @@ export function Workbench() {
     (h.closest("section") ?? h).scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
   }, [applyKey, reduced]);
 
+  // Heading and label suggestions: the server asks the LLM for wording and the scent model verifies it.
+  const readyPage = ready?.page;
+  const taskKey = site?.tasks.map((t) => t.id).join("|") ?? "";
+  const repairKey = site && readyPage ? `${site.id}|${taskKey}` : "";
+  useEffect(() => {
+    if (!repairKey || !site || !ready || !source.suggestRepairs) return;
+    let alive = true;
+    setRepair({ key: repairKey, status: "loading" });
+    source
+      .suggestRepairs(site, ready)
+      .then((report) => alive && setRepair({ key: repairKey, status: report ? "ready" : "unavailable", report }))
+      .catch(() => alive && setRepair({ key: repairKey, status: "unavailable" }));
+    return () => {
+      alive = false;
+    };
+    // `site` and `ready` are captured on purpose: re-run only when the page or the task list changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repairKey, source]);
+
   const lanes = useMemo<Lane[] | null>(() => (result ? PERSONA_ORDER.map((p) => buildLane(result.personas[p])) : null), [result]);
 
   if (loadError) {
@@ -166,6 +246,15 @@ export function Workbench() {
       </div>
       <SitePreview key={site.id} site={site} frameRef={frameRef} />
       <TaskList tasks={site.tasks} results={ready?.results} selectedId={taskId} busyId={pending} onRun={run} />
+      {source.groundTask && (
+        <CustomTaskBox
+          key={`custom-${site.id}`}
+          state={custom.siteId === site.id ? custom : { siteId: site.id, status: "idle" }}
+          page={ready?.page}
+          busy={pending !== null}
+          onSubmit={runCustom}
+        />
+      )}
       {analysis?.status === "error" && analysis.siteId === siteId && (
         <p role="alert" className="rounded-lg border border-blocked bg-surface p-3 text-sm text-blocked">
           Analysis failed: {analysis.error}
@@ -181,10 +270,18 @@ export function Workbench() {
           1 · Choose a page
         </h2>
         <SiteCards sites={sites} value={siteId} onChange={chooseSite} />
-        {mode === "sample" && (
+        {(ready?.mode ?? mode) === "sample" ? (
           <p className="mt-3 text-sm text-muted">
-            <strong className="text-ink">Sample data.</strong> Times on this screen come from hand-calibrated fixtures, not the live engine yet.
+            <strong className="text-ink">Sample data.</strong> Times on this screen come from hand-calibrated fixtures
+            {ready?.fallbackReason ? ` because the live page could not be read (${ready.fallbackReason})` : ", not the live engine"}.
           </p>
+        ) : (
+          ready && (
+            <p className="mt-3 text-sm text-muted">
+              <strong className="text-ink">Measured live.</strong> Read {Object.keys(ready.page.nodes).length} elements from the rendered page, with their real positions
+              and sizes.
+            </p>
+          )
         )}
       </section>
 
@@ -196,6 +293,8 @@ export function Workbench() {
         taskLabel={task?.label ?? ""}
         loading={analysis?.status === "loading" && analysis.siteId === siteId}
       />
+
+      {ready && repair?.key === repairKey && <RepairPanel status={repair.status} report={repair.report} page={ready.page} />}
 
       {ready && (
         <FixPlanPanel
@@ -245,6 +344,7 @@ function Stage({
   const duration = lanes ? raceDuration(lanes) : 0;
   const clock = useRaceClock(duration, resetKey);
   const sr = lanes?.find((l) => l.persona === "screenreader");
+  const insight = result ? searchInsight(result.personas.screenreader) : undefined;
 
   return (
     <>
@@ -277,6 +377,8 @@ function Stage({
           <WhyPanel result={result} />
         </div>
       )}
+
+      {result && insight && <SearchInsight search={insight} taskLabel={taskLabel} />}
     </>
   );
 }
