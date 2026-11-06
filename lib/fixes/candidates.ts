@@ -23,6 +23,7 @@ export function capitalizeFirst(s: string): string {
 }
 
 const quote = (s: string) => `“${s}”`;
+const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
 // ---------------------------------------------------------------------------------------------
 // skip link
@@ -51,16 +52,25 @@ export function findSkipTarget(page: PageModel, tree: Tree): SkipTarget | null {
   if (element) {
     to = firstStopAtOrAfter(page, tree, element);
   } else {
-    const first = blocks[0];
+    // No main landmark and no h1: land on the first stop after the leading run of repetitive blocks.
+    const first = blocks.find((b) => stopsIn(page, tree, b).length > 0);
     if (!first) return null;
-    const after = tree.end.get(first) as number;
-    let best = Infinity;
-    for (const r of page.readingOrder) {
-      const i = tree.idx.get(r);
-      if (i !== undefined && i > after && i < best) {
-        best = i;
-        to = r;
+    let after = tree.end.get(first) as number;
+    for (;;) {
+      let best = Infinity;
+      to = undefined;
+      for (const r of page.readingOrder) {
+        const i = tree.idx.get(r);
+        if (i !== undefined && i > after && i < best) {
+          best = i;
+          to = r;
+        }
       }
+      if (to === undefined) break;
+      // If that stop sits inside another block, keep going past it.
+      const inner = blocks.find((b) => (tree.idx.get(b) as number) <= best && best <= (tree.end.get(b) as number));
+      if (!inner) break;
+      after = tree.end.get(inner) as number;
     }
     element = to;
   }
@@ -89,7 +99,7 @@ function skipLinkCandidates(page: PageModel, tree: Tree): FixSpec[] {
       id: "skip-link:main",
       kind: "skip-link",
       title: `Add a ${quote(SKIP_LINK_NAME)} link`,
-      rationale: `Lets keyboard users skip ${focusBefore} Tab stops and screen-reader users skip ${readingBefore} items before the main content.`,
+      rationale: `Lets keyboard users skip ${plural(focusBefore, "Tab stop")} and screen-reader users skip ${plural(readingBefore, "item")} before the main content.`,
       targets: [target.element],
       params: { target: target.element, stop: target.to, anchor, linkId: SKIP_LINK_ID, label: SKIP_LINK_NAME },
       patch: {
