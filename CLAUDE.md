@@ -37,7 +37,7 @@ Edit only the paths your task owns. If you need a change elsewhere, say so in yo
 - Next.js is **16.4**: read `node_modules/next/dist/docs/` before using framework APIs.
   React is 19.3 and Tailwind is 4.
 - Dependencies are pre-installed. Avoid adding packages. If you must, list them in your report.
-- Commit on your own branch with clear messages. Never commit `.env*` or secrets.
+- Commit on your own branch with clear, plain messages. **No "Co-Authored-By" or AI-attribution lines.** Never commit `.env*` or secrets.
   Do not push, merge or rebase other branches.
 - Python, if ever needed: `uv run --with <pkg> python ...`. Never install into the base interpreter.
 - Shell is Git Bash on Windows. Use forward slashes.
