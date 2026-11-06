@@ -50,7 +50,7 @@ export function planKeyboard(page: PageModel, idx: PageIndex, task: Task, p: Par
     }
 
     const f = idx.focusPos.get(node.id);
-    if (f === undefined) return tb.done({ stepIndex: si, reason: keyboardBlockReason(idx, node, step.action) });
+    if (f === undefined) return tb.done({ stepIndex: si, reason: keyboardBlockReason(idx, node, step.action, step.note) });
 
     if (f !== cur) {
       const goalState = f + 1;

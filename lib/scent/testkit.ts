@@ -80,7 +80,7 @@ export function referenceExpectedSeconds(s: Scenario, override: { scores?: numbe
   const hear = (j: number) => K + sp(j) * (j === target ? 1 : lf);
   const ks = sectionOf(target);
 
-  if (cursor >= 0 && sectionOf(cursor) === ks) {
+  if (sectionOf(cursor) === ks) {
     let t = 0;
     if (target > cursor) for (let j = cursor + 1; j <= target; j++) t += hear(j);
     else if (target < cursor) for (let j = cursor - 1; j >= target; j--) t += hear(j);

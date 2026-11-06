@@ -135,6 +135,28 @@ function searchPath(idx: PageIndex, strategy: ScreenReaderStrategy, p: Params, c
   return sp.goal < 0 ? null : { path: pathEdges(sp, sp.goal), query: useFind ? q : "" };
 }
 
+export const VERIFY_LABEL = "Verify (no state announced)";
+
+/**
+ * MODELLING ASSUMPTION: a clickable <div> announces no role and, after
+ * Enter, no state change ("checked", "selected", "expanded"). A real control says so itself. So after
+ * activating a fake control a screen-reader user checks that it worked: one more think (M), one key
+ * to re-read the item in full (K + its speech), and one Up/Down round trip past a neighbour (2K plus
+ * the neighbour's and the item's announcements, each at listenFraction).
+ */
+function verifyFakeControl(tb: TraceBuilder, idx: PageIndex, page: PageModel, t: number): void {
+  const targetId = page.readingOrder[t];
+  const text = idx.announcement(t);
+  tb.event("think", null, VERIFY_LABEL, { M: 1 });
+  tb.event("think", targetId, VERIFY_LABEL, { K: 1, spkFull: idx.words(t) }, { utterance: { nodeId: targetId, text, truncated: false }, counted: false });
+  if (idx.N < 2) return;
+  const backFirst = t > 0;
+  const other = backFirst ? t - 1 : t + 1;
+  const otherId = page.readingOrder[other];
+  tb.heard(backFirst ? "prev" : "next", otherId, VERIFY_LABEL, 1, idx.words(other), false, idx.announcement(other));
+  tb.heard(backFirst ? "next" : "prev", targetId, VERIFY_LABEL, 1, idx.words(t), false, text);
+}
+
 export function planScreenReader(page: PageModel, idx: PageIndex, task: Task, strategy: ScreenReaderStrategy, p: Params): Planned {
   const tb = new TraceBuilder(strategy, p);
   const S = idx.N + 1;
@@ -181,6 +203,7 @@ export function planScreenReader(page: PageModel, idx: PageIndex, task: Task, st
     const targetId = page.readingOrder[t];
     if (step.action !== "read") {
       tb.event("activate", targetId, `Enter → activate “${label}”`, { K: 1 });
+      if ((step.action === "activate" || step.action === "select") && node.hints.fakeButton) verifyFakeControl(tb, idx, page, t);
       if (step.action === "type") {
         const text = step.text ?? "";
         tb.event("type", targetId, `Type “${clip(text, 30)}”`, { chars: text.length });

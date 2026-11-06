@@ -59,27 +59,19 @@ export function describeBlock(n: A11yNode): string {
   }
 }
 
-/** True when some skip link starts before the block and lands after it. */
-function bypassed(idx: PageIndex, blockId: NodeId): boolean {
+/** Reading position of the last stop attributed to the block, or -1. */
+function lastStopOf(idx: PageIndex, blockId: NodeId): number {
   const ro = idx.page.readingOrder;
-  let first = -1;
-  let last = -1;
-  for (let i = 0; i < ro.length; i++) {
-    if (idx.blockOf(ro[i]) === blockId) {
-      if (first < 0) first = i;
-      last = i;
-    }
-  }
-  if (first < 0) return false;
-  return idx.page.skipLinks.some((sl) => {
-    const from = idx.resolveStop(sl.from);
-    const to = idx.resolveStop(sl.to);
-    return from >= 0 && to >= 0 && from < first && to > last;
-  });
+  for (let i = ro.length - 1; i >= 0; i--) if (idx.blockOf(ro[i]) === blockId) return i;
+  return -1;
 }
 
-/** "; 24 of them are in the navigation menu, which has no skip link" (or "" when no block dominates). */
-function blockClause(idx: PageIndex, nodeIds: NodeId[], lead: string, verb = "are in"): string {
+/**
+ * "; 24 of them are in the navigation menu, which has no skip link" (or "" when no block dominates).
+ * The skip-link tail is only attached to navigation landmarks and repetitive blocks, never when the
+ * path itself used a skip link, and never when some skip link lands after the block.
+ */
+function blockClause(idx: PageIndex, nodeIds: NodeId[], lead: string, verb = "are in", usedSkipLink = false): string {
   const counts = new Map<NodeId, number>();
   for (const id of nodeIds) {
     const b = idx.blockOf(id);
@@ -96,8 +88,11 @@ function blockClause(idx: PageIndex, nodeIds: NodeId[], lead: string, verb = "ar
   if (top === null || topCount < 3 || topCount < 0.3 * nodeIds.length) return "";
   const block = idx.page.nodes[top];
   let skip = "";
-  if (idx.page.skipLinks.length === 0) skip = ", which has no skip link";
-  else if (!bypassed(idx, top)) skip = ", which no skip link bypasses";
+  if ((block.landmark === "navigation" || block.hints.repetitiveBlock === true) && !usedSkipLink) {
+    const last = lastStopOf(idx, top);
+    if (idx.page.skipLinks.length === 0) skip = ", which has no skip link";
+    else if (!idx.page.skipLinks.some((sl) => idx.resolveStop(sl.to) > last)) skip = ", which no skip link bypasses";
+  }
   return `${lead}${topCount} of them ${verb} ${describeBlock(block)}${skip}`;
 }
 
@@ -116,6 +111,16 @@ function finalTargetName(idx: PageIndex, task: Task): string {
   const last = task.steps[task.steps.length - 1];
   const n = last ? idx.page.nodes[last.target] : undefined;
   return n ? clip(nodeName(n), 40) : "the target";
+}
+
+/** Targets the screen-reader user activates or selects that are fake controls (the user must verify them). */
+export function verifiedControls(idx: PageIndex, task: Task): A11yNode[] {
+  const out: A11yNode[] = [];
+  for (const s of task.steps) {
+    const n = idx.page.nodes[s.target];
+    if (n && (s.action === "activate" || s.action === "select") && n.hints.fakeButton && !out.includes(n)) out.push(n);
+  }
+  return out;
 }
 
 function blockedSentence(who: string, idx: PageIndex, task: Task, r: PersonaResult): string {
@@ -158,6 +163,12 @@ export function explain(idx: PageIndex, task: Task, personas: Partial<Record<Per
           const lead = USING[slow.strategy as ScreenReaderStrategy] ?? "Another strategy";
           out.push(`${lead} instead takes ${fmtSeconds(slow.seconds)} s: ${plural(heardSlow.length, "announcement", "announcements")}${c}.`);
         }
+        const fakes = verifiedControls(idx, task);
+        if (fakes.length === 1) {
+          out.push(`“${clip(nodeName(fakes[0]), 40)}” is a clickable <${fakes[0].tag}>: the screen reader announces no role or selected state, so the user has to re-check it.`);
+        } else if (fakes.length > 1) {
+          out.push(`${fakes.map((n) => `“${clip(nodeName(n), 40)}”`).join(" and ")} are clickable elements: the screen reader announces no role or state, so the user has to re-check each one.`);
+        }
       }
     }
   }
@@ -175,7 +186,7 @@ export function explain(idx: PageIndex, task: Task, personas: Partial<Record<Per
         const scrolls = events.filter((e) => e.command === "scroll").length;
         if (stops.length > 0) {
           const via = skips > 0 ? " and uses a skip link" : "";
-          out.push(`A keyboard user presses Tab ${plural(stops.length, "time", "times")}${via} before reaching “${final}” (${fmtSeconds(kb.seconds)} s)${blockClause(idx, stops, "; ")}.`);
+          out.push(`A keyboard user presses Tab ${plural(stops.length, "time", "times")}${via} before reaching “${final}” (${fmtSeconds(kb.seconds)} s)${blockClause(idx, stops, "; ", "are in", skips > 0)}.`);
         } else if (scrolls > 0) {
           out.push(`A keyboard user scrolls ${plural(scrolls, "screen", "screens")} to reach “${final}” (${fmtSeconds(kb.seconds)} s).`);
         } else {
