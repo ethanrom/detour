@@ -5,7 +5,7 @@ import type { ConverseSend, Env } from "./bedrock";
 
 /** A fake environment that satisfies isLlmConfigured(). The values are obviously not real. */
 export const TEST_ENV: Env = {
-  CLAUDE_AWS_ACCESS_KEY: "AKIATESTACCESSKEY00",
+  CLAUDE_AWS_ACCESS_KEY: "test-access-key-id-not-real",
   CLAUDE_AWS_SECRET_KEY: "test-secret-key-not-real",
   CLAUDE_AWS_REGION: "us-test-1",
   CLAUDE_AWS_MODEL: "test-strong-model",
