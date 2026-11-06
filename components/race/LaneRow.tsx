@@ -246,6 +246,12 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
               {fmtSeconds(lane.seconds)}
             </span>
             <span className="block text-xs text-muted">
+              {Math.abs(lane.seconds - lane.duration) > Math.max(1, 0.15 * lane.seconds) ? (
+                <>
+                  expected · this path {fmtSeconds(lane.duration)}
+                  <br />
+                </>
+              ) : null}
               90% interval {fmtRange(lane.interval)} s
               {ghost && !ghost.blocked ? (
                 <>

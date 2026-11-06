@@ -111,7 +111,7 @@ export function Transcript({ lane, clock }: Props) {
                       )}
                     </span>
                   ) : (
-                    <span className="italic text-muted">{e.label}</span>
+                    <span className="italic text-muted">{restLabel(commandKey(e.command), e.label) || (e.command === "think" ? "plans the next step" : "")}</span>
                   )}
                 </li>
               );
@@ -121,4 +121,12 @@ export function Transcript({ lane, clock }: Props) {
       </div>
     </section>
   );
+}
+
+/** The event label without the key name the row already shows ("Enter → activate M" → "activate M"). */
+function restLabel(key: string, label: string): string {
+  const l = label.trim();
+  if (l.toLowerCase() === key.toLowerCase()) return "";
+  if (!l.toLowerCase().startsWith(key.toLowerCase())) return l;
+  return l.slice(key.length).replace(/^\s*(→|->)?\s*/, "");
 }

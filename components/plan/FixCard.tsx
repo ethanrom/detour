@@ -55,7 +55,7 @@ export function FixCard({ fix, rank, impact, defaultOpen }: Props) {
             {unblocks &&
               d.unblocks.map((u) => (
                 <li key={u} className="inline-block rounded bg-lime px-2 py-0.5 sm:block sm:w-fit sm:ml-auto">
-                  {u}
+                  {u.replace(/^unblockss+/i, "")} can finish
                 </li>
               ))}
             {d.savings.map((s) => (
