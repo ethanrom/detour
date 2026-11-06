@@ -108,10 +108,11 @@ export interface HeadingInfo {
 export type StepMode =
   /** Heading foraging chain. */
   | "search"
-  /** The target is in the section the cursor is already in: the user just arrows to it. */
-  | "local"
-  /** The page has no headings and the cursor is at the top: plain linear reading. */
-  | "linear";
+  /** The target is in the section the cursor is already in: the user just arrows to it. At the start of a
+   *  task the cursor is at the top of the page, inside the preamble (the stops before the first heading), so
+   *  a preamble target (header cart button, language links) and any target on a page without headings
+   *  land here. */
+  | "local";
 
 export interface StepSetup {
   params: ResolvedScentOptions;
@@ -183,10 +184,9 @@ export function prepareStep(page: PageModel, task: Task, stepIndex: number, opts
   };
   const targetSection = sectionOf(targetPos);
 
-  let mode: StepMode;
-  if (cursorPos >= 0 && sectionOf(cursorPos) === targetSection) mode = "local";
-  else if (headings.length === 0) mode = "linear";
-  else mode = "search";
+  // The cursor at the top of the page (-1) is in the preamble section (-1), like any stop before the first heading.
+  const cursorSection = cursorPos >= 0 ? sectionOf(cursorPos) : -1;
+  const mode: StepMode = cursorSection === targetSection ? "local" : "search";
 
   let startHeading = headings.findIndex((h) => h.pos > cursorPos);
   if (startHeading < 0) startHeading = 0;
@@ -296,7 +296,7 @@ export interface Chain {
 export function buildChain(s: StepSetup, pEnter: number[]): Chain {
   const H = s.headings.length;
   const costs = makeCosts(s);
-  const fallbackCost = costs.linearFromTop() + (s.mode === "linear" ? 0 : s.params.K);
+  const fallbackCost = costs.linearFromTop() + s.params.K; // Ctrl+Home, then read down
   const states: ChainState[] = [];
   if (s.mode === "search") {
     for (const pass of [1, 2] as const) {
@@ -430,22 +430,6 @@ export function analyze(s: StepSetup, scores: number[]): ScentResult {
   }
 
   const chain = buildChain(s, pEnter);
-  if (s.mode === "linear") {
-    return {
-      ...base,
-      seconds: chain.fallbackCost,
-      foragingOverheadSeconds: chain.fallbackCost - shortest,
-      pFoundFirstPass: 0,
-      pFoundHeadings: 0,
-      pFallbackLinear: 1,
-      expectedHeadingsHeard: 0,
-      expectedWrongSections: 0,
-      components: { ...emptyComponents(), linearFallback: chain.fallbackCost },
-      perHeading: [],
-      targetHeading: null,
-    };
-  }
-
   const v = visitsFromFirstState(chain.Q); // row 0 of N = (I - Q)^-1: expected visits to each state
   let seconds = 0;
   let pFound1 = 0;

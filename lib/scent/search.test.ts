@@ -269,23 +269,35 @@ describe("edge cases", () => {
   });
   const o = { K: 0.3, wpm: 240, listenFraction: 0.5, M: 1.5 };
 
-  it("a page without headings is plain linear reading from the top", () => {
+  it("a page without headings is an arrow walk from the top", () => {
     const page = sectionedPage({ preamble: [3, 3, 3, 3], sections: [] });
     const r = searchHeadings(page, mk(page, ["pre-3"]), 0, [], o);
-    expect(r.mode).toBe("linear");
+    expect(r.mode).toBe("local");
     expect(r.seconds).toBeCloseTo(r.linearSeconds, 12);
-    expect(r.pFallbackLinear).toBe(1);
   });
 
-  it("a target before the first heading can only be found by the linear fallback", () => {
+  it("a target in the preamble is local at task start: the cursor is already in the preamble", () => {
     const page = sectionedPage({ preamble: [3, 3, 3], sections: [{ heading: "A", stops: [3, 3] }, { heading: "B", stops: [3] }] });
-    const r = searchHeadings(page, mk(page, ["pre-1"]), 0, [1, 1], o);
+    const r = searchHeadings(page, mk(page, ["pre-1"]), 0, [0, 0], o);
+    expect(r.mode).toBe("local");
+    expect(r.seconds).toBeCloseTo(r.linearSeconds, 12);
+    expect(r.seconds).toBeCloseTo(r.shortestSeconds, 12);
+    expect(r.foragingOverheadSeconds).toBe(0);
+    expect(r.perHeading).toEqual([]);
+    const ref = referenceExpectedSeconds({ page, task: mk(page, ["pre-1"]), stepIndex: 0, scores: [0, 0], opts: o, headings: 2 });
+    expect(r.seconds).toBeCloseTo(ref, 12);
+  });
+
+  it("from inside a section, a preamble target cannot be reached by H: search, then the linear fallback", () => {
+    const page = sectionedPage({ preamble: [3, 3, 3], sections: [{ heading: "A", stops: [3, 3] }, { heading: "B", stops: [3] }] });
+    const task = mk(page, ["s-0-0", "pre-1"]);
+    const r = searchHeadings(page, task, 1, [1, 1], o);
     expect(r.mode).toBe("search");
     expect(r.targetHeading).toBeNull();
     expect(r.pFoundHeadings).toBe(0);
     expect(r.pFallbackLinear).toBe(1);
     expect(r.seconds).toBeGreaterThan(r.linearSeconds);
-    expect(r.seconds).toBeCloseTo(referenceExpectedSeconds({ page, task: mk(page, ["pre-1"]), stepIndex: 0, scores: [1, 1], opts: o, headings: 2 }), 9);
+    expect(r.seconds).toBeCloseTo(referenceExpectedSeconds({ page, task, stepIndex: 1, scores: [1, 1], opts: o, headings: 2 }), 9);
   });
 
   it("when the target is a heading, entering only finishes listening to it", () => {
