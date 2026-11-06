@@ -182,8 +182,11 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
         {ghost && (
           <span
             aria-hidden="true"
-            className="absolute top-1 -translate-x-1/2 text-[0.625rem] font-semibold uppercase tracking-wider text-muted"
-            style={{ left: pct(ghost.duration, axis.max) }}
+            className="absolute top-1 text-[0.625rem] font-semibold uppercase tracking-wider text-muted"
+            style={{
+              left: pct(ghost.duration, axis.max),
+              transform: ghost.duration / axis.max > 0.85 ? "translateX(-110%)" : "translateX(-50%)",
+            }}
           >
             before
           </span>

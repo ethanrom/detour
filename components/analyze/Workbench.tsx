@@ -138,7 +138,7 @@ export function Workbench() {
     const h = afterHeading.current;
     if (!h) return;
     h.focus({ preventScroll: true });
-    h.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    (h.closest("section") ?? h).scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
   }, [applyKey, reduced]);
 
   const lanes = useMemo<Lane[] | null>(() => (result ? PERSONA_ORDER.map((p) => buildLane(result.personas[p])) : null), [result]);
