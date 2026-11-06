@@ -4,7 +4,7 @@
 
 An accessibility audit can list hundreds of violations and still not say which ones matter. In the WebAIM Million 2026 survey, 95.9% of the top million home pages had detected WCAG 2 failures, 56.1 errors per page on average. Teams fix what is easy to fix. Finding out what a failure costs a person needs a user study with disabled participants, which is slow, expensive and rare. **Detour predicts that cost.** It reads the page the way assistive technology does, models how each kind of user would complete a task using established human-performance models (KLM-GOMS, Fitts's law, screen-reader navigation as shortest paths over the accessibility tree, a strategy mixture weighted by the WebAIM Screen Reader Survey, Monte Carlo intervals) and an information-scent search model, and answers: how many seconds, for whom, and which three fixes win the most back. A language model helps with words only; it never produces a number.
 
-Live demo: TODO. Demo video: TODO.
+Live demo: **https://detour-ecru.vercel.app**.
 
 ## Highlights
 
@@ -15,10 +15,11 @@ Live demo: TODO. Demo video: TODO.
 - **Three fixes, certified.** From 18 candidate fixes, greedy picks three: label the icon buttons, make the size options real buttons, add a skip link. The objective (keyboard plus screen-reader seconds, a blocked persona charged 300 s) falls from 649.6 to 65.7. Both blocked cases are unblocked, and the skip link then cuts the keyboard user's size-M route from 18.4 s to 4.4 s. The plan is checked against exhaustive search over a pool of 11 candidates: **optimality gap 0.00**. On Riverside (10 candidates) the pool is all 10 and the gap is also 0.00.
 - **Complementary fixes are why it is plain greedy.** The skip link alone changes nothing for the keyboard user (still blocked); the real-button fix alone leaves 18.4 s; together 4.4 s. Lazy greedy (CELF) would never re-examine the skip link, so we removed it ([`docs/MODEL.md`](docs/MODEL.md) section 9).
 - **A vague heading is worse than none.** On the Riverside County food-assistance page, the income-limit table sits under a section titled "More information". After the headings are made real, a heading-navigating screen-reader user is predicted to need **160 s** to find the limit for a household of 3 (3% chance of opening the right section first; about 13 wrong sections entered), against a best case of 18 s that a shortest-path model charges for the same page. Claude proposed the heading "Monthly income limits by household size"; the scent model re-ran the search and the expected time drops to **42 s**, a 74% cut. A rename is accepted only when the model verifies that it saves time, and the app shows the ones it rejects (two of Claude’s other suggestions would have made search slower).
+- **Any public page, not only our demos.** Paste a URL and a server-side proxy (SSRF-guarded, every script stripped) serves the page from our origin, so the extractor can read its rendered DOM. Click the element a person needs to reach (no AI involved, with a searchable list for keyboard users) or describe the task for Claude, and the same race, fix plan and wording checks run. Tried on usa.gov pages and on Wikipedia articles of 2,000 to 3,500 elements, read in about 2 s.
 - **It does not cry wolf.** On the well-built control page (Alpine Co-op) Detour finds 0 candidate fixes and says "Nothing worth fixing".
 - **Consistent with field data.** Bigham et al. (2007, WebinSitu) measured blind users taking 1.5 to 4.5 times as long as sighted users on matched web tasks (2.2 times to issue a query, 4.5 times to click a result). For adding the jacket to the cart, the model's screen-reader to mouse ratio is **3.5×** (17.3 s against 5.0 s), inside that range. This is a sanity check, not a validation ([`docs/MODEL.md`](docs/MODEL.md) section 12).
 - **The search model is checked three ways.** The information-scent Markov chain matches a seeded 20,000-user simulation within 0.53% of mean time on 100 random pages (worst case), and an independent reference implementation to 1e-9.
-- **Engineering rigor.** 558 unit and property tests, brute-force oracles for the shortest paths, and Playwright end-to-end tests that include an axe scan of our own UI (0 violations) and a keyboard-only walkthrough ([details](#tests-and-verification)).
+- **Engineering rigor.** 601 unit and property tests, brute-force oracles for the shortest paths, and Playwright end-to-end tests that include an axe scan of our own UI (0 violations) and a keyboard-only walkthrough ([details](#tests-and-verification)).
 
 ### Northwind Outfitters, per persona, before and after the 3-fix plan
 
@@ -52,7 +53,7 @@ Riverside County FreshStart Food Assistance, same method: "Switch the page to Sp
 flowchart TB
     subgraph BROWSER["Browser: Next.js 16 app"]
         direction TB
-        IF["Demo site in a same-origin iframe<br/>public/sites: northwind, riverside, alpine"]
+        IF["Page in a same-origin iframe<br/>demo sites, or any public URL via /api/proxy"]
         EX["Extract: DOM to PageModel<br/>lib/extract"]
         subgraph WK["Web Worker"]
             direction TB
@@ -73,10 +74,12 @@ flowchart TB
         direction LR
         G["POST /api/ground<br/>task text to page elements"]
         R["POST /api/repair<br/>clearer headings and labels"]
+        P["GET /api/proxy<br/>any public page: SSRF guard, scripts stripped"]
     end
 
     BR["Amazon Bedrock Converse<br/>Claude fast tier, forced tool use"]
 
+    P -->|"same-origin HTML"| IF
     IF --> EX
     EX -->|PageModel| M
     EX -->|PageModel| K
@@ -100,12 +103,12 @@ flowchart TB
 
 ## How it works
 
-1. **Extract** (`lib/extract/`). Walks a live same-origin iframe in document order and builds a `PageModel`: roles and accessible names (`dom-accessibility-api`), states, NVDA-style browse-mode reading stops, the sequential focus order (positive `tabindex` first, negative and disabled excluded), headings, landmarks, skip links and the layout rectangle of every node. It also attaches heuristic hints for the fix generator: text that looks like a heading (size and weight) but is not one, clickable elements that cannot take focus, and unlabeled controls. The announcement printer (`lib/a11y/announce.ts`) is shared with the engine.
-2. **Ground** (`lib/llm/`, `app/api/ground/`, `fixtures/tasks/`). A task such as "Add the Trail Jacket in size M to the cart" becomes an ordered list of steps (`activate`, `select`, `type`, `read`) pointing at nodes. The demo tasks are hand-pinned; free text goes through Claude on Amazon Bedrock with forced tool use, and the result is validated against the `PageModel` (retry once with the errors, else fail).
+1. **Extract** (`lib/extract/`). Walks a live same-origin iframe (one of the demo sites, or any public page served through `lib/proxy/` and `app/api/proxy/`) in document order and builds a `PageModel`: roles and accessible names (`dom-accessibility-api`), states, NVDA-style browse-mode reading stops, the sequential focus order (positive `tabindex` first, negative and disabled excluded), headings, landmarks, skip links and the layout rectangle of every node. It also attaches heuristic hints for the fix generator: text that looks like a heading (size and weight) but is not one, clickable elements that cannot take focus, and unlabeled controls. The announcement printer (`lib/a11y/announce.ts`) is shared with the engine.
+2. **Ground** (`lib/llm/`, `app/api/ground/`, `fixtures/tasks/`). A task such as "Add the Trail Jacket in size M to the cart" becomes an ordered list of steps (`activate`, `select`, `type`, `read`) pointing at nodes. The demo tasks are hand-pinned. On any page you can click the target in the preview (pick mode, or a searchable list of the page's controls and headings) to make a task without AI; free text goes through Claude on Amazon Bedrock with forced tool use, and the result is validated against the `PageModel` (retry once with the errors, else fail).
 3. **Plan a route per persona** (`lib/engine/`). Mouse: `M`, scroll, a Fitts's-law pointing time, then a click. Keyboard-only: shortest path over Tab, Shift+Tab and skip-link edges. Screen reader: Dijkstra over the browse-mode reading order, where commands (next item, next heading, next landmark, Tab, Find) are edges costing a keystroke plus the speech of what is heard, for five navigation strategies. A control the persona cannot operate (not focusable, or no accessible name) makes that strategy **blocked**.
 4. **Mix and bound** (`lib/engine/persona.ts`, `montecarlo.ts`). Screen-reader strategies are weighted by the WebAIM Screen Reader User Survey #10 (headings 71.6%, Find 13.6%, read through 6.4%, links 4.8%, landmarks 3.7%). 400 seeded Monte Carlo samples over the literature's parameter ranges give a 90% interval.
 5. **Search realistically** (`lib/scent/`). The shortest path assumes the user knows which heading holds the answer. The scent model drops that: an absorbing Markov chain over the heading order, with `N = (I - Q)^-1` giving expected time, wrong sections entered and the chance of finding the target first time.
-6. **Explain** (`lib/engine/explain.ts`). Deterministic sentences built from the traces: "A keyboard user cannot choose size M. The colour forest picker option "M" can't be reached with the keyboard: it is a clickable `<div>` that cannot receive focus." No language model writes any explanation.
+6. **Explain** (`lib/engine/explain.ts`). Deterministic sentences built from the traces: "A keyboard user cannot choose size M. The size picker option "M" can't be reached with the keyboard: it is a clickable `<div>` that cannot receive focus." No language model writes any explanation.
 7. **Plan the fixes** (`lib/fixes/`). Candidate fixes are generated from the page (skip link, promote a styled heading, add a landmark, label a control, replace a fake button, remove a positive `tabindex`), grouped by component, and applied as pure transforms on the `PageModel` with an HTML before and after patch and the WCAG 2.2 criteria. Plain greedy picks up to `k`; for `k <= 3` an exhaustive search certifies it.
 8. **Repair wording** (`lib/repair/`, `app/api/repair/`). Claude proposes a clearer heading for a vague one, or a name for an unlabeled control; the scent model re-runs the search on the renamed page and the rename is accepted only if it saves more than half a second.
 9. **Show it** (`app/`, `components/`). Three lanes race on one clock; the screen-reader lane has a transcript and **Hear it**, which speaks the utterances with the browser's speech synthesis at the modelled rate. Then the fix plan with diffs, then the same race again with the before as a ghost.
@@ -182,7 +185,7 @@ npx playwright test # end-to-end in the installed Chrome; builds and serves the 
 
 ## Tests and verification
 
-`npm test` runs 558 tests in 52 files. The checks behind the claims above:
+`npm test` runs 601 tests in 60 files. The checks behind the claims above:
 
 - **Shortest paths are exact.** `lib/engine/dijkstra.test.ts` compares Dijkstra with Bellman-Ford on random graphs, and checks that adding an edge never increases a cost and that ties break deterministically. `lib/engine/oracle.test.ts` compares every screen-reader strategy, and the keyboard Tab, Shift+Tab and skip-link path, with a brute-force shortest path on random pages, and checks that every emitted move is a legal command and that totals add up.
 - **The Monte Carlo shortcut is checked.** Intervals re-cost each strategy's nominal-optimal path rather than re-searching per sample. `lib/engine/montecarlo.test.ts` re-runs the shortest-path search per sample and shows the median differs by less than 10% (and that re-optimising never costs more on average), that every interval contains its point estimate on random pages, and that a blocked strategy is never drawn.
@@ -203,7 +206,8 @@ State these when quoting a number. The long form is [`docs/MODEL.md`](docs/MODEL
 - **Scent is lexical.** The shipped scorer is word overlap with a small synonym map, and it covers the headings strategy only. Its behaviour constants are assumptions. A Claude-proposed rename is verified by that same lexical model, so a rename can look better to the model than to a person; review the proposals.
 - **Strategy weights are survey-based.** WebAIM respondents are self-selected and skew experienced, and the question asks what a user does first, which we treat as the whole-task strategy.
 - **Mixtures can move the wrong way.** A blocked strategy is dropped from the average and the rest renormalised, so unblocking one can raise a persona's mean by a few seconds (we see it on Northwind).
-- **The demo sites are synthetic and static.** No dynamic content, modals, focus traps, live regions, forms or network delays. Northwind and Riverside are invented, and built to be realistically inaccessible; Alpine is built properly as a control.
+- **Pages are read without their JavaScript.** A URL is analysed as its server-rendered HTML, so client-rendered apps, logged-in pages, modals, focus traps and live regions are out of reach (a browser extension that runs the extractor in the user's own tab would remove that limit). Very large pages (over about 3,000 elements) skip the wording check because of the request size limit.
+- **The demo sites are synthetic and static.** Northwind and Riverside are invented and built to be realistically inaccessible; Alpine is built properly as a control.
 - **Fix gains are model gains.** They are the seconds the model saves, not measured improvements.
 - **Scope.** Adult, English-language, desktop users. Beginners, braille users, mobile screen readers and non-English speech are outside the model.
 
@@ -211,7 +215,8 @@ State these when quoting a number. The long form is [`docs/MODEL.md`](docs/MODEL
 
 - **Estimates, not verdicts.** Every time carries a 90% interval, every page of the Method section states its assumptions, and Detour never claims WCAG conformance or replaces testing with disabled people. It is meant to decide what to fix first and to make the cost visible to people who write the checks.
 - **Personas by how they operate the page.** Mouse, keyboard-only and screen-reader users are defined by input and output modality; the model does not claim to represent any individual or any condition.
-- **No surprises about data.** The pages analysed in the demo are our own synthetic sites. Credentials and model calls stay on the server; request bodies and secrets are never logged. There is no URL proxy, so the app cannot be pointed at third-party pages.
+- **Any URL, fetched safely.** The proxy accepts only `http`/`https` on the standard ports, resolves DNS and refuses private, loopback, link-local and cloud-metadata addresses, re-checks every redirect and pins the connection to the address it checked (no DNS rebinding). It strips every script, event handler and `javascript:` URL with a real HTML parser, serves the page with `script-src 'none'`, and shows it in a sandboxed iframe that cannot run scripts. Limits: 10 s, 4 MB, 30 pages a minute per address.
+- **Claude usage is bounded.** The demo pages' wording proposals were recorded from one Claude run and are served from `fixtures/repair/`, so browsing the demo costs nothing. Live calls have a per-address rate limit, a daily cap, input and output token limits, and a kill switch ([`docs/OPERATIONS.md`](docs/OPERATIONS.md)). Credentials and model calls stay on the server; request bodies and secrets are never logged.
 - **Deterministic explanations.** Numbers and reasons come from code that can be read and tested. The language model cannot invent a result.
 - **We hold ourselves to the standard.** Our UI targets WCAG 2.2 AA, is fully keyboard operable, respects `prefers-reduced-motion`, and passes an automated axe scan with 0 violations.
 
@@ -225,11 +230,12 @@ State these when quoting a number. The long form is [`docs/MODEL.md`](docs/MODEL
 | `lib/scent/` | information-scent search: lexical scorer, absorbing Markov chain, simulation |
 | `lib/fixes/` | candidate fixes, pure transforms, the optimiser |
 | `lib/repair/`, `app/api/repair/` | proposed wording with model verification |
-| `lib/llm/`, `app/api/ground/` | Bedrock client and task grounding |
+| `lib/llm/`, `app/api/ground/` | Bedrock client, task grounding and the usage guard |
+| `lib/proxy/`, `app/api/proxy/` | the any-URL proxy: SSRF guard, HTML sanitiser, limits |
 | `lib/params/literature.ts` | every human-performance parameter with its source |
 | `lib/a11y/announce.ts` | NVDA-style announcement printer |
 | `public/sites/` | the three demo sites (Northwind, Riverside, Alpine) |
-| `fixtures/` | pinned tasks, test page models, sample results |
+| `fixtures/` | pinned tasks, test page models, sample results, recorded Claude proposals for the demo pages |
 | `app/`, `components/` | the UI |
 | `tests/e2e/` | Playwright and axe |
 | `docs/MODEL.md` | the model specification |
