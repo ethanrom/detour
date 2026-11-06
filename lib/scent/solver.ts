@@ -115,3 +115,19 @@ export function fundamentalMatrix(Q: Matrix): Matrix {
   const IminusQ = identity(n).map((row, i) => row.map((v, j) => v - Q[i][j]));
   return invert(IminusQ);
 }
+
+/** Above this many transient states, the first row of N is obtained from one linear solve rather than a
+ *  full inverse (identical result, O(n^2) instead of O(n^3) on the bidiagonal chains used here). */
+export const FULL_INVERSE_MAX_STATES = 80;
+
+/** First row of N: expected visits to every transient state when the chain starts in state 0.
+ *  Row 0 of N equals the solution x of (I - Q)^T x = e0. */
+export function visitsFromFirstState(Q: Matrix, opts: { full?: boolean } = {}): number[] {
+  const n = assertSquare(Q);
+  if (n === 0) return [];
+  if (opts.full ?? n <= FULL_INVERSE_MAX_STATES) return fundamentalMatrix(Q)[0];
+  const A = identity(n).map((row, i) => row.map((v, j) => v - Q[j][i]));
+  const e0 = new Array<number>(n).fill(0);
+  e0[0] = 1;
+  return solve(A, e0);
+}

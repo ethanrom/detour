@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { fundamentalMatrix, identity, invert, matMul, matVec, solve, type Matrix } from "./solver";
+import { fundamentalMatrix, identity, invert, matMul, matVec, solve, visitsFromFirstState, type Matrix } from "./solver";
 
 const maxAbsDiff = (A: Matrix, B: Matrix) => Math.max(...A.flatMap((row, i) => row.map((v, j) => Math.abs(v - B[i][j]))));
 
@@ -111,8 +111,22 @@ describe("invert / solve (Gaussian elimination with partial pivoting)", () => {
         expect(maxAbsDiff(matMul(N, IminusQ), identity(Q.length))).toBeLessThan(1e-8);
         // Diagonal of N is >= 1 (the visit at time zero).
         N.forEach((row, i) => expect(row[i]).toBeGreaterThanOrEqual(1 - 1e-12));
+        // The first row of N, whether from the full inverse or from one transposed solve.
+        const full = visitsFromFirstState(Q, { full: true });
+        const fast = visitsFromFirstState(Q, { full: false });
+        expect(full).toEqual(N[0]);
+        full.forEach((v, j) => expect(Math.abs(v - fast[j])).toBeLessThan(1e-9 * Math.max(1, v)));
       }),
       { numRuns: 200 },
     );
+  });
+
+  it("the first-row solve stays fast on long bidiagonal chains (600 states)", () => {
+    const n = 600;
+    const Q: Matrix = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (j === i + 1 ? 0.9 : 0)));
+    const t0 = performance.now();
+    const v = visitsFromFirstState(Q);
+    expect(performance.now() - t0).toBeLessThan(1500);
+    v.forEach((x, j) => expect(x).toBeCloseTo(0.9 ** j, 10));
   });
 });

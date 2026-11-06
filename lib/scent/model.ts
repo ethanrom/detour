@@ -19,7 +19,7 @@
 import { wordCount } from "@/lib/a11y/announce";
 import type { NodeId, PageModel, Task } from "@/lib/contracts";
 import { LITERATURE } from "@/lib/params/literature";
-import { fundamentalMatrix, type Matrix } from "./solver";
+import { visitsFromFirstState, type Matrix } from "./solver";
 
 // ---------------------------------------------------------------------------------------------
 // Parameters
@@ -446,8 +446,7 @@ export function analyze(s: StepSetup, scores: number[]): ScentResult {
     };
   }
 
-  const N = fundamentalMatrix(chain.Q);
-  const v = N[0]; // expected visits to each transient state from the start state
+  const v = visitsFromFirstState(chain.Q); // row 0 of N = (I - Q)^-1: expected visits to each state
   let seconds = 0;
   let pFound1 = 0;
   let pFound2 = 0;

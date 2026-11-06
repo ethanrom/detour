@@ -128,6 +128,18 @@ describe("agreement of three independent computations", () => {
     }
   });
 
+  it("a 300-heading page (600 states) uses the fast first-row path and still matches the reference", () => {
+    const sections = Array.from({ length: 300 }, (_, k) => ({ heading: `Heading ${k}`, stops: [5, 7, 5, 7, 5, 7] }));
+    const page = sectionedPage({ preamble: [3, 3], sections });
+    const task = { id: "t", siteId: "s", label: "x", grounding: "fixture" as const, steps: [{ target: "s-250-3", action: "read" as const }] };
+    const scores = sections.map((_, k) => ((k * 37) % 100) / 100);
+    const s: Scenario = { page, task, stepIndex: 0, scores, opts: {}, headings: 300 };
+    const t0 = performance.now();
+    const r = run(s);
+    expect(performance.now() - t0).toBeLessThan(1500);
+    expect(Math.abs(r.seconds - referenceExpectedSeconds(s))).toBeLessThanOrEqual(1e-9 * r.seconds);
+  });
+
   it("Monte Carlo agrees on the civic page, clear and vague", () => {
     for (const heading of ["Income limits", "More information"]) {
       const page = civicPage(heading);
