@@ -4,9 +4,9 @@ import { HeroTeaser } from "@/components/home/HeroTeaser";
 
 const FACTS = [
   {
-    lead: "95%",
+    lead: "95.9%",
     text: "of home pages fail WCAG checks",
-    cite: "WebAIM Million",
+    cite: "WebAIM Million, 2026",
   },
   {
     lead: "Which?",
@@ -34,7 +34,7 @@ const STEPS = [
   },
   {
     title: "Plan the smallest fix set",
-    body: "Re-measure after each candidate code fix, keep the few that win the most seconds, and certify the choice against exhaustive search.",
+    body: "Re-measure after each candidate code fix, keep the few that win the most seconds, and check the choice against an exhaustive search over the most promising fixes.",
   },
 ];
 

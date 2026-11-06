@@ -60,9 +60,19 @@ export function fmtElapsed(s: number): string {
   return `${Math.max(0, s).toFixed(1)} s`;
 }
 
-/** Optimality sentence. `gap` is plan.optimalityGap. Undefined when the exhaustive check did not run. */
-export function fmtOptimality(gap: number | undefined): string | null {
+/** Where the exhaustive check drew its subsets from: "all 11 candidates" or "the 11 most promising candidates". */
+function poolPhrase(pool: number | undefined, total: number | undefined): string {
+  if (pool === undefined) return "the candidates";
+  if (total !== undefined && pool >= total) return `all ${pool} candidates`;
+  return `the ${pool} most promising candidates`;
+}
+
+/** Optimality sentence. `gap` is plan.optimalityGap, `pool` the exhaustive pool size (exhaustivePoolSize(plan)),
+ *  `total` the number of candidates and `k` the fix budget. Null when the exhaustive check did not run. */
+export function fmtOptimality(gap: number | undefined, pool?: number, total?: number, k?: number): string | null {
   if (gap === undefined) return null;
-  if (Math.abs(gap) < 1e-9) return "Greedy plan certified optimal by exhaustive search (gap 0.0 s)";
-  return `Greedy plan is within ${gap.toFixed(1)} s of the best possible set, found by exhaustive search`;
+  const sets = k === undefined ? "all fix sets" : `all sets of up to ${k} fix${k === 1 ? "" : "es"}`;
+  const among = `${sets} of ${poolPhrase(pool, total)}`;
+  if (Math.abs(gap) < 1e-9) return `Certified optimal among ${among} (gap 0.0 s)`;
+  return `Within ${gap.toFixed(1)} s of the best of ${among}, found by exhaustive search`;
 }

@@ -45,7 +45,10 @@ export function TaskList({ tasks, results, selectedId, busyId, onRun }: Props) {
             }`}
           >
             <div className="min-w-0 flex-1 basis-56">
-              <p className="font-semibold leading-snug">{t.label}</p>
+              <p className="font-semibold leading-snug">
+                {t.label}
+                {t.grounding === "llm" && <span className="ml-2 rounded bg-lime px-1.5 py-px align-middle text-[0.6875rem] font-bold">your task</span>}
+              </p>
               <p className="mt-0.5 text-xs text-muted">
                 {t.steps.length} step{t.steps.length === 1 ? "" : "s"}: {t.steps.map((s) => s.note ?? s.action).join(" → ")}
               </p>

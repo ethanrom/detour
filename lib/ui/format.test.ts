@@ -49,11 +49,12 @@ describe("percentages and deltas", () => {
 });
 
 describe("fmtOptimality", () => {
-  it("certifies a zero gap", () => {
-    expect(fmtOptimality(0)).toBe("Greedy plan certified optimal by exhaustive search (gap 0.0 s)");
+  it("certifies a zero gap and names the pool it covered", () => {
+    expect(fmtOptimality(0, 11, 18, 3)).toBe("Certified optimal among all sets of up to 3 fixes of the 11 most promising candidates (gap 0.0 s)");
+    expect(fmtOptimality(0, 10, 10, 1)).toBe("Certified optimal among all sets of up to 1 fix of all 10 candidates (gap 0.0 s)");
   });
   it("reports a non-zero gap honestly and stays silent when the check did not run", () => {
-    expect(fmtOptimality(1.234)).toContain("1.2 s");
+    expect(fmtOptimality(1.234, 11, 18, 3)).toContain("1.2 s");
     expect(fmtOptimality(undefined)).toBeNull();
   });
 });

@@ -8,7 +8,7 @@ export function SiteFooter() {
           <p className="font-serif text-2xl font-bold tracking-tight">Detour</p>
           <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-[#b8c0cc]">
             Accessibility, measured in seconds. Every number comes from published human-performance models. A language
-            model only helps point at page elements. It never produces a time.
+            model helps point at page elements and proposes clearer wording, and the model checks each suggestion. It never produces a time.
           </p>
         </div>
         <nav aria-label="Footer">
