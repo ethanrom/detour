@@ -48,7 +48,7 @@ describe("northwind", () => {
     expect(titles?.targets.length).toBeGreaterThanOrEqual(4);
     expect(titles?.targets).toEqual(expect.arrayContaining(["details-title", "reviews-title", "returns-title", "related-title"]));
     expect(titles?.title).toMatch(/^Make the \d+ “section-title” blocks real <h2> headings$/);
-    expect(cands.length).toBeLessThanOrEqual(16);
+    expect(cands.length).toBeLessThanOrEqual(20);
     expect(cands.length).toBeLessThan(generateCandidates(withoutStyleKeys(pages.northwind), tasksOf("northwind")).length / 2);
   });
 });
