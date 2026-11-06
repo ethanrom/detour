@@ -4,7 +4,7 @@ import type { PersonaId } from "@/lib/contracts";
 /**
  * Three-lane teaser. Pure CSS: each marker runs along a shared time axis once, then rests on the final
  * state. Under prefers-reduced-motion the animations collapse to their last frame (see globals.css), so the
- * resting state IS the reduced-motion state. Illustration with sample numbers, hence the caption.
+ * resting state IS the reduced-motion state. The numbers are the model output for this task on the Northwind demo page (mouse 5 s, keyboard blocked, screen reader 17 s).
  */
 
 interface LaneSpec {
@@ -21,9 +21,9 @@ interface LaneSpec {
 }
 
 const LANES: LaneSpec[] = [
-  { id: "mouse", label: "Mouse", color: "#5bb5ea", end: "8.3%", dur: "0.7s", result: "4.3 s", shape: "circle", ticks: 4 },
-  { id: "keyboard", label: "Keyboard", color: "#f2a65a", end: "44%", dur: "3.2s", result: "Can’t finish", blocked: true, shape: "square", ticks: 22 },
-  { id: "screenreader", label: "Screen reader", color: "#43d6aa", end: "100%", dur: "7s", result: "52 s", shape: "diamond", ticks: 48 },
+  { id: "mouse", label: "Mouse", color: "#5bb5ea", end: "28.9%", dur: "2s", result: "5 s", shape: "circle", ticks: 6 },
+  { id: "keyboard", label: "Keyboard", color: "#f2a65a", end: "2%", dur: "0.3s", result: "Can’t finish", blocked: true, shape: "square", ticks: 0 },
+  { id: "screenreader", label: "Screen reader", color: "#43d6aa", end: "100%", dur: "7s", result: "17 s", shape: "diamond", ticks: 23 },
 ];
 
 function Shape({ shape, color }: { shape: LaneSpec["shape"]; color: string }) {
@@ -40,11 +40,11 @@ export function HeroTeaser() {
   return (
     <figure
       role="img"
-      aria-label="Example: for the same task, a mouse user needs 4.3 seconds, a keyboard-only user cannot finish, and a screen-reader user needs 52 seconds."
+      aria-label="Real model output for this task: a mouse user needs 5 seconds, a keyboard-only user cannot finish, and a screen-reader user needs 17 seconds."
       className="on-ink m-0 rounded-3xl bg-ink p-5 text-paper shadow-[8px_8px_0_var(--lime)] sm:p-7"
     >
       <div aria-hidden="true">
-        <p className="eyebrow !text-[#b8c0cc]">Example task · sample page</p>
+        <p className="eyebrow !text-[#b8c0cc]">Example task · Northwind Outfitters</p>
         <p className="mt-2 font-serif text-xl font-bold leading-snug sm:text-2xl">Add the Trail Jacket in size M to the cart</p>
 
         <div className="mt-6 space-y-5">
@@ -95,7 +95,7 @@ export function HeroTeaser() {
             </div>
           ))}
         </div>
-        <p className="mt-5 text-xs text-[#b8c0cc]">Illustration with sample numbers. Lanes share one time axis.</p>
+        <p className="mt-5 text-xs text-[#b8c0cc]">Real model output for this task. Lanes share one time axis.</p>
       </div>
     </figure>
   );

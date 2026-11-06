@@ -1,7 +1,8 @@
 import { CheckIcon } from "@/components/icons";
-import type { PageModel } from "@/lib/contracts";
+import type { PageModel, Task } from "@/lib/contracts";
 import type { RepairReport } from "@/lib/ui/datasource";
 import { fmtNum, fmtSeconds } from "@/lib/ui/format";
+import { renameChanges, type RenameStory } from "@/lib/ui/rename-story";
 
 export type RepairStatus = "loading" | "ready" | "unavailable";
 
@@ -9,6 +10,10 @@ interface Props {
   status: RepairStatus;
   report?: RepairReport | null;
   page: PageModel;
+  /** Per-task numbers for each accepted rename (lib/ui/rename-story). */
+  story?: RenameStory[] | null;
+  /** The task shown in the race: its numbers are the headline of every rename. */
+  task?: Task;
 }
 
 const who = (source: "llm" | "fallback") => (source === "llm" ? "Claude" : "a rule-based fallback (no LLM)");
@@ -21,7 +26,7 @@ function nodeLabel(page: PageModel, id: string): string {
 }
 
 /** "The LLM proposes, the model verifies": renames are shown with the seconds the scent model says they save. */
-export function RepairPanel({ status, report, page }: Props) {
+export function RepairPanel({ status, report, page, story, task }: Props) {
   if (status === "unavailable") return null;
   if (status === "loading") {
     return (
@@ -60,7 +65,9 @@ export function RepairPanel({ status, report, page }: Props) {
             Accepted renames{total > 0 ? ` · ${fmtSeconds(total)} saved across all tasks` : ""}
           </h3>
           <ul className="mt-2 space-y-3">
-            {accepted.map((h) => (
+            {accepted.map((h) => {
+              const line = task ? story?.find((s) => s.nodeId === h.nodeId)?.lines.find((l) => l.taskId === task.id) : undefined;
+              return (
               <li key={h.nodeId} className="rounded-xl border-2 border-ink bg-lime/30 p-3.5">
                 <p className="flex items-start gap-2 font-semibold leading-snug">
                   <CheckIcon size={16} className="mt-1 shrink-0" />
@@ -69,15 +76,34 @@ export function RepairPanel({ status, report, page }: Props) {
                     <span className="sr-only"> becomes </span> “{h.proposed}”
                   </span>
                 </p>
+                {task && line && (
+                  <p className="tnum mt-2 pl-6 text-[0.9375rem]">
+                    <strong>{task.label}</strong>
+                    {renameChanges(line) ? (
+                      <>
+                        : realistic search {fmtNum(line.before)} s <span aria-hidden="true">→</span>
+                        <span className="sr-only"> becomes </span> <strong>{fmtNum(line.after)} s</strong> (best case {fmtNum(line.best)} s)
+                      </>
+                    ) : line.after - line.before > 0.5 ? (
+                      <>
+                        : this rename makes it slightly slower (realistic search {fmtNum(line.before)} s <span aria-hidden="true">→</span>
+                        <span className="sr-only"> becomes </span> {fmtNum(line.after)} s, best case {fmtNum(line.best)} s)
+                      </>
+                    ) : (
+                      <>: this rename does not change it (realistic search stays {fmtNum(line.before)} s, best case {fmtNum(line.best)} s)</>
+                    )}
+                  </p>
+                )}
                 <p className="mt-1 pl-6 text-sm text-ink/80">
                   <span className="tnum">
-                    Realistic search, all tasks: {fmtNum(h.before)} s <span aria-hidden="true">→</span>
+                    All tasks together: {fmtNum(h.before)} s <span aria-hidden="true">→</span>
                     <span className="sr-only"> becomes </span> {fmtNum(h.after)} s
                   </span>{" "}
                   · proposed by {who(h.source)}, verified by the scent model
                 </p>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </>
       )}

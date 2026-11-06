@@ -97,7 +97,7 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
             {ax.ticks.map((t, i) => (
               <span
                 key={t}
-                className="tnum absolute top-0 text-[0.6875rem] font-medium text-muted"
+                className="tnum absolute top-0 whitespace-nowrap text-[0.6875rem] font-medium text-muted"
                 style={{
                   left: `${(t / ax.max) * 100}%`,
                   transform: i === 0 ? "none" : "translateX(-50%)",

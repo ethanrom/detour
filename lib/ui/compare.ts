@@ -28,9 +28,14 @@ export interface PersonaDelta {
   savedSeconds: number;
   /** percentLess(before, after); 0 when blocked on either side. */
   percent: number;
+  /** True when the time moved by less than NEARLY_SAME_PERCENT but is not exactly unchanged ("17 s → 17 s, about the same"). */
+  nearlySame: boolean;
   /** "52 s → 9 s, 83% less" / "Can't finish → 6 s" / "4.3 s, no change". */
   headline: string;
 }
+
+/** Changes smaller than this (in percent) read as noise, not as a win or a loss. */
+export const NEARLY_SAME_PERCENT = 3;
 
 const EPS = 0.05;
 
@@ -41,6 +46,7 @@ export function comparePersona(persona: PersonaId, before: PersonaResult, after:
   let headline: string;
   let saved = 0;
   let percent = 0;
+  let nearlySame = false;
   if (b.seconds === undefined && a.seconds === undefined) {
     change = "still-blocked";
     headline = "Can't finish, before or after";
@@ -58,12 +64,16 @@ export function comparePersona(persona: PersonaId, before: PersonaResult, after:
     if (Math.abs(saved) < EPS || percent === 0) {
       change = "same";
       headline = `${fmtSeconds(as)}, no change`;
+    } else if (Math.abs(percent) < NEARLY_SAME_PERCENT) {
+      change = "same";
+      nearlySame = true;
+      headline = `${fmtSeconds(bs)} → ${fmtSeconds(as)}, about the same`;
     } else {
       change = saved > 0 ? "faster" : "slower";
       headline = `${fmtSeconds(bs)} → ${fmtSeconds(as)}, ${fmtPercentLess(bs, as)}`;
     }
   }
-  return { persona, before: b, after: a, change, savedSeconds: saved, percent, headline };
+  return { persona, before: b, after: a, change, savedSeconds: saved, percent, nearlySame, headline };
 }
 
 export function compareTask(before: TaskResult, after: TaskResult): PersonaDelta[] {
