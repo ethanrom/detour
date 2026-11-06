@@ -23,7 +23,7 @@ import {
   visibleText,
 } from "./dom";
 import { isTabStop, orderFocus, tabIndexAttr } from "./focus";
-import { hasSemanticDescendants, isClickTarget, looksLikeHeadingHint, visualLabelFor } from "./hints";
+import { hasSemanticDescendants, isClickTarget, looksLikeHeadingHint, styleKeyOf, visualLabelFor } from "./hints";
 import {
   canBeFakeButtonRole,
   CONTAINER_ROLES,
@@ -94,6 +94,9 @@ const KEEP_TAGS = new Set(["nav", "header", "footer", "main", "aside", "section"
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 class Extractor {
+  /** Unlabeled controls whose visualLabel is only nearby sibling text (siblings may share it). */
+  private readonly weakLabels: Draft[] = [];
+
   constructor(private readonly env: Env) {}
 
   // ---------- geometry ----------
@@ -252,6 +255,13 @@ class Extractor {
     ctx.items.push(...this.buildBlock(el, role));
   }
 
+  private markUnlabeled(d: Draft) {
+    d.node.hints.unlabeled = true;
+    const label = visualLabelFor(d.el);
+    d.node.hints.visualLabel = label.text;
+    if (label.weak) this.weakLabels.push(d);
+  }
+
   private visitInteractive(el: Element, role: string, ctx: Ctx) {
     if (!ctx.suppress) this.flush(ctx);
     let name = safeName(el);
@@ -259,8 +269,7 @@ class Extractor {
     if (!name && (tag === "input" || tag === "textarea")) name = norm(el.getAttribute("placeholder") ?? "");
     const d = this.draft(el, { role, name, stop: true, actionable: true });
     if (!name) {
-      d.node.hints.unlabeled = true;
-      d.node.hints.visualLabel = visualLabelFor(el);
+      this.markUnlabeled(d);
     }
     if (!NO_WALK_TAGS.has(tag)) {
       const sub: Ctx = { items: [], run: null, suppress: true, cont: el };
@@ -302,8 +311,7 @@ class Extractor {
     const d = this.draft(el, { role: textRoleOf(el, role), name, stop: true, stateRole: role, actionable: true });
     d.node.hints.fakeButton = true;
     if (!name) {
-      d.node.hints.unlabeled = true;
-      d.node.hints.visualLabel = visualLabelFor(el);
+      this.markUnlabeled(d);
     }
     ctx.items.push(d);
     return true;
@@ -465,6 +473,20 @@ class Extractor {
       return id;
     };
 
+    // Nearby-text labels are only trusted when no sibling control in the same parent would get the same text.
+    const byParent = new Map<Element, Map<string, Draft[]>>();
+    for (const d of this.weakLabels) {
+      const parent = d.el.parentElement;
+      if (!parent) continue;
+      const text = d.node.hints.visualLabel ?? "";
+      const texts = byParent.get(parent) ?? new Map<string, Draft[]>();
+      texts.set(text, [...(texts.get(text) ?? []), d]);
+      byParent.set(parent, texts);
+    }
+    for (const texts of byParent.values()) {
+      for (const group of texts.values()) if (group.length > 1) for (const d of group) d.node.hints.visualLabel = "";
+    }
+
     const nodes: Record<string, A11yNode> = {};
     const readingOrder: string[] = [];
     const headings: string[] = [];
@@ -478,6 +500,10 @@ class Extractor {
       n.id = assignId(d);
       n.parentId = parent ? parent.node.id : null;
       n.selector = selectorFor(d.el);
+      if (!d.synthetic && (n.hints.looksLikeHeading || n.hints.fakeButton || n.hints.unlabeled)) {
+        n.hints.className = d.el.getAttribute("class") ?? "";
+        n.hints.styleKey = styleKeyOf(d.el, env, !!n.hints.looksLikeHeading);
+      }
       nodes[n.id] = n;
       if (n.landmark) landmarks.push(n.id);
       if (n.role === "heading") headings.push(n.id);
