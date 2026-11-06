@@ -13,6 +13,8 @@ import { SITES } from "@/fixtures/tasks";
 import { LlmUnavailableError, type Analysis, type DataSource, type PlanOutcome, type RepairReport, type SiteInfo } from "./datasource";
 import { createEngineClient, type EngineClient } from "./engine-client";
 import { normalizeTasks } from "./pipeline";
+import { sourceUrl, wireSiteId } from "./any-url";
+import { MAX_REPAIR_TASKS } from "@/lib/llm/guard";
 
 const FRAME_TIMEOUT_MS = 10_000;
 
@@ -86,11 +88,14 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
     async analyze(site, frame) {
       try {
         const doc = await waitForFrameDocument(frame, site.path);
-        const page: PageModel = extractPage(doc, { url: site.path });
+        // Extraction runs on the main thread and a big real page takes a moment: let "Reading the page…" paint first.
+        if (site.kind === "url") await sleep(16);
+        const page: PageModel = extractPage(doc, { url: sourceUrl(site) });
         const results = await eng().evaluate(page, site.tasks);
         return { page, results, mode: "live" } satisfies Analysis;
       } catch (e) {
-        if (!fallback) throw e;
+        // There are no sample numbers for a page the user typed in, so say what went wrong instead.
+        if (!fallback || site.kind === "url") throw e;
         const a = await fallback.analyze(site, frame);
         return { ...a, mode: "sample", fallbackReason: e instanceof Error ? e.message : String(e) };
       }
@@ -111,16 +116,19 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
       const res = await doFetch("/api/ground", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ siteId: site.id, page: analysis.page, text }),
+        body: JSON.stringify({ siteId: wireSiteId(site.id), page: analysis.page, text }),
       });
       if (res.status === 503) throw new LlmUnavailableError();
+      const instead = site.kind === "url" ? "click a target instead" : "run one of the listed tasks instead";
+      if (res.status === 429) throw new Error(`Claude is rate-limited for this address; try again in a few minutes, or ${instead}.`);
+      if (res.status === 413) throw new Error(`This page is too large to send to Claude; ${instead}.`);
       if (!res.ok) {
         const why = await readError(res);
         if (res.status === 422) throw new Error(`Claude could not match that to elements on this page (${why}). Try describing the steps differently.`);
         throw new Error(`Could not ground the task (${why}).`);
       }
       const body = (await res.json()) as { task: Task };
-      return body.task;
+      return { ...body.task, siteId: site.id };
     },
 
     async suggestRepairs(site, analysis): Promise<RepairReport | null> {
@@ -130,7 +138,14 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
         res = await doFetch("/api/repair", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ siteId: site.id, page: analysis.page, tasks: normalizeTasks(analysis.page, site.tasks) }),
+          body: JSON.stringify({
+            siteId: wireSiteId(site.id),
+            page: analysis.page,
+            // The server takes at most 20 tasks and ids of at most 100 characters (a page address can be longer).
+            tasks: normalizeTasks(analysis.page, site.tasks)
+              .slice(-MAX_REPAIR_TASKS)
+              .map((t) => ({ ...t, siteId: wireSiteId(t.siteId) })),
+          }),
         });
       } catch {
         return null;

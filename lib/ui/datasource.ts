@@ -12,10 +12,11 @@ export interface SiteInfo {
   id: string;
   name: string;
   tagline: string;
-  /** Same-origin URL of the page, e.g. "/sites/northwind/index.html". */
+  /** Same-origin URL of the page, e.g. "/sites/northwind/index.html". For kind "url": "/api/proxy?url=<encoded>". */
   path: string;
-  /** "control" is a well-built page that shows Detour does not cry wolf. */
-  kind: "demo" | "control";
+  /** "control" is a well-built page that shows Detour does not cry wolf. "url" is any public page the user typed in,
+   *  served through the proxy (id is "url:" + the page's address); it starts with no tasks. */
+  kind: "demo" | "control" | "url";
   tasks: Task[];
 }
 

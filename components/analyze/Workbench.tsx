@@ -8,8 +8,9 @@ import { FixPlanPanel, type PlanStatus } from "@/components/plan/FixPlanPanel";
 import { Race, raceDuration } from "@/components/race/Race";
 import { Transcript } from "@/components/race/Transcript";
 import { useRaceClock } from "@/components/race/useRaceClock";
-import type { SearchEstimate, Task, TaskResult } from "@/lib/contracts";
+import type { A11yNode, SearchEstimate, Task, TaskResult } from "@/lib/contracts";
 import { LlmUnavailableError, type Analysis, type PlanOutcome, type RepairReport, type SiteInfo } from "@/lib/ui/datasource";
+import { nodeLabel, roleWord, taskForNode } from "@/lib/ui/pick";
 import { buildRenameStory, hideSearchInsight } from "@/lib/ui/rename-story";
 import { searchInsight } from "@/lib/ui/search-insight";
 import { PERSONAS } from "@/lib/ui/personas";
@@ -20,8 +21,12 @@ import { RepairPanel, type RepairStatus } from "./RepairPanel";
 import { SearchInsight } from "./SearchInsight";
 import { SiteCards } from "./SiteCards";
 import { SitePreview } from "./SitePreview";
+import { TargetPicker } from "./TargetPicker";
 import { TaskList } from "./TaskList";
 import { WhyPanel } from "./WhyPanel";
+
+/** Fewer reading stops than this and the page, without its JavaScript, is mostly empty. */
+const MIN_READING_STOPS = 5;
 
 type AnalysisState =
   | { siteId: string; status: "loading" }
@@ -62,6 +67,11 @@ export function Workbench() {
   const [afterTaskId, setAfterTaskId] = useState<string | null>(null);
   const [custom, setCustom] = useState<CustomState>({ siteId: "", status: "idle" });
   const [repair, setRepair] = useState<RepairState | null>(null);
+  // "Click to choose a target" (pages from a typed-in address start with no tasks).
+  const [picking, setPicking] = useState(false);
+  const [hovered, setHovered] = useState<A11yNode | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [pickMsg, setPickMsg] = useState("");
 
   const frameRef = useRef<HTMLIFrameElement>(null);
   const afterHeading = useRef<HTMLHeadingElement>(null);
@@ -92,6 +102,10 @@ export function Workbench() {
   const outcome = planForSite.status === "ready" ? planForSite.outcome : undefined;
   const task: Task | undefined = site?.tasks.find((t) => t.id === taskId);
   const result: TaskResult | undefined = ready?.results.find((r) => r.taskId === taskId);
+  const isUrl = site?.kind === "url";
+  const reading = analysis?.status === "loading" && analysis.siteId === siteId;
+  /** Something is being worked on: the task waiting for its analysis, or the page being read. */
+  const busyId = pending ?? (reading ? "page" : null);
 
   const chooseSite = useCallback((id: string) => {
     setSiteId(id);
@@ -100,7 +114,24 @@ export function Workbench() {
     setPending(null);
     setApplied(false);
     setPlan({ siteId: id, status: "idle" });
+    setPicking(false);
+    setHovered(null);
+    setHighlightId(null);
+    setPickMsg("");
   }, []);
+
+  /** The proxy accepted a typed-in address: add it as the (one) page of its kind and select it. */
+  const addUrlSite = useCallback(
+    (added: SiteInfo) => {
+      setSites((list) => {
+        const cur = list ?? [];
+        // The same address again keeps the tasks already chosen on it.
+        return cur.some((s) => s.id === added.id) ? cur : [...cur.filter((s) => s.kind !== "url"), added];
+      });
+      chooseSite(added.id);
+    },
+    [chooseSite],
+  );
 
   /** Read the page and evaluate every task of the site. Resolves with the analysis once it is on screen. */
   const startAnalysis = useCallback(
@@ -140,6 +171,50 @@ export function Workbench() {
     [site, ready, startAnalysis],
   );
 
+  // A page from a typed-in address has no tasks to wait for, so read it as soon as it is selected.
+  useEffect(() => {
+    if (!site || site.kind !== "url" || analysis !== null) return;
+    startAnalysis(site).catch(() => undefined); // the error is shown by the analysis state
+  }, [site, analysis, startAnalysis]);
+
+  /** Add a task to the site (evaluated on the page that is already read) and run it. False if the user moved on meanwhile. */
+  const adoptTask = useCallback(
+    async (target: SiteInfo, data: Analysis, task: Task): Promise<boolean> => {
+      const sid = target.id;
+      const next: SiteInfo = { ...target, tasks: [...target.tasks.filter((t) => t.id !== task.id), task] };
+      const withTask = source.addTask ? await source.addTask(next, data, task) : data;
+      if (liveSite.current !== sid) return false;
+      setSites((list) => list?.map((s) => (s.id === sid ? next : s)) ?? list);
+      setAnalysis({ siteId: sid, status: "ready", data: withTask });
+      setPlan({ siteId: sid, status: "idle" });
+      setApplied(false);
+      setTaskId(task.id);
+      setRunKey((n) => n + 1);
+      return true;
+    },
+    [source],
+  );
+
+  /** A node chosen on the page or from the list: the deterministic task for it, added and run. No LLM. */
+  const choosePick = useCallback(
+    async (nodeId: string) => {
+      if (!site || !ready) return;
+      const task = taskForNode(ready.page, site.id, nodeId);
+      const node = ready.page.nodes[nodeId];
+      if (!task || !node) return;
+      setPicking(false);
+      setHovered(null);
+      try {
+        if (await adoptTask(site, ready, task)) {
+          setPickMsg(`Chose the ${roleWord(node)} “${nodeLabel(node, 60)}”. Task added and running: ${task.label}.`);
+        }
+      } catch (e) {
+        setPickMsg(`Could not time that target: ${errMsg(e)}`);
+      }
+    },
+    [site, ready, adoptTask],
+  );
+
   /** Ground a sentence on the page with the LLM, add the task to the site and run it. */
   const runCustom = useCallback(
     async (text: string) => {
@@ -161,21 +236,12 @@ export function Workbench() {
         }
         const task = await source.groundTask(site, data, text);
         if (liveSite.current !== sid) return;
-        const next: SiteInfo = { ...site, tasks: [...site.tasks.filter((t) => t.id !== task.id), task] };
-        const withTask = source.addTask ? await source.addTask(next, data, task) : data;
-        if (liveSite.current !== sid) return;
-        setSites((list) => list?.map((s) => (s.id === sid ? next : s)) ?? list);
-        setAnalysis({ siteId: sid, status: "ready", data: withTask });
-        setPlan({ siteId: sid, status: "idle" });
-        setApplied(false);
-        setTaskId(task.id);
-        setRunKey((n) => n + 1);
-        mine({ siteId: sid, status: "done", text, task });
+        if (await adoptTask(site, data, task)) mine({ siteId: sid, status: "done", text, task });
       } catch (e) {
         mine(e instanceof LlmUnavailableError ? { siteId: sid, status: "unavailable", text } : { siteId: sid, status: "error", text, error: errMsg(e) });
       }
     },
-    [site, ready, source, startAnalysis],
+    [site, ready, source, startAnalysis, adoptTask],
   );
 
   const doPlan = useCallback(() => {
@@ -206,7 +272,7 @@ export function Workbench() {
   // Heading and label suggestions: the server asks the LLM for wording and the scent model verifies it.
   const readyPage = ready?.page;
   const taskKey = site?.tasks.map((t) => t.id).join("|") ?? "";
-  const repairKey = site && readyPage ? `${site.id}|${taskKey}` : "";
+  const repairKey = site && readyPage && site.tasks.length > 0 ? `${site.id}|${taskKey}` : "";
   useEffect(() => {
     if (!repairKey || !site || !ready || !source.suggestRepairs) return;
     let alive = true;
@@ -263,20 +329,67 @@ export function Workbench() {
         <h2 className="h-card">2 · Pick a task</h2>
         <p className="mt-1 text-sm text-muted">Each task is a short chain of steps on the page.</p>
       </div>
-      <SitePreview key={site.id} site={site} frameRef={frameRef} />
-      <TaskList tasks={site.tasks} results={ready?.results} selectedId={taskId} busyId={pending} onRun={run} />
+      <SitePreview
+        key={site.id}
+        site={site}
+        frameRef={frameRef}
+        pick={
+          isUrl
+            ? {
+                active: picking,
+                page: ready?.page,
+                onHover: setHovered,
+                onPick: (n) => void choosePick(n.id),
+                onCancel: () => setPicking(false),
+                highlight: highlightId && ready ? (ready.page.nodes[highlightId] ?? null) : null,
+              }
+            : undefined
+        }
+      />
+      {isUrl && ready && ready.page.readingOrder.length < MIN_READING_STOPS && (
+        <p role="status" className="rounded-lg border-2 border-blocked bg-surface p-3 text-sm">
+          <strong>This page renders almost nothing without JavaScript; try a server-rendered page.</strong> Detour found only{" "}
+          {ready.page.readingOrder.length} thing{ready.page.readingOrder.length === 1 ? "" : "s"} to read or press, so any time it predicts here says little about
+          the real page.
+        </p>
+      )}
+      {isUrl && (
+        <TargetPicker
+          page={ready?.page}
+          picking={picking}
+          onPicking={(on) => {
+            setPicking(on);
+            if (on) setPickMsg("");
+          }}
+          hovered={hovered}
+          onChoose={(id) => void choosePick(id)}
+          onActive={setHighlightId}
+          message={pickMsg}
+          busy={busyId !== null}
+        />
+      )}
+      {site.tasks.length > 0 ? (
+        <TaskList tasks={site.tasks} results={ready?.results} selectedId={taskId} busyId={busyId} onRun={run} />
+      ) : (
+        isUrl && (
+          <p className="rounded-xl border border-dashed border-rule-strong bg-surface p-4 text-sm text-muted">
+            <strong className="text-ink">No tasks yet.</strong> Choose a target on the page above, or describe a task below. It shows up here and the race starts.
+          </p>
+        )
+      )}
       {source.groundTask && (
         <CustomTaskBox
           key={`custom-${site.id}`}
           state={custom.siteId === site.id ? custom : { siteId: site.id, status: "idle" }}
           page={ready?.page}
-          busy={pending !== null}
+          busy={busyId !== null}
           onSubmit={runCustom}
         />
       )}
       {analysis?.status === "error" && analysis.siteId === siteId && (
         <p role="alert" className="rounded-lg border border-blocked bg-surface p-3 text-sm text-blocked">
           Analysis failed: {analysis.error}
+          {isUrl && " Check that the page loads in the preview, or try another address."}
         </p>
       )}
     </div>
@@ -288,7 +401,7 @@ export function Workbench() {
         <h2 id="pick-h" className="h-card mb-3">
           1 · Choose a page
         </h2>
-        <SiteCards sites={sites} value={siteId} onChange={chooseSite} />
+        <SiteCards sites={sites} value={siteId} onChange={chooseSite} onAddUrl={addUrlSite} />
         {(ready?.mode ?? mode) === "sample" ? (
           <p className="mt-3 text-sm text-muted">
             <strong className="text-ink">Sample data.</strong> Times on this screen come from hand-calibrated fixtures
@@ -310,14 +423,15 @@ export function Workbench() {
         lanes={lanes}
         result={result}
         taskLabel={task?.label ?? ""}
-        loading={analysis?.status === "loading" && analysis.siteId === siteId}
+        loading={reading}
+        url={isUrl}
         hideInsight={hideInsight}
         wording={
           ready && repair?.key === repairKey ? <RepairPanel status={repair.status} report={repair.report} page={ready.page} story={story} task={task} /> : null
         }
       />
 
-      {ready && (
+      {ready && site.tasks.length > 0 && (
         <FixPlanPanel
           baseline={ready.results}
           k={k}
@@ -355,6 +469,7 @@ function Stage({
   result,
   taskLabel,
   loading,
+  url,
   wording,
   hideInsight,
 }: {
@@ -364,6 +479,8 @@ function Stage({
   result?: TaskResult;
   taskLabel: string;
   loading: boolean;
+  /** The page came from a typed-in address. */
+  url: boolean;
   /** The Wording panel: right under the race, so the heading story is visible before any plan. */
   wording: ReactNode;
   hideInsight: (taskId: string, search: SearchEstimate) => boolean;
@@ -394,7 +511,7 @@ function Stage({
           {lanes ? (
             <Race idBase="race" taskLabel={taskLabel} lanes={lanes} clock={clock} announcePrefix="Race finished." />
           ) : (
-            <EmptyRace loading={loading} />
+            <EmptyRace loading={loading} url={url} />
           )}
         </section>
       </div>
@@ -413,7 +530,8 @@ function Stage({
   );
 }
 
-function EmptyRace({ loading }: { loading: boolean }) {
+function EmptyRace({ loading, url }: { loading: boolean; url: boolean }) {
+  const reading = url ? "Reading the page…" : "Reading the page’s accessibility tree…";
   return (
     <div>
       <div role={loading ? "status" : undefined} className="space-y-3" aria-busy={loading}>
@@ -430,12 +548,22 @@ function EmptyRace({ loading }: { loading: boolean }) {
             </div>
           </div>
         ))}
-        {loading && <span className="sr-only">Reading the page’s accessibility tree…</span>}
+        {loading && <span className="sr-only">{reading}</span>}
       </div>
       <p className="mt-5 text-sm text-muted">
-        {loading
-          ? "Reading the page’s accessibility tree and modelling each person…"
-          : "Press Run on a task. Detour models a mouse user, a keyboard-only user and a blind screen-reader user doing the same thing, then races them."}
+        {loading ? (
+          url ? (
+            <>
+              <strong className="text-ink">Reading the page…</strong> Detour is reading its accessibility tree from the rendered page. A large page can take a few seconds.
+            </>
+          ) : (
+            "Reading the page’s accessibility tree and modelling each person…"
+          )
+        ) : url ? (
+          "Choose a target on the page, or describe a task in your own words. Detour then models a mouse user, a keyboard-only user and a blind screen-reader user doing it, and races them."
+        ) : (
+          "Press Run on a task. Detour models a mouse user, a keyboard-only user and a blind screen-reader user doing the same thing, then races them."
+        )}
       </p>
     </div>
   );

@@ -11,7 +11,7 @@ export type CustomState =
   | { siteId: string; status: "unavailable"; text: string }
   | { siteId: string; status: "error"; text: string; error: string };
 
-const MAX_TEXT = 500;
+const MAX_TEXT = 200; // the server rejects longer task descriptions
 
 const ACTION_VERB: Record<string, string> = { activate: "Press", select: "Choose", type: "Type into", read: "Read" };
 
