@@ -5,7 +5,7 @@ import { SearchInsight } from "@/components/analyze/SearchInsight";
 import { CheckIcon, PersonaIcon } from "@/components/icons";
 import { Race, raceDuration } from "@/components/race/Race";
 import { useRaceClock } from "@/components/race/useRaceClock";
-import type { PersonaId, Task, TaskResult } from "@/lib/contracts";
+import type { PersonaId, SearchEstimate, Task, TaskResult } from "@/lib/contracts";
 import { compareTask, describeComparison, type Change, type PersonaDelta } from "@/lib/ui/compare";
 import { fmtPercentLess, fmtSeconds } from "@/lib/ui/format";
 import { PERSONAS, PERSONA_BY_ID } from "@/lib/ui/personas";
@@ -20,6 +20,8 @@ interface Props {
   onTask: (id: string) => void;
   /** Changes whenever a plan is (re)applied, to restart the race. */
   runKey: number;
+  /** True when the separate realistic-search panel would contradict the Wording panel for this task. */
+  hideInsight?: (taskId: string, search: SearchEstimate) => boolean;
 }
 
 function Headline({ d }: { d: PersonaDelta }) {
@@ -28,9 +30,12 @@ function Headline({ d }: { d: PersonaDelta }) {
   if (d.change === "still-blocked") return <span className="text-blocked">Can’t finish</span>;
   if (d.change === "unblocked") return <>Can’t finish <span aria-hidden="true">→</span><span className="sr-only"> became </span> {fmtSeconds(a!)}</>;
   if (d.change === "newly-blocked") return <>{fmtSeconds(b!)} <span aria-hidden="true">→</span><span className="sr-only"> became </span> can’t finish</>;
+  if (d.change === "same" && d.nearlySame) return <>{fmtSeconds(b!)} <span aria-hidden="true">→</span><span className="sr-only"> became </span> {fmtSeconds(a!)}</>;
   if (d.change === "same") return <>{fmtSeconds(a!)}</>;
   return <>{fmtSeconds(b!)} <span aria-hidden="true">→</span><span className="sr-only"> became </span> {fmtSeconds(a!)}</>;
 }
+
+const sameLabel = (d: PersonaDelta) => (d.nearlySame ? "about the same" : CHANGE_LABEL.same);
 
 const CHANGE_LABEL: Record<Change, string> = {
   faster: "",
@@ -66,7 +71,7 @@ function Tile({ d }: { d: PersonaDelta }) {
         )}
         {d.change !== "faster" && d.change !== "unblocked" && (
           <span className="rounded-full border border-rule-strong px-2.5 py-0.5 text-sm font-semibold text-muted">
-            {d.change === "slower" ? `${fmtPercentLess(d.before.seconds!, d.after.seconds!)}` : CHANGE_LABEL[d.change]}
+            {d.change === "slower" ? `${fmtPercentLess(d.before.seconds!, d.after.seconds!)}` : d.change === "same" ? sameLabel(d) : CHANGE_LABEL[d.change]}
           </span>
         )}
       </p>
@@ -75,7 +80,7 @@ function Tile({ d }: { d: PersonaDelta }) {
 }
 
 export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function AfterSection(
-  { tasks, before, after, taskId, onTask, runKey },
+  { tasks, before, after, taskId, onTask, runKey, hideInsight },
   headingRef,
 ) {
   const beforeTask = before.find((r) => r.taskId === taskId) ?? before[0];
@@ -87,7 +92,8 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
   const duration = raceDuration(lanes, ghost);
   const deltas = compareTask(beforeTask, afterTask);
   const [openTable, setOpenTable] = useState(true);
-  const insight = searchInsight(afterTask.personas.screenreader);
+  const found = searchInsight(afterTask.personas.screenreader);
+  const insight = found && !hideInsight?.(afterTask.taskId, found) ? found : undefined;
 
   return (
     <section aria-labelledby="after-h" className="scroll-mt-24">
@@ -173,7 +179,7 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
                           <td key={pid} className="tnum py-3 pr-3">
                             <span className="font-semibold"><Headline d={d} /></span>
                             <span className="block text-xs text-muted">
-                              {d.change === "faster" ? fmtPercentLess(d.before.seconds!, d.after.seconds!) : d.change === "slower" ? `▲ ${fmtPercentLess(d.before.seconds!, d.after.seconds!)}` : CHANGE_LABEL[d.change]}
+                              {d.change === "faster" ? fmtPercentLess(d.before.seconds!, d.after.seconds!) : d.change === "slower" ? `▲ ${fmtPercentLess(d.before.seconds!, d.after.seconds!)}` : d.change === "same" ? sameLabel(d) : CHANGE_LABEL[d.change]}
                             </span>
                           </td>
                         );

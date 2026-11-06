@@ -8,8 +8,9 @@ import { FixPlanPanel, type PlanStatus } from "@/components/plan/FixPlanPanel";
 import { Race, raceDuration } from "@/components/race/Race";
 import { Transcript } from "@/components/race/Transcript";
 import { useRaceClock } from "@/components/race/useRaceClock";
-import type { Task, TaskResult } from "@/lib/contracts";
+import type { SearchEstimate, Task, TaskResult } from "@/lib/contracts";
 import { LlmUnavailableError, type Analysis, type PlanOutcome, type RepairReport, type SiteInfo } from "@/lib/ui/datasource";
+import { buildRenameStory, hideSearchInsight } from "@/lib/ui/rename-story";
 import { searchInsight } from "@/lib/ui/search-insight";
 import { PERSONAS } from "@/lib/ui/personas";
 import { PERSONA_ORDER, buildLane, type Lane } from "@/lib/ui/timeline";
@@ -221,6 +222,24 @@ export function Workbench() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repairKey, source]);
 
+  // The Wording panel tells the heading story per task; the separate realistic-search panel steps aside for it.
+  const repairReport = repair?.key === repairKey ? repair.report : undefined;
+  const repairStatus: RepairStatus | undefined =
+    source.suggestRepairs && repairKey ? (repair?.key === repairKey ? repair.status : "loading") : undefined;
+  const story = useMemo(() => {
+    if (!readyPage || !site || !repairReport) return null;
+    try {
+      return buildRenameStory(readyPage, site.tasks, repairReport);
+    } catch {
+      return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readyPage, taskKey, repairReport]);
+  const hideInsight = useCallback(
+    (forTask: string, search: SearchEstimate) => hideSearchInsight({ loading: repairStatus === "loading", story, taskId: forTask, search }),
+    [repairStatus, story],
+  );
+
   const lanes = useMemo<Lane[] | null>(() => (result ? PERSONA_ORDER.map((p) => buildLane(result.personas[p])) : null), [result]);
 
   if (loadError) {
@@ -292,9 +311,11 @@ export function Workbench() {
         result={result}
         taskLabel={task?.label ?? ""}
         loading={analysis?.status === "loading" && analysis.siteId === siteId}
+        hideInsight={hideInsight}
+        wording={
+          ready && repair?.key === repairKey ? <RepairPanel status={repair.status} report={repair.report} page={ready.page} story={story} task={task} /> : null
+        }
       />
-
-      {ready && repair?.key === repairKey && <RepairPanel status={repair.status} report={repair.report} page={ready.page} />}
 
       {ready && (
         <FixPlanPanel
@@ -319,6 +340,7 @@ export function Workbench() {
           taskId={afterTaskId ?? taskId ?? site.tasks[0].id}
           onTask={setAfterTaskId}
           runKey={applyKey}
+          hideInsight={hideInsight}
         />
       )}
     </div>
@@ -333,6 +355,8 @@ function Stage({
   result,
   taskLabel,
   loading,
+  wording,
+  hideInsight,
 }: {
   resetKey: string;
   left: ReactNode;
@@ -340,11 +364,15 @@ function Stage({
   result?: TaskResult;
   taskLabel: string;
   loading: boolean;
+  /** The Wording panel: right under the race, so the heading story is visible before any plan. */
+  wording: ReactNode;
+  hideInsight: (taskId: string, search: SearchEstimate) => boolean;
 }) {
   const duration = lanes ? raceDuration(lanes) : 0;
   const clock = useRaceClock(duration, resetKey);
   const sr = lanes?.find((l) => l.persona === "screenreader");
-  const insight = result ? searchInsight(result.personas.screenreader) : undefined;
+  const found = result ? searchInsight(result.personas.screenreader) : undefined;
+  const insight = result && found && !hideInsight(result.taskId, found) ? found : undefined;
 
   return (
     <>
@@ -370,6 +398,8 @@ function Stage({
           )}
         </section>
       </div>
+
+      {wording}
 
       {lanes && result && sr && (
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
