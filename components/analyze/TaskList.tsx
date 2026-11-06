@@ -36,6 +36,7 @@ export function TaskList({ tasks, results, selectedId, busyId, onRun }: Props) {
         const selected = t.id === selectedId;
         const busy = t.id === busyId;
         const result = results?.find((r) => r.taskId === t.id);
+        const verb = busy ? "Analyzing…" : selected && result ? "Run again" : "Run";
         return (
           <li
             key={t.id}
@@ -62,10 +63,10 @@ export function TaskList({ tasks, results, selectedId, busyId, onRun }: Props) {
               onClick={() => onRun(t.id)}
               disabled={busyId !== null}
               aria-busy={busy}
-              aria-label={`${busy ? "Analyzing for" : "Run"}: ${t.label}`}
+              aria-label={`${verb}: ${t.label}`}
             >
               <PlayIcon size={14} />
-              {busy ? "Analyzing…" : selected && result ? "Run again" : "Run"}
+              {verb}
             </button>
           </li>
         );
