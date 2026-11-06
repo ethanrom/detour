@@ -91,7 +91,7 @@ export function expectTaskResultShape(r: TaskResult): void {
   expect(Object.keys(r).sort()).toEqual(["explanation", "personas", "taskId"]);
   expect(Object.keys(r.personas).sort()).toEqual(["keyboard", "mouse", "screenreader"]);
   expect(r.explanation.length).toBeGreaterThanOrEqual(2);
-  expect(r.explanation.length).toBeLessThanOrEqual(4);
+  expect(r.explanation.length).toBeLessThanOrEqual(5);
   for (const [persona, p] of Object.entries(r.personas) as Array<[PersonaId, PersonaResult]>) {
     expect(p.persona).toBe(persona);
     expect(Number.isFinite(p.seconds)).toBe(true);

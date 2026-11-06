@@ -18,6 +18,9 @@ function cachedWordCount(text: string): number {
   return w;
 }
 
+/** Landmarks whose contents are repeated on every page and skipped by sighted users. */
+const BLOCK_LANDMARKS: ReadonlySet<string> = new Set(["navigation", "banner", "contentinfo"]);
+
 export class PageIndex {
   /** Number of browse-mode reading stops. */
   readonly N: number;
@@ -207,7 +210,7 @@ export class PageIndex {
     return out;
   }
 
-  /** The nearest ancestor-or-self that is a landmark or flagged as a repetitive block, else null. */
+  /** The nearest ancestor-or-self that is a navigation / banner / contentinfo landmark or flagged as a repetitive block, else null. Region, main, form and similar landmarks are not blocks a user "passes through". */
   blockOf(id: NodeId): NodeId | null {
     const hit = this.blocks.get(id);
     if (hit !== undefined) return hit;
@@ -217,7 +220,7 @@ export class PageIndex {
     while (cur !== null && guard++ < 10_000) {
       const n: PageModel["nodes"][string] | undefined = this.page.nodes[cur];
       if (!n) break;
-      if (n.landmark || n.hints.repetitiveBlock) {
+      if ((n.landmark !== undefined && BLOCK_LANDMARKS.has(n.landmark)) || n.hints.repetitiveBlock) {
         result = cur;
         break;
       }

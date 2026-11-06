@@ -12,7 +12,7 @@ export { TraceBuilder } from "./trace";
 export type { Planned } from "./trace";
 export { planMouse } from "./mouse";
 export { planKeyboard } from "./keyboard";
-export { planScreenReader, findQuery, SCREEN_READER_STRATEGIES } from "./screenreader";
+export { planScreenReader, findQuery, SCREEN_READER_STRATEGIES, VERIFY_LABEL } from "./screenreader";
 export type { ScreenReaderStrategy } from "./screenreader";
 export { planPersona, summarise, mixture, priorWeights, personaStrategies, PERSONAS } from "./persona";
 export { sampleSeconds, sampleSecondsReoptimised, quantile } from "./montecarlo";
