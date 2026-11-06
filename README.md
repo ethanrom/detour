@@ -36,13 +36,15 @@ Riverside County FreshStart Food Assistance, same method: "Switch the page to Sp
 
 ## Screenshots
 
-<!-- Captured from the running app at 1440 x 900. Keep these exact names. -->
+<!-- Captured from the production build by a Playwright script: 1600 x 1000 viewport at 2x, prefers-reduced-motion: reduce so races show their final state. Keep these exact names. -->
 | | |
 |---|---|
-| ![Home: the problem, the four steps and the three-lane teaser](docs/img/home.png) | ![Analyze: three people race through one task, with the screen-reader transcript and the reasons](docs/img/analyze.png) |
-| **Home**: the problem and the four steps | **Analyze**: the race, the transcript with Hear it, and where the seconds go |
-| ![Fix plan: ranked fixes with code diffs, WCAG criteria and the optimality certificate](docs/img/plan.png) | ![Method: the model, the strategy mixture, the parameters and their sources](docs/img/method.png) |
-| **Fix plan**: ranked fixes, diffs, certificate | **Method**: every formula and source, in the open |
+| ![Home: the headline "Accessibility, measured in seconds." next to a three-lane teaser with a mouse time, a keyboard "Can't finish" and a screen-reader time](docs/img/home.png) | ![Analyze: Northwind Outfitters, "Add the Trail Jacket in size M to the cart". The mouse user needs 5 s, the keyboard user can't finish because the size option is a clickable div, the screen-reader user needs 17 s](docs/img/analyze.png) |
+| **Home**: the problem and a three-lane teaser | **Analyze**: pick a page and a task, race the three users, read why the keyboard lane stops |
+| ![Fix plan: three ranked fixes with WCAG criteria, an HTML diff and a "Certified optimal" badge, with the objective falling from 658 to 71 s](docs/img/plan.png) | ![Before and after: the same race after Apply plan. The keyboard user goes from can't finish to 4.4 s, with the before run drawn as a ghost](docs/img/after.png) |
+| **Fix plan**: ranked fixes, code diffs, WCAG criteria, optimality certificate | **After Apply plan**: the same race again, before (ghost) and after (solid) |
+| ![Riverside County: Claude's wording suggestion renames "More information" to "Monthly income limits by household size", verified by the scent model with the seconds saved, above the realistic heading-search panel](docs/img/riverside.png) | ![Method: Fitts's law formula and the table of parameters with ranges and sources](docs/img/method.png) |
+| **Riverside County**: Claude proposes wording, the scent model checks the seconds | **Method**: every formula, parameter and source, in the open |
 
 ## Architecture
 
