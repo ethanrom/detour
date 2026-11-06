@@ -11,7 +11,7 @@ import { generateCandidates } from "./candidates";
 export const MIN_GAIN_SECONDS = 0.01;
 /** With at most this many candidates the exhaustive search covers all of them. */
 export const EXHAUSTIVE_ALL_MAX = 14;
-/** Above that, the pool takes this many top candidates from each of the first three greedy rounds. */
+/** Above that, the pool takes up to this many top candidates from each of the first three greedy rounds (fewer if needed to stay within EXHAUSTIVE_ALL_MAX). */
 export const EXHAUSTIVE_TOP_PER_ROUND = 8;
 
 /** planFixes also attaches the size of the exhaustive pool (outside the frozen FixPlan contract). */
@@ -129,10 +129,15 @@ export const planFixes: PlanFixes = (page, tasks, evaluate, opts = {}) => {
   // the greedy picks themselves (so the greedy plan is always compared and the gap cannot be negative).
   if (k <= exhaustiveMaxK) {
     const all = candidates.map((_, i) => i);
-    const exPool =
-      candidates.length <= EXHAUSTIVE_ALL_MAX
-        ? all
-        : [...new Set([...roundGains.flatMap((g) => topIndices(g, EXHAUSTIVE_TOP_PER_ROUND)), ...chosen])].sort((a, b) => a - b);
+    // Real pages can have dozens of candidates: shrink the per-round take until the pool fits
+    // EXHAUSTIVE_ALL_MAX, so certification stays a few hundred evaluations at most.
+    let exPool = all;
+    if (candidates.length > EXHAUSTIVE_ALL_MAX) {
+      for (let top = EXHAUSTIVE_TOP_PER_ROUND; top >= 1; top--) {
+        exPool = [...new Set([...roundGains.flatMap((g) => topIndices(g, top)), ...chosen])].sort((a, b) => a - b);
+        if (exPool.length <= EXHAUSTIVE_ALL_MAX) break;
+      }
+    }
     let best = baseline.value;
     for (const subset of subsets(exPool, k)) best = Math.min(best, evalSet(subset).value);
     plan.method = "greedy+exhaustive";
