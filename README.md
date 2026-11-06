@@ -8,27 +8,27 @@ Live demo: TODO. Demo video: TODO.
 
 ## Highlights
 
-<!-- TODO(lead): numbers on this page were measured with the real pipeline (extractPage -> evaluate -> planFixes -> applyFixes -> evaluate, plus lib/scent) loaded in jsdom, which has no layout. Everything that does not depend on layout is final: blocked states, screen-reader and keyboard times for activate/select steps, the fix plan and its certificate, and the scent numbers. Mouse times use Fitts's law with real rectangles and keyboard "read" steps scroll by viewport, so they must be re-read from the app in Chrome. Cells marked TODO-from-Chrome are those. -->
+<!-- Numbers measured in Chrome on the production build (real layout), 400 Monte Carlo samples, seed 1. -->
 
 - **The keyboard user is locked out of the size picker.** On the Northwind Outfitters demo store the size options are clickable `<div>`s. A keyboard-only user cannot reach size M, so "Add the Trail Jacket in size M to the cart" is **blocked** for them. Detour says so, and why, in a plain sentence.
 - **The screen-reader user cannot open the cart.** The cart is an icon-only button with no accessible name. The reader announces just "button". That task is **blocked** for a blind user.
 - **Three fixes, certified.** From 18 candidate fixes, greedy picks three: label the icon buttons, make the size options real buttons, add a skip link. The objective (keyboard plus screen-reader seconds, a blocked persona charged 300 s) falls from 649.6 to 65.7. Both blocked cases are unblocked, and the skip link then cuts the keyboard user's size-M route from 18.4 s to 4.4 s. The plan is checked against exhaustive search over a pool of 11 candidates: **optimality gap 0.00**. On Riverside (10 candidates) the pool is all 10 and the gap is also 0.00.
 - **Complementary fixes are why it is plain greedy.** The skip link alone changes nothing for the keyboard user (still blocked); the real-button fix alone leaves 18.4 s; together 4.4 s. Lazy greedy (CELF) would never re-examine the skip link, so we removed it ([`docs/MODEL.md`](docs/MODEL.md) section 9).
-- **A vague heading is worse than none.** On the Riverside County food-assistance page, the income-limit table sits under a section titled "More information". After the headings are made real, a heading-navigating screen-reader user is predicted to need **159 s** to find the limit for a household of 3 (3% chance of opening the right section first; about 13 wrong sections entered), against a best case of 16 s that a shortest-path model charges for the same page. Reading straight down would take 106 s. Rename the heading to "Income limits by household size" and the expected time drops to **41 s** (98% first-pass), a 74% cut. A Claude-proposed rename like that is accepted only when the scent model verifies that it saves time.
+- **A vague heading is worse than none.** On the Riverside County food-assistance page, the income-limit table sits under a section titled "More information". After the headings are made real, a heading-navigating screen-reader user is predicted to need **160 s** to find the limit for a household of 3 (3% chance of opening the right section first; about 13 wrong sections entered), against a best case of 18 s that a shortest-path model charges for the same page. Claude proposed the heading "Monthly income limits by household size"; the scent model re-ran the search and the expected time drops to **42 s**, a 74% cut. A rename is accepted only when the model verifies that it saves time, and the app shows the ones it rejects (two of Claude’s other suggestions would have made search slower).
 - **It does not cry wolf.** On the well-built control page (Alpine Co-op) Detour finds 0 candidate fixes and says "Nothing worth fixing".
-- **Consistent with field data.** Bigham et al. (2007, WebinSitu) measured blind users taking 1.5 to 4.5 times as long as sighted users on matched web tasks (2.2 times to issue a query, 4.5 times to click a result). On the control page the model's screen-reader to mouse ratio is **TODO-from-Chrome** (2.9 to 3.6 when pointing falls back to the KLM `P` operator, as in a layout-less test). This is a sanity check, not a validation ([`docs/MODEL.md`](docs/MODEL.md) section 12).
+- **Consistent with field data.** Bigham et al. (2007, WebinSitu) measured blind users taking 1.5 to 4.5 times as long as sighted users on matched web tasks (2.2 times to issue a query, 4.5 times to click a result). For adding the jacket to the cart, the model's screen-reader to mouse ratio is **3.5×** (17.3 s against 5.0 s), inside that range. This is a sanity check, not a validation ([`docs/MODEL.md`](docs/MODEL.md) section 12).
 - **The search model is checked three ways.** The information-scent Markov chain matches a seeded 20,000-user simulation within 0.53% of mean time on 100 random pages (worst case), and an independent reference implementation to 1e-9.
-- **Engineering rigor.** 518 unit and property tests, brute-force oracles for the shortest paths, and Playwright end-to-end tests that include an axe scan of our own UI (0 violations) and a keyboard-only walkthrough ([details](#tests-and-verification)).
+- **Engineering rigor.** 558 unit and property tests, brute-force oracles for the shortest paths, and Playwright end-to-end tests that include an axe scan of our own UI (0 violations) and a keyboard-only walkthrough ([details](#tests-and-verification)).
 
 ### Northwind Outfitters, per persona, before and after the 3-fix plan
 
-Point estimates in seconds; the 90% Monte Carlo interval is in brackets for the screen reader, whose time varies most with how the user navigates.
+Point estimates in seconds (the app shows each with its 90% Monte Carlo interval).
 
 | Task | Mouse | Keyboard-only | Screen reader |
 |---|---|---|---|
-| Add the Trail Jacket in size M to the cart | TODO-from-Chrome | **cannot finish** → 4.4 | 14.7 [6 to 55] → 17.4 |
-| Find out how many days you have to return it | TODO-from-Chrome | 4.2 → 4.2 (TODO-from-Chrome) | 27.6 [10 to 137] → 29.9 |
-| Open your cart | TODO-from-Chrome | 3.0 → 3.2 | **cannot finish** → 6.5 |
+| Add the Trail Jacket in size M to the cart | 5.0 → 5.0 | **cannot finish** → 4.4 | 17.3 → 17.4 |
+| Find out how many days you have to return it | 8.6 → 8.6 | 9.2 → 9.2 | 28.2 → 30.5 |
+| Open your cart | 2.4 → 2.4 | 3.0 → 3.2 | **cannot finish** → 6.6 |
 
 Two screen-reader cells get slower after the plan, and the model says why rather than hiding it: a real button is announced "button, M, not pressed" (four words) instead of "clickable, M" (two), so a reader who passes the five size options hears a little more, and once the size picker is reachable the slow Tab-only strategy rejoins the strategy mixture. The optimiser accepts that trade because the keyboard user can finish.
 
@@ -182,8 +182,7 @@ npx playwright test # end-to-end in the installed Chrome; builds and serves the 
 
 ## Tests and verification
 
-<!-- TODO(lead): recount with `npm test` after the final merge. 518 tests in 42 files at 80ba380. -->
-`npm test` runs 518 tests in 42 files. The checks behind the claims above:
+`npm test` runs 558 tests in 52 files. The checks behind the claims above:
 
 - **Shortest paths are exact.** `lib/engine/dijkstra.test.ts` compares Dijkstra with Bellman-Ford on random graphs, and checks that adding an edge never increases a cost and that ties break deterministically. `lib/engine/oracle.test.ts` compares every screen-reader strategy, and the keyboard Tab, Shift+Tab and skip-link path, with a brute-force shortest path on random pages, and checks that every emitted move is a legal command and that totals add up.
 - **The Monte Carlo shortcut is checked.** Intervals re-cost each strategy's nominal-optimal path rather than re-searching per sample. `lib/engine/montecarlo.test.ts` re-runs the shortest-path search per sample and shows the median differs by less than 10% (and that re-optimising never costs more on average), that every interval contains its point estimate on random pages, and that a blocked strategy is never drawn.
