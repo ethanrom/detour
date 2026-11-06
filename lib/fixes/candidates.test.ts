@@ -169,6 +169,21 @@ describe("generateCandidates edge cases", () => {
     expect(mainOf([{ id: "t", siteId: "s", label: "x", grounding: "fixture", steps: [{ target: "home", action: "activate" }] }])).toBe("wrap");
   });
 
+  it("never promotes controls or nodes without text to headings", () => {
+    const big = { fontSizeRatio: 2, fontWeight: 700, suggestedLevel: 2 as const };
+    const page = buildPage({
+      id: "root",
+      role: "document",
+      stop: false,
+      children: [
+        { id: "card-link", role: "link", name: "Big card title", tag: "a", hints: { looksLikeHeading: big } },
+        { id: "empty", role: "generic", name: "", hints: { looksLikeHeading: big } },
+        { id: "real", role: "generic", name: "Real one", hints: { looksLikeHeading: big } },
+      ],
+    });
+    expect(generateCandidates(page).map((c) => c.id)).toEqual(["promote-heading:real"]);
+  });
+
   it("offers a content-info-only landmark fix when main already exists", () => {
     const page = buildPage({
       id: "root",

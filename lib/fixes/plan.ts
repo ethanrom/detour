@@ -74,7 +74,7 @@ export const planFixes: PlanFixes = (page, tasks, evaluate, opts = {}) => {
   const baseline = evalSet([]);
 
   // Single-fix gains: the initial upper bounds.
-  const singleGain = candidates.map((_, i) => baseline.value - evalSet([i]).value);
+  const singleGain = candidates.map((_, i) => (k > 0 ? baseline.value - evalSet([i]).value : 0));
 
   // CELF: take the candidate with the highest upper bound; if that bound is stale for the current
   // set, refresh it and look again. A fresh bound at the top is the true best marginal gain.

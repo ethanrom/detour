@@ -24,7 +24,7 @@ const promoteHeading: Applier = (draft, fix) => {
   const done: NodeId[] = [];
   for (const id of fix.targets) {
     const n = draft.nodes[id];
-    if (!n || n.role === "heading" || !tree.idx.has(id)) continue;
+    if (!n || n.role === "heading" || n.focusable || n.actionable || !tree.idx.has(id)) continue;
     const level = n.hints.looksLikeHeading?.suggestedLevel ?? clampLevel(fix.params.level);
     const text = textOf(draft, tree, id);
     if (!text) continue;

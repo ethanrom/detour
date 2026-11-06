@@ -1,9 +1,9 @@
 // Test helpers for lib/fixes: a toy evaluator standing in for the real engine, and small utilities.
 // Not part of the public API (index.ts does not export it).
 
-import type { Evaluate, EvaluateOptions, PageModel, PersonaId, PersonaResult, Task, TaskResult } from "@/lib/contracts";
+import type { Evaluate, PageModel, PersonaId, PersonaResult, Task, TaskResult } from "@/lib/contracts";
 
-function persona(id: PersonaId, seconds: number, blocked: boolean): PersonaResult {
+export function personaResult(id: PersonaId, seconds: number, blocked: boolean): PersonaResult {
   const s = blocked ? 0 : seconds;
   return {
     persona: id,
@@ -45,7 +45,7 @@ function screenReaderSteps(page: PageModel, target: string): number | null {
 
 /** Deterministic stand-in for the engine. Keyboard = index of each step target in focusOrder (blocked if
  *  absent); screen reader = index in readingOrder / (1 + 3 * [heading before target]); mouse = 1 s per step. */
-export const toyEvaluate: Evaluate = (page: PageModel, tasks: Task[], _opts?: EvaluateOptions): TaskResult[] =>
+export const toyEvaluate: Evaluate = (page: PageModel, tasks: Task[]): TaskResult[] =>
   tasks.map((task) => {
     let kb = 0;
     let sr = 0;
@@ -62,9 +62,9 @@ export const toyEvaluate: Evaluate = (page: PageModel, tasks: Task[], _opts?: Ev
     return {
       taskId: task.id,
       personas: {
-        mouse: persona("mouse", task.steps.length, false),
-        keyboard: persona("keyboard", kb, kbBlocked),
-        screenreader: persona("screenreader", sr, srBlocked),
+        mouse: personaResult("mouse", task.steps.length, false),
+        keyboard: personaResult("keyboard", kb, kbBlocked),
+        screenreader: personaResult("screenreader", sr, srBlocked),
       },
       explanation: [],
     };

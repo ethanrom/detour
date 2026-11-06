@@ -120,7 +120,8 @@ function promoteHeadingCandidates(page: PageModel, tree: Tree): FixSpec[] {
   for (const id of tree.order) {
     const n = page.nodes[id];
     const hint = n.hints.looksLikeHeading;
-    if (!hint || n.role === "heading") continue;
+    // Never turn a control (a large link or button) into a heading.
+    if (!hint || n.role === "heading" || n.focusable || n.actionable) continue;
     const text = textOf(page, tree, id);
     if (!text) continue;
     const level = hint.suggestedLevel;

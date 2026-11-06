@@ -26,13 +26,16 @@ export function parseSelector(selector: string): SelectorParts {
     else if (ch === "]" || ch === ")") depth--;
     else if (depth === 0 && /[\s>+~]/.test(ch)) start = i + 1;
   }
-  const compound = selector.slice(start);
+  // Pseudo-classes carry no attributes (and may hold selectors of their own, e.g. :not(.x)).
+  const compound = selector.slice(start).replace(/(?<!\\):[\w-]+(?:\([^)]*\))?/g, "");
 
   const out: SelectorParts = { classes: [], attrs: [] };
-  const re = /#([\w-]+)|\.([\w-]+)|\[([\w-]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\]]*)))?\]/g;
+  const name = String.raw`((?:\\.|[\w-])+)`;
+  const re = new RegExp(String.raw`#${name}|\.${name}|\[([\w-]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\]]*)))?\]`, "g");
+  const unescape = (s: string) => s.replace(/\\(.)/g, "$1");
   for (const m of compound.matchAll(re)) {
-    if (m[1]) out.id = m[1];
-    else if (m[2]) out.classes.push(m[2]);
+    if (m[1]) out.id = unescape(m[1]);
+    else if (m[2]) out.classes.push(unescape(m[2]));
     else if (m[3] && m[3] !== "data-detour-id") out.attrs.push([m[3], m[4] ?? m[5] ?? m[6] ?? null]);
   }
   return out;
