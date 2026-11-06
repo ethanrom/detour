@@ -37,6 +37,12 @@ export interface NodeHints {
   visualLabel?: string;
   /** A large group a sighted user skims past but an AT user must traverse (mega menu, long footer). */
   repetitiveBlock?: boolean;
+  /** Visual-style signature: tag + sorted class list + computed font-size/weight, e.g.
+   *  "div.section-title|24|700". Nodes with equal styleKey come from the same component, so a fix
+   *  can treat them as one change ("fix the SectionTitle component once"). Set on hinted nodes. */
+  styleKey?: string;
+  /** The CSS class attribute of the source element (for patches), "" when absent. */
+  className?: string;
 }
 
 export interface A11yNode {
