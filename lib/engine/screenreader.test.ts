@@ -48,9 +48,10 @@ describe("screen-reader model", () => {
     expect(ev.filter((e) => e.label === "Think")).toHaveLength(2);
     // The title is not a user command.
     expect(s.steps[0].commands).toEqual([
-      { command: "think", count: 1 },
+      { command: "think", count: 2 }, // Think + the verification think
       { command: "next", count: expect.any(Number) },
       { command: "activate", count: 1 },
+      { command: "prev", count: 1 },
     ]);
   });
 

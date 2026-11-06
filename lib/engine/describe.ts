@@ -41,31 +41,51 @@ export function roleNoun(n: A11yNode): string {
   }
 }
 
-const LABEL_FILLER = new Set(["select", "choose", "pick", "enter", "your", "a", "an", "the", "please", "a(n)"]);
+const LABEL_FILLER = new Set(["select", "choose", "pick", "enter", "your", "a", "an", "the", "please"]);
+
+/** "Size: Select a size" -> "size"; "Select a size" -> "size"; long prose -> null. */
+function nounFromLabel(text: string): string | null {
+  const lower = text.toLowerCase().replace(/\s+/g, " ").trim();
+  const colon = lower.indexOf(":");
+  const head = (colon > 0 ? lower.slice(0, colon) : lower).replace(/[*]/g, " ");
+  const words = head.split(/\s+/).filter(Boolean);
+  while (words.length && LABEL_FILLER.has(words[0])) words.shift();
+  const max = colon > 0 ? 2 : 3;
+  return words.length > 0 && words.length <= max ? words.join(" ") : null;
+}
+
+/** True when the subtree of node `id` holds at least two reading stops. */
+function isGroup(idx: PageIndex, id: string): boolean {
+  let found = 0;
+  const stack = [id];
+  while (stack.length && found < 2) {
+    const cur = stack.pop()!;
+    if (idx.readPos.has(cur)) found++;
+    const n = idx.page.nodes[cur];
+    if (n) for (const c of n.children) stack.push(c);
+  }
+  return found >= 2;
+}
 
 /**
- * The thing a group of controls is for, taken from the nearest preceding visible label
- * ("Select a size" -> "size"). Walks up at most three levels. Null when nothing fits.
+ * What a group of controls is for. The group is the nearest ancestor holding two or more reading
+ * stops (the options of a picker); its label is the closest *preceding* non-interactive text,
+ * looked for within three stops before the group's first member ("Size: Select a size" -> "size").
+ * When the task step has a note ("Choose size M") the noun must appear in it. Null when unsure:
+ * a missing noun is better than a wrong one.
  */
-export function contextNoun(idx: PageIndex, node: A11yNode): string | null {
-  const nodes = idx.page.nodes;
-  let cur: A11yNode = node;
-  for (let depth = 0; depth < 3 && cur.parentId; depth++) {
-    const parent = nodes[cur.parentId];
-    if (!parent) return null;
-    const at = parent.children.indexOf(cur.id);
-    for (let i = at - 1; i >= 0; i--) {
-      const sib = nodes[parent.children[i]];
-      if (!sib || sib.actionable || !sib.name.trim()) continue;
-      const words = sib.name
-        .toLowerCase()
-        .replace(/[:*]/g, " ")
-        .split(/\s+/)
-        .filter(Boolean);
-      while (words.length && LABEL_FILLER.has(words[0])) words.shift();
-      return words.length > 0 && words.length <= 3 ? words.join(" ") : null;
-    }
-    cur = parent;
+export function contextNoun(idx: PageIndex, node: A11yNode, note?: string): string | null {
+  let group: A11yNode | undefined = node.parentId ? idx.page.nodes[node.parentId] : undefined;
+  for (let depth = 0; group && depth < 3 && !isGroup(idx, group.id); depth++) group = group.parentId ? idx.page.nodes[group.parentId] : undefined;
+  if (!group || !isGroup(idx, group.id)) return null;
+  const first = idx.resolveStop(group.id);
+  for (let j = first - 1, looked = 0; j >= 0 && looked < 3; j--, looked++) {
+    const n = idx.page.nodes[idx.page.readingOrder[j]];
+    if (!n || n.actionable || !n.name.trim()) continue;
+    const noun = nounFromLabel(n.name);
+    if (!noun) return null;
+    if (note && !note.toLowerCase().includes(noun)) return null;
+    return noun;
   }
   return null;
 }
@@ -79,11 +99,11 @@ function whyNotFocusable(n: A11yNode): string {
 }
 
 /** Reason a keyboard-only user cannot operate `node`. */
-export function keyboardBlockReason(idx: PageIndex, node: A11yNode, action: StepAction): string {
+export function keyboardBlockReason(idx: PageIndex, node: A11yNode, action: StepAction, note?: string): string {
   const name = nodeName(node);
   let subject: string;
   if (action === "select") {
-    const ctx = contextNoun(idx, node);
+    const ctx = contextNoun(idx, node, note);
     subject = ctx ? `The ${ctx} picker option “${clip(name, 40)}”` : `The option “${clip(name, 40)}”`;
   } else if (action === "type") {
     subject = `The “${clip(name, 40)}” field`;

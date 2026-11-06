@@ -10,11 +10,12 @@ const NUM = String.raw`\d+\.\d`;
 
 describe("explanations on mini-shop", () => {
   it("buy-m: screen reader, slow alternative, keyboard block, mouse", () => {
-    expect(buyM.explanation).toHaveLength(4);
+    expect(buyM.explanation).toHaveLength(5);
     expect(buyM.explanation[0]).toMatch(new RegExp(`^A screen-reader user hears \\d+ announcements before reaching “Add to cart” \\(${NUM} s\\)\\.$`));
-    expect(buyM.explanation[1]).toMatch(new RegExp(`^Reading straight down with the arrow key instead takes ${NUM} s: 36 announcements, 24 of them in the navigation menu, which has no skip link\\.$`));
-    expect(buyM.explanation[2]).toBe("A keyboard user cannot choose size M. The size picker option “M” can't be reached with the keyboard: it is a clickable <div> that cannot receive focus.");
-    expect(buyM.explanation[3]).toMatch(new RegExp(`^The mouse user needs ${NUM} s\\.$`));
+    expect(buyM.explanation[1]).toMatch(new RegExp(`^Reading straight down with the arrow key instead takes ${NUM} s: 38 announcements, 24 of them in the navigation menu, which has no skip link\\.$`));
+    expect(buyM.explanation[2]).toBe("“M” is a clickable <div>: the screen reader announces no role or selected state, so the user has to re-check it.");
+    expect(buyM.explanation[3]).toBe("A keyboard user cannot choose size M. The size picker option “M” can't be reached with the keyboard: it is a clickable <div> that cannot receive focus.");
+    expect(buyM.explanation[4]).toMatch(new RegExp(`^The mouse user needs ${NUM} s\\.$`));
   });
 
   it("returns: scrolling for the keyboard, nav attribution for the slow strategy", () => {
@@ -30,7 +31,7 @@ describe("explanations on mini-shop", () => {
     expect(evaluate(miniShop, miniShopTasks)[0].explanation).toEqual(buyM.explanation);
   });
 
-  it("is 2 to 4 sentences with the exact result shape", () => {
+  it("is 2 to 5 sentences with the exact result shape", () => {
     expectTaskResultShape(buyM);
     expectTaskResultShape(returns);
   });

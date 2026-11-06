@@ -56,7 +56,9 @@ describe("evaluate on mini-shop", () => {
       };
       const tM = ro.indexOf("size-m");
       const tCart = ro.indexOf("add-to-cart");
-      const expected = (wordCount(miniShop.title) * 60) / p.speechWpm + p.M + walk(-1, tM) + p.K + p.M + walk(tM, tCart) + p.K;
+      // Size M is a fake control: after Enter the user re-checks it (M, re-read, Up/Down round trip).
+      const verify = p.M + p.K + speech(tM, true) + 2 * p.K + speech(tM - 1, false) + speech(tM, false);
+      const expected = (wordCount(miniShop.title) * 60) / p.speechWpm + p.M + walk(-1, tM) + p.K + verify + p.M + walk(tM, tCart) + p.K;
       expect(strategy(buy, "screenreader", "linear").seconds).toBeCloseTo(expected, 9);
     });
 
