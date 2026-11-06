@@ -30,8 +30,8 @@ Edit only the paths your task owns. If you need a change elsewhere, say so in yo
 ## Rules
 
 - TypeScript strict. No `any` across module boundaries. Import shared types from `@/lib/contracts`.
-- Every module ships with Vitest tests next to it (`*.test.ts`). Use fast-check for properties.
-  DOM tests use `// @vitest-environment jsdom` at the top of the file.
+- Tests: keep them lean. A few tests per module that guard core correctness. No exhaustive/property/perf
+  suites unless the lead asks. DOM tests use `// @vitest-environment jsdom` at the top of the file.
 - Gates before you finish: `npm run typecheck` and `npm test` must pass. Run `npm run build`
   if you touched `app/`.
 - Next.js is **16.4**: read `node_modules/next/dist/docs/` before using framework APIs.
