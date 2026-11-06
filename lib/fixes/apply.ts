@@ -25,7 +25,8 @@ const promoteHeading: Applier = (draft, fix) => {
   for (const id of fix.targets) {
     const n = draft.nodes[id];
     if (!n || n.role === "heading" || n.focusable || n.actionable || !tree.idx.has(id)) continue;
-    const level = n.hints.looksLikeHeading?.suggestedLevel ?? clampLevel(fix.params.level);
+    // The level was inferred for the whole group at generation time; fall back to the node's own hint.
+    const level = typeof fix.params.level === "number" ? clampLevel(fix.params.level) : (n.hints.looksLikeHeading?.suggestedLevel ?? 2);
     const text = textOf(draft, tree, id);
     if (!text) continue;
     n.role = "heading";
@@ -43,7 +44,8 @@ const addLabel: Applier = (draft, fix) => {
   for (const id of fix.targets) {
     const n = draft.nodes[id];
     if (!n || !n.hints.unlabeled) continue;
-    const label = capitalizeFirst(n.hints.visualLabel ?? (typeof fix.params.label === "string" ? fix.params.label : ""));
+    const fromParams = fix.params[`label:${id}`] ?? fix.params.label;
+    const label = capitalizeFirst(n.hints.visualLabel ?? (typeof fromParams === "string" ? fromParams : ""));
     if (!label) continue;
     n.name = label;
     withoutHint(n, "unlabeled");

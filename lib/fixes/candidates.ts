@@ -115,32 +115,119 @@ function skipLinkCandidates(page: PageModel, tree: Tree): FixSpec[] {
 // ---------------------------------------------------------------------------------------------
 // promote-heading
 
+// Component-level grouping: nodes that share a styleKey come from one component, so a developer
+// fixes them in one change and the optimiser treats them as one fix.
+
+/** Group ids by key, keeping first-appearance order. A missing key makes the id its own group. */
+function groupByKey(ids: NodeId[], keyOf: (id: NodeId) => string | undefined): NodeId[][] {
+  const groups = new Map<string, NodeId[]>();
+  for (const id of ids) {
+    const key = keyOf(id);
+    const k = key === undefined || key === "" ? `\0${id}` : key;
+    groups.set(k, [...(groups.get(k) ?? []), id]);
+  }
+  return [...groups.values()];
+}
+
+/** Component identity for grouping. Equal styleKeys always match; on top of that, elements whose class
+ *  attribute starts with the same base class (BEM-style: "icon-btn icon-cart" and "icon-btn icon-search",
+ *  "thumb" and "thumb is-active") and share tag, font size and weight are one component with variants. */
+export function componentKey(n: A11yNode): string | undefined {
+  const key = n.hints.styleKey;
+  if (!key) return undefined;
+  const base = n.hints.className?.trim().split(/\s+/)[0];
+  if (!base) return key;
+  const [head, ...style] = key.split("|");
+  return [`${head.split(".")[0]}.${base}`, ...style].join("|");
+}
+
+/** First CSS class of the component ("section-title"), from hints.className or the styleKey. */
+function componentClass(n: A11yNode): string | undefined {
+  const fromAttr = n.hints.className?.trim().split(/\s+/)[0];
+  if (fromAttr) return fromAttr;
+  const fromKey = n.hints.styleKey?.split("|")[0].split(".")[1];
+  return fromKey || undefined;
+}
+
+/** `tag.class-a.class-b` selector for a component, or the node's own selector when no classes are known. */
+function componentSelector(n: A11yNode): string {
+  const classes = n.hints.className?.trim().split(/\s+/).filter(Boolean) ?? [];
+  return classes.length ? `${n.tag}.${classes.join(".")}` : n.selector;
+}
+
+const HAS_WORDS = /\p{L}{2,}/u;
+
+/** Level for a group: the most common suggested level (shallowest on ties), pushed down so it is never
+ *  higher than one level below the nearest real heading before the group's first node. */
+function inferHeadingLevel(page: PageModel, tree: Tree, ids: NodeId[]): 1 | 2 | 3 | 4 | 5 | 6 {
+  const counts = new Map<number, number>();
+  for (const id of ids) {
+    const l = page.nodes[id].hints.looksLikeHeading?.suggestedLevel ?? 2;
+    counts.set(l, (counts.get(l) ?? 0) + 1);
+  }
+  let mode = 6;
+  let best = 0;
+  for (const [l, c] of [...counts].sort((a, b) => a[0] - b[0])) {
+    if (c > best) {
+      mode = l;
+      best = c;
+    }
+  }
+  const at = tree.idx.get(ids[0]) as number;
+  let floor = 1;
+  let nearest = -1;
+  for (const h of page.headings) {
+    const hi = tree.idx.get(h);
+    const lvl = page.nodes[h]?.level;
+    if (hi !== undefined && hi < at && hi > nearest && lvl !== undefined) {
+      nearest = hi;
+      floor = lvl + 1;
+    }
+  }
+  return Math.min(6, Math.max(mode, floor)) as 1 | 2 | 3 | 4 | 5 | 6;
+}
+
 function promoteHeadingCandidates(page: PageModel, tree: Tree): FixSpec[] {
-  const out: FixSpec[] = [];
-  for (const id of tree.order) {
+  const eligible = tree.order.filter((id) => {
     const n = page.nodes[id];
-    const hint = n.hints.looksLikeHeading;
-    // Never turn a control (a large link or button) into a heading.
-    if (!hint || n.role === "heading" || n.focusable || n.actionable) continue;
-    const text = textOf(page, tree, id);
-    if (!text) continue;
-    const level = hint.suggestedLevel;
-    const before = page.readingOrder.filter((r) => (tree.idx.get(r) ?? Infinity) < (tree.idx.get(id) as number)).length;
+    // Never turn a control (a large link or button) into a heading; bare numbers and prices are not headings.
+    return !!n.hints.looksLikeHeading && n.role !== "heading" && !n.focusable && !n.actionable && HAS_WORDS.test(textOf(page, tree, id));
+  });
+  const out: FixSpec[] = [];
+  for (const ids of groupByKey(eligible, (id) => componentKey(page.nodes[id]))) {
+    const first = page.nodes[ids[0]];
+    const n = ids.length;
+    const level = inferHeadingLevel(page, tree, ids);
+    const text = textOf(page, tree, ids[0]);
+    const before = page.readingOrder.filter((r) => (tree.idx.get(r) ?? Infinity) < (tree.idx.get(ids[0]) as number)).length;
+    const cls = componentClass(first);
+    const params: FixSpec["params"] = { level, text: abbreviate(text, 80), count: n };
+    const key = componentKey(first);
+    if (n > 1 && key) params.styleKey = key;
     out.push({
-      id: `promote-heading:${id}`,
+      id: n > 1 && key ? `promote-heading:style:${key}` : `promote-heading:${ids[0]}`,
       kind: "promote-heading",
-      title: `Make ${quote(abbreviate(text, 50))} a level-${level} heading`,
+      title: n === 1 ? `Make ${quote(abbreviate(text, 50))} a level-${level} heading` : `Make the ${n} ${quote(cls ?? "styled")} blocks real <h${level}> headings`,
       rationale:
-        before > 0
-          ? `Screen-reader users can reach ${quote(abbreviate(text, 50))} with the H key instead of stepping through the ${before} items before it.`
-          : `Exposes ${quote(abbreviate(text, 50))} as a heading so screen-reader users can navigate to it by heading.`,
-      targets: [id],
-      params: { level, text: abbreviate(text, 80) },
-      patch: {
-        selector: n.selector,
-        before: renderElement(n, { inner: abbreviate(text) }),
-        after: renderElement(n, { tag: `h${level}`, inner: abbreviate(text) }),
-      },
+        n > 1
+          ? `Screen-reader users can jump between these ${n} titles with the H key instead of stepping through everything between them.`
+          : before > 0
+            ? `Screen-reader users can reach ${quote(abbreviate(text, 50))} with the H key instead of stepping through the ${before} items before it.`
+            : `Exposes ${quote(abbreviate(text, 50))} as a heading so screen-reader users can navigate to it by heading.`,
+      targets: ids,
+      params,
+      patch:
+        n === 1
+          ? {
+              selector: first.selector,
+              before: renderElement(first, { inner: abbreviate(text), className: first.hints.className }),
+              after: renderElement(first, { tag: `h${level}`, inner: abbreviate(text), className: first.hints.className }),
+            }
+          : {
+              selector: componentSelector(first),
+              before: renderElement(first, { inner: abbreviate(text), className: first.hints.className, bare: true }),
+              after: renderElement(first, { tag: `h${level}`, inner: abbreviate(text), className: first.hints.className, bare: true }),
+            },
       wcag: ["1.3.1 Info and Relationships", "2.4.6 Headings and Labels"],
     });
   }
@@ -277,24 +364,50 @@ function addLandmarkCandidates(page: PageModel, tree: Tree, tasks: Task[]): FixS
 // ---------------------------------------------------------------------------------------------
 // add-label
 
+const labelOf = (n: A11yNode) => capitalizeFirst(n.hints.visualLabel ?? "");
+const labelKey = (s: string) => s.toLowerCase().replace(/\s+/g, " ");
+
 function addLabelCandidates(page: PageModel, tree: Tree): FixSpec[] {
+  const eligible = tree.order.filter((id) => page.nodes[id].hints.unlabeled && labelOf(page.nodes[id]) !== "");
   const out: FixSpec[] = [];
-  for (const id of tree.order) {
-    const n = page.nodes[id];
-    const label = capitalizeFirst(n.hints.visualLabel ?? "");
-    if (!n.hints.unlabeled || !label) continue;
+  for (const group of groupByKey(eligible, (id) => componentKey(page.nodes[id]))) {
+    // Each target gets its own label; targets whose label is shared with another target of the group
+    // cannot be told apart by name, so they are left for manual or LLM repair.
+    const seen = new Map<string, number>();
+    for (const id of group) seen.set(labelKey(labelOf(page.nodes[id])), (seen.get(labelKey(labelOf(page.nodes[id]))) ?? 0) + 1);
+    const ids = group.filter((id) => seen.get(labelKey(labelOf(page.nodes[id]))) === 1);
+    if (!ids.length) continue;
+
+    const first = page.nodes[ids[0]];
+    const n = ids.length;
+    const labels = ids.map((id) => labelOf(page.nodes[id]));
+    const roleWord = ids.every((id) => page.nodes[id].role === first.role) && first.role !== "generic" ? first.role : "control";
+    const cls = componentClass(first);
+    const params: FixSpec["params"] = n === 1 ? { label: labels[0] } : { count: n };
+    if (n > 1) ids.forEach((id, i) => (params[`label:${id}`] = labels[i]));
+    const aria = `aria-label="${labels[0].replace(/"/g, "&quot;")}"`;
     out.push({
-      id: `add-label:${id}`,
+      id: n > 1 && componentKey(first) ? `add-label:style:${componentKey(first)}` : `add-label:${ids[0]}`,
       kind: "add-label",
-      title: `Label the unlabeled ${n.role} ${quote(abbreviate(label, 40))}`,
-      rationale: `Screen readers announce this ${n.role} with no name; ${quote(abbreviate(label, 40))} tells users what it does.`,
-      targets: [id],
-      params: { label },
-      patch: {
-        selector: n.selector,
-        before: renderElement(n, { inner: "…" }),
-        after: renderElement(n, { inner: "…", trailing: [`aria-label="${label.replace(/"/g, "&quot;")}"`] }),
-      },
+      title: n === 1 ? `Label the unlabeled ${roleWord} ${quote(abbreviate(labels[0], 40))}` : `Label the ${n} unlabeled ${cls ? `${quote(cls)} ` : ""}${roleWord}s: ${listNames(labels)}`,
+      rationale:
+        n === 1
+          ? `Screen readers announce this ${roleWord} with no name; ${quote(abbreviate(labels[0], 40))} tells users what it does.`
+          : `Screen readers announce these ${n} ${roleWord}s with no name; a label on each tells users what it does.`,
+      targets: ids,
+      params,
+      patch:
+        n === 1
+          ? {
+              selector: first.selector,
+              before: renderElement(first, { inner: "…", className: first.hints.className }),
+              after: renderElement(first, { inner: "…", className: first.hints.className, trailing: [aria] }),
+            }
+          : {
+              selector: componentSelector(first),
+              before: renderElement(first, { inner: "…", className: first.hints.className, bare: true }),
+              after: renderElement(first, { inner: "…", className: first.hints.className, bare: true, trailing: [aria] }),
+            },
       wcag: ["4.1.2 Name, Role, Value", "2.5.3 Label in Name"],
     });
   }
@@ -321,39 +434,67 @@ function listNames(names: string[]): string {
   return `${q[0]}, ${q[1]} and ${q.length - 2} more`;
 }
 
-function realButtonCandidates(page: PageModel, tree: Tree): FixSpec[] {
-  const groups = new Map<NodeId, NodeId[]>();
-  for (const id of tree.order) {
+/** Fake buttons that belong together: siblings under one parent, or nodes with the same styleKey
+ *  (one component), transitively. Groups and members are in document order. */
+function fakeButtonGroups(page: PageModel, tree: Tree): NodeId[][] {
+  const fake = tree.order.filter((id) => page.nodes[id].hints.fakeButton);
+  const root = new Map<NodeId, NodeId>(fake.map((id) => [id, id]));
+  const find = (id: NodeId): NodeId => {
+    let r = id;
+    while (root.get(r) !== r) r = root.get(r) as NodeId;
+    return r;
+  };
+  const union = (a: NodeId, b: NodeId) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) root.set(rb, ra);
+  };
+  const firstBy = new Map<string, NodeId>();
+  for (const id of fake) {
     const n = page.nodes[id];
-    if (!n.hints.fakeButton) continue;
-    const key = n.parentId ?? "";
-    groups.set(key, [...(groups.get(key) ?? []), id]);
+    for (const key of [n.parentId ? `parent:${n.parentId}` : "", componentKey(n) ? `style:${componentKey(n)}` : ""]) {
+      if (!key) continue;
+      const seen = firstBy.get(key);
+      if (seen === undefined) firstBy.set(key, id);
+      else union(seen, id);
+    }
   }
+  return groupByKey(fake, (id) => find(id));
+}
+
+function realButtonCandidates(page: PageModel, tree: Tree): FixSpec[] {
   const out: FixSpec[] = [];
-  for (const [parent, ids] of groups) {
+  for (const ids of fakeButtonGroups(page, tree)) {
     const first = page.nodes[ids[0]];
+    const n = ids.length;
     const names = ids.map((id) => textOf(page, tree, id)).filter(Boolean);
     const noun = groupNoun(ids);
-    const pressed = ids.length > 1;
+    const cls = componentClass(first);
+    const pressed = n > 1;
+    const component = n > 1 && !!componentKey(first);
     const title = noun
       ? `Make the ${noun} options real buttons`
-      : ids.length === 1
+      : n === 1
         ? `Make ${names.length ? quote(abbreviate(names[0], 40)) : "the clickable element"} a real button`
-        : names.length
-          ? `Make ${listNames(names)} real buttons`
-          : `Make ${ids.length} clickable elements real buttons`;
-    const n = ids.length;
+        : cls && component
+          ? `Make the ${n} ${quote(cls)} elements real buttons`
+          : names.length
+            ? `Make ${listNames(names)} real buttons`
+            : `Make ${n} clickable elements real buttons`;
+    const parent = first.parentId;
+    const siblings = parent !== null && ids.every((id) => page.nodes[id].parentId === parent);
+    const el = { className: first.hints.className, bare: component };
     out.push({
-      id: `real-button:${parent || first.id}`,
+      id: siblings ? `real-button:${parent}` : `real-button:style:${first.id}`,
       kind: "real-button",
       title,
       rationale: `${n} clickable ${n === 1 ? "element has" : "elements have"} no keyboard focus, so keyboard users cannot operate ${n === 1 ? "it" : "them"} and screen readers announce ${n === 1 ? "it" : "them"} only as “clickable”.`,
       targets: ids,
       params: { count: n, pressed },
       patch: {
-        selector: first.selector,
-        before: renderElement(first),
-        after: renderElement(first, { tag: "button", leading: [`type="button"`], trailing: pressed ? [`aria-pressed="false"`] : [] }),
+        selector: component ? componentSelector(first) : first.selector,
+        before: renderElement(first, el),
+        after: renderElement(first, { ...el, tag: "button", leading: [`type="button"`], trailing: pressed ? [`aria-pressed="false"`] : [] }),
       },
       wcag: ["2.1.1 Keyboard", "4.1.2 Name, Role, Value"],
     });
