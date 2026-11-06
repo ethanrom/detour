@@ -1,7 +1,8 @@
 // Fixture builders for engine tests (built with the shared PageModel builder). Test-only.
 
 import { buildPage, type Spec } from "@/fixtures/pagemodels/builder";
-import type { PageModel, Task } from "@/lib/contracts";
+import { expect } from "vitest";
+import type { PageModel, PersonaId, PersonaResult, StrategyResult, Task, TaskResult } from "@/lib/contracts";
 
 const WORDS = ["alpha", "bravo", "delta", "echo", "foxtrot", "gamma", "hotel", "india", "kilo", "lima", "metro", "nova", "oscar", "papa", "quebec", "romeo"];
 
@@ -83,4 +84,46 @@ export function longPage(o: LongPageOptions = {}): LongPage {
     title: (i) => `title-${i}`,
     task: (steps, id = "t") => ({ id, siteId: "test", label: "test task", steps, grounding: "fixture" }),
   };
+}
+
+/** Exact TaskResult shape check: no missing and no extra keys, finite numbers. */
+export function expectTaskResultShape(r: TaskResult): void {
+  expect(Object.keys(r).sort()).toEqual(["explanation", "personas", "taskId"]);
+  expect(Object.keys(r.personas).sort()).toEqual(["keyboard", "mouse", "screenreader"]);
+  expect(r.explanation.length).toBeGreaterThanOrEqual(2);
+  expect(r.explanation.length).toBeLessThanOrEqual(4);
+  for (const [persona, p] of Object.entries(r.personas) as Array<[PersonaId, PersonaResult]>) {
+    expect(p.persona).toBe(persona);
+    expect(Number.isFinite(p.seconds)).toBe(true);
+    expect(p.interval).toHaveLength(2);
+    expect(p.strategies.map((s) => s.strategy)).toContain(p.representative);
+    for (const s of p.strategies) {
+      let t = 0;
+      let sum = 0;
+      for (const step of s.steps) {
+        let stepSum = 0;
+        for (const e of step.events) {
+          expect(e.t).toBeCloseTo(t, 9);
+          expect(e.dt).toBeGreaterThanOrEqual(0);
+          expect(e.label.length).toBeGreaterThan(0);
+          if (e.utterance) expect(e.utterance.seconds).toBeLessThanOrEqual(e.dt + 1e-9);
+          t += e.dt;
+          stepSum += e.dt;
+        }
+        expect(step.seconds).toBeCloseTo(stepSum, 9);
+        // `commands` counts events, except passive time (reading, hearing the page title).
+        const counted = step.commands.reduce((n, c) => n + c.count, 0);
+        expect(counted).toBeLessThanOrEqual(step.events.length);
+        sum += stepSum;
+      }
+      expect(s.seconds).toBeCloseTo(sum, 9);
+    }
+  }
+}
+
+/** Total seconds of speech heard along a strategy's trace. */
+export function totalSpeechSeconds(s: StrategyResult): number {
+  let total = 0;
+  for (const st of s.steps) for (const e of st.events) total += e.utterance?.seconds ?? 0;
+  return total;
 }

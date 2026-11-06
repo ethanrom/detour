@@ -144,7 +144,7 @@ export function explain(idx: PageIndex, task: Task, personas: Partial<Record<Per
       if (rep) {
         const heard = skippedAnnouncements(rep);
         const clause = blockClause(idx, heard, "; ");
-        out.push(`A screen-reader user hears ${plural(heard.length, "announcement", "announcements")} before reaching “${final}”${clause} (${fmtSeconds(sr.seconds)} s).`);
+        out.push(`A screen-reader user hears ${plural(heard.length, "announcement", "announcements")} before reaching “${final}” (${fmtSeconds(sr.seconds)} s)${clause}.`);
         // Slowest alternative strategy that people actually use.
         let slow: StrategyResult | undefined;
         for (const s of sr.strategies) {
@@ -174,7 +174,7 @@ export function explain(idx: PageIndex, task: Task, personas: Partial<Record<Per
         const scrolls = events.filter((e) => e.command === "scroll").length;
         if (stops.length > 0) {
           const via = skips > 0 ? " and uses a skip link" : "";
-          out.push(`A keyboard user presses Tab ${plural(stops.length, "time", "times")}${via} before reaching “${final}”${blockClause(idx, stops, "; ")} (${fmtSeconds(kb.seconds)} s).`);
+          out.push(`A keyboard user presses Tab ${plural(stops.length, "time", "times")}${via} before reaching “${final}” (${fmtSeconds(kb.seconds)} s)${blockClause(idx, stops, "; ")}.`);
         } else if (scrolls > 0) {
           out.push(`A keyboard user scrolls ${plural(scrolls, "screen", "screens")} to reach “${final}” (${fmtSeconds(kb.seconds)} s).`);
         } else {
