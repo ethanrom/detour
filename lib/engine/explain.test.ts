@@ -80,9 +80,9 @@ describe("attribution to blocks", () => {
       });
     const task: Task = { id: "go", siteId: "s", label: "Go", grounding: "fixture", steps: [{ target: "go", action: "activate" }] };
     const nonBypassing = evaluate(build("nav"), [task])[0];
-    expect(nonBypassing.explanation[0]).toMatch(/; 12 of them are in the navigation menu, which no skip link bypasses.$/);
+    expect(nonBypassing.explanation[0]).toMatch(/; 12 of them are in the navigation menu, which no skip link bypasses\.$/);
     const bypassing = evaluate(build("main"), [task])[0];
-    expect(bypassing.explanation[0]).toMatch(/; 12 of them are in the navigation menu.$/);
+    expect(bypassing.explanation[0]).toMatch(/; 12 of them are in the navigation menu\.$/);
     expectTaskResultShape(nonBypassing);
     expectTaskResultShape(bypassing);
   });
