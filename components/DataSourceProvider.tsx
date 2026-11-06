@@ -2,16 +2,13 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import type { DataSource, DataSourceMode } from "@/lib/ui/datasource";
+import { createLiveDataSource } from "@/lib/ui/live-datasource";
 import { mockDataSource } from "@/lib/ui/mock-datasource";
 
-// ---------------------------------------------------------------------------------------------
-// INTEGRATOR: this is the one line to change to plug in the real pipeline.
-//   import { createLiveDataSource } from "@/lib/ui/live-datasource";
-//   const DEFAULT_SOURCE: DataSource = createLiveDataSource();
-//   const DEFAULT_MODE: DataSourceMode = "live";
-// ---------------------------------------------------------------------------------------------
-const DEFAULT_SOURCE: DataSource = mockDataSource;
-const DEFAULT_MODE: DataSourceMode = "sample";
+// Live by default: extract the page from the preview iframe, evaluate and plan in a Web Worker.
+// If the iframe cannot be read, analyze() falls back to the sample data and marks the analysis "sample".
+const DEFAULT_SOURCE: DataSource = createLiveDataSource({ fallback: mockDataSource });
+const DEFAULT_MODE: DataSourceMode = "live";
 
 interface Ctx {
   source: DataSource;

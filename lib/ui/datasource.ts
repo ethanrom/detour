@@ -22,6 +22,10 @@ export interface Analysis {
   page: PageModel;
   /** One TaskResult per task of the site, in task order. */
   results: TaskResult[];
+  /** Where the numbers came from. Absent means the data source's own mode. */
+  mode?: DataSourceMode;
+  /** Why the live pipeline was not used (set together with mode "sample"). */
+  fallbackReason?: string;
 }
 
 /** `page` and `results` are AFTER applying `plan.chosen`. */
@@ -37,8 +41,41 @@ export interface DataSource {
   analyze(site: SiteInfo, frame: HTMLIFrameElement | null): Promise<Analysis>;
   /** Choose up to `k` fixes and evaluate the patched page. */
   plan(site: SiteInfo, analysis: Analysis, k: number): Promise<PlanOutcome>;
-  /** Optional: ground a free-text task to page elements (LLM, validated). */
+  /** Optional: ground a free-text task to page elements (LLM, validated). Rejects with
+   *  `LlmUnavailableError` when the server has no LLM credentials. */
   groundTask?(site: SiteInfo, analysis: Analysis, text: string): Promise<Task>;
+  /** Optional: evaluate one more task (for example a grounded custom task) on an existing analysis.
+   *  Returns the analysis with that task's result appended. */
+  addTask?(site: SiteInfo, analysis: Analysis, task: Task): Promise<Analysis>;
+  /** Optional: LLM-proposed, scent-verified heading and label suggestions. Resolves to null when the
+   *  server does not offer them. `site.tasks` are the tasks the suggestions are verified against. */
+  suggestRepairs?(site: SiteInfo, analysis: Analysis): Promise<RepairReport | null>;
+}
+
+/** The LLM proposes, the scent model verifies. Mirrors the response of POST /api/repair. */
+export interface RepairReport {
+  /** True when at least one heading rename was accepted and applied to the page used for the verdict. */
+  promoted: boolean;
+  headings: Array<{
+    nodeId: string;
+    original: string;
+    proposed: string;
+    source: "llm" | "fallback";
+    /** Realistic-search seconds before and after the rename. */
+    before: number;
+    after: number;
+    savedSeconds: number;
+    accepted: boolean;
+  }>;
+  labels: Array<{ nodeId: string; proposed: string; source: "llm" | "fallback" }>;
+}
+
+/** Thrown by `groundTask` when the server has no LLM keys configured (HTTP 503). */
+export class LlmUnavailableError extends Error {
+  constructor() {
+    super("Custom tasks need the LLM (Bedrock) configured.");
+    this.name = "LlmUnavailableError";
+  }
 }
 
 /** Shown in the UI so nobody mistakes fixture numbers for engine output. */
