@@ -74,8 +74,33 @@ export interface StrategyResult {
   blocked?: Blocked;
 }
 
+/** Information-scent search estimate (lib/scent) for a screen-reader user navigating by headings
+ *  who must judge each heading by its words, versus the shortest path that assumes they already
+ *  know where the target is. */
+export interface SearchEstimate {
+  /** Expected seconds summed over the task's steps (absorbing Markov chain, N = (I − Q)⁻¹). */
+  seconds: number;
+  /** Shortest-path seconds for the same steps (the best case). */
+  shortestSeconds: number;
+  /** Probability the user finds the target on the first pass through the headings (dominant step). */
+  pFoundFirstPass: number;
+  /** Expected wrong sections entered (dominant step). */
+  expectedWrongSections: number;
+  /** Per-heading breakdown for the step with the largest foraging overhead. */
+  perHeading: Array<{
+    nodeId: NodeId;
+    label: string;
+    scent: number;
+    pEnter: number;
+    expectedVisits: number;
+    containsTarget: boolean;
+  }>;
+}
+
 export interface PersonaResult {
   persona: PersonaId;
+  /** Screen-reader persona only: realistic heading search with information scent. */
+  search?: SearchEstimate;
   /** Strategy-weighted mixture at nominal parameters (blocked strategies are renormalised out). */
   seconds: number;
   /** 90% interval [p05, p95] from Monte Carlo over parameter ranges and strategy draws. */
