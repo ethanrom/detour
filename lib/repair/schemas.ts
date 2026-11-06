@@ -3,6 +3,7 @@
 
 import { z } from "zod";
 import type { PageModel, Task } from "@/lib/contracts";
+import { MAX_REPAIR_TASKS } from "@/lib/llm/guard";
 import { pageModelSchema } from "@/lib/llm/schemas";
 
 const nodeSchema = pageModelSchema.shape.nodes.valueType;
@@ -40,7 +41,7 @@ export const taskSchema = z.object({
 export const repairRequestSchema = z.object({
   siteId: z.string().trim().min(1).max(100),
   page: repairPageSchema,
-  tasks: z.array(taskSchema).max(20),
+  tasks: z.array(taskSchema).max(MAX_REPAIR_TASKS),
 });
 
 export type RepairRequest = z.infer<typeof repairRequestSchema>;

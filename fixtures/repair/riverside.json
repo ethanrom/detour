@@ -1,0 +1,42 @@
+{
+  "promoted": true,
+  "headings": [
+    {
+      "nodeId": "income-title",
+      "original": "More information",
+      "proposed": "Monthly income limits by household size",
+      "source": "llm",
+      "before": 242.13039227551644,
+      "after": 124.81027043504311,
+      "savedSeconds": 117.32012184047333,
+      "accepted": true
+    },
+    {
+      "nodeId": "n226",
+      "original": "Fresh produce",
+      "proposed": "Farmers market produce matching program",
+      "source": "llm",
+      "before": 124.81027043504311,
+      "after": 125.99817096266973,
+      "savedSeconds": -1.1879005276266241,
+      "accepted": false
+    },
+    {
+      "nodeId": "n242",
+      "original": "Residency",
+      "proposed": "Residency rules for Riverside County applicants",
+      "source": "llm",
+      "before": 124.81027043504311,
+      "after": 125.99676353548078,
+      "savedSeconds": -1.1864931004376729,
+      "accepted": false
+    }
+  ],
+  "labels": [
+    {
+      "nodeId": "n82",
+      "proposed": "Submit search",
+      "source": "llm"
+    }
+  ]
+}

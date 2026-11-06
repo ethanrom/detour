@@ -3,35 +3,46 @@
 
 import { GroundingError, groundTask } from "./ground";
 import { isLlmConfigured, LlmError, LlmNotConfiguredError, type ConverseSend, type Env } from "./bedrock";
+import { checkLlmGuard, isLlmDisabled, MAX_PAGE_NODES, pageNodeCount, pageTooLargeResponse, readJsonBody } from "./guard";
 import { groundRequestSchema } from "./schemas";
 
 export interface GroundRouteDeps {
   send?: ConverseSend;
   env?: Env;
+  /** Test seam: replaces Date.now() for the rate limiter. */
+  now?: number;
 }
 
 /**
  * POST { siteId, page, text } -> 200 { task }
- *   503 { error: "llm-unavailable" }            Bedrock not configured (the UI falls back to fixtures)
- *   400 { error: "bad-request", details }       body failed validation
+ *   503 { error: "llm-unavailable" }            Bedrock not configured, LLM_DISABLED=1, or LLM_DAILY_CAP reached
+ *                                               (the UI falls back to fixtures)
+ *   429 { error: "rate-limited" }               too many calls from this IP (Retry-After says when to retry)
+ *   413 { error: "payload-too-large" }          body over 1.5 MB or page over 4,000 nodes
+ *   400 { error: "bad-request", details }       body failed validation (text is at most 200 characters)
  *   422 { error: "grounding-failed", details }  the model could not produce valid steps
  *   502 { error: "llm-request-failed" }         Bedrock call failed (network, auth, throttling)
  * Never logs request bodies or secrets.
  */
 export async function handleGroundRequest(req: Request, deps: GroundRouteDeps = {}): Promise<Response> {
   const env = deps.env ?? process.env;
-  if (!isLlmConfigured(env)) return Response.json({ error: "llm-unavailable" }, { status: 503 });
+  if (isLlmDisabled(env) || !isLlmConfigured(env)) return Response.json({ error: "llm-unavailable" }, { status: 503 });
 
-  let json: unknown;
-  try {
-    json = await req.json();
-  } catch {
-    return Response.json({ error: "bad-request", details: ["Body must be valid JSON."] }, { status: 400 });
-  }
-  const parsed = groundRequestSchema.safeParse(json);
+  const body = await readJsonBody(req);
+  if (!body.ok) return Response.json({ error: body.error, details: body.details }, { status: body.status });
+  if (pageNodeCount(body.json) > MAX_PAGE_NODES) return pageTooLargeResponse();
+  const parsed = groundRequestSchema.safeParse(body.json);
   if (!parsed.success) {
     const details = parsed.error.issues.slice(0, 10).map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`);
     return Response.json({ error: "bad-request", details }, { status: 400 });
+  }
+
+  const verdict = checkLlmGuard(req, { env, now: deps.now });
+  if (!verdict.allowed) {
+    if (verdict.reason === "rate-limited") {
+      return Response.json({ error: "rate-limited" }, { status: 429, headers: { "retry-after": String(verdict.retryAfterSec ?? 60) } });
+    }
+    return Response.json({ error: "llm-unavailable" }, { status: 503 });
   }
 
   const { siteId, page, text } = parsed.data;

@@ -46,7 +46,7 @@ describe("POST /api/repair handler", () => {
   const post = (body: unknown) => new Request("http://localhost/api/repair", { method: "POST", body: JSON.stringify(body) });
 
   it("returns 200 with fallback proposals when no LLM is configured, and 400 on bad input", async () => {
-    const ok = await handleRepairRequest(post({ siteId: "riverside", page: riverside, tasks }), { env: {} });
+    const ok = await handleRepairRequest(post({ siteId: "not-a-demo-site", page: riverside, tasks }), { env: {} });
     expect(ok.status).toBe(200);
     const report = (await ok.json()) as RepairReport;
     expect(report.promoted).toBe(true);

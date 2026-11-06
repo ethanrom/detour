@@ -4,6 +4,7 @@
 import { z } from "zod";
 import type { A11yNode, NodeId, PageModel } from "@/lib/contracts";
 import { converseTool, isLlmConfigured, LlmError, LlmOutputError } from "@/lib/llm/bedrock";
+import { REPAIR_MAX_TOKENS } from "@/lib/llm/guard";
 import { matchWeight, stem, tokenize } from "@/lib/scent";
 import { collapse, splitCamel, stripDecoration, titleCase, truncate, wordsOf } from "./text";
 import type { LlmOptions, Proposal } from "./types";
@@ -254,7 +255,7 @@ export async function proposeHeading(page: PageModel, headingId: NodeId, opts: L
         description: "Submit the replacement heading for the section.",
         inputSchema: HEADING_JSON_SCHEMA,
         parse: (x) => schema.parse(x),
-        maxTokens: 200,
+        maxTokens: Math.min(REPAIR_MAX_TOKENS, 200),
         send: opts.send,
         env: opts.env,
       });
