@@ -73,6 +73,14 @@ describe("northwind", () => {
   });
 });
 
+describe("alpine labels", () => {
+  it("reads a radio and its label as one stop, with no separate 'M' stop", () => {
+    expect(alpine.nodes["size-m"].announcement).toBe("radio button, not checked, M");
+    const stopsNamedM = alpine.readingOrder.map((id) => alpine.nodes[id]).filter((n) => n.name === "M");
+    expect(stopsNamedM.map((n) => n.id)).toEqual(["size-m"]);
+  });
+});
+
 describe("riverside", () => {
   it("excludes the statistics from looksLikeHeading but keeps the section titles", () => {
     const names = withHint(riverside, "looksLikeHeading").map((n) => n.name);
