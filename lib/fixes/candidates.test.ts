@@ -184,6 +184,56 @@ describe("generateCandidates edge cases", () => {
     expect(generateCandidates(page).map((c) => c.id)).toEqual(["promote-heading:real"]);
   });
 
+  it("groups by styleKey: one fix per component, level after the preceding heading, distinct labels only", () => {
+    const h = (id: string, name: string, level: 1 | 2 | 3): Spec => ({
+      id,
+      role: "generic",
+      name,
+      hints: { styleKey: "div.section-title|24|700", className: "section-title", looksLikeHeading: { fontSizeRatio: 1.5, fontWeight: 700, suggestedLevel: level } },
+    });
+    const icon = (id: string, label: string): Spec => ({
+      id,
+      role: "button",
+      name: "",
+      tag: "button",
+      hints: { styleKey: `button.icon-btn.icon-${id}|16|400`, className: `icon-btn icon-${id}`, unlabeled: true, visualLabel: label },
+    });
+    const page = buildPage({
+      id: "root",
+      role: "document",
+      stop: false,
+      children: [
+        { id: "top", role: "heading", level: 1, name: "Shop", tag: "h1" },
+        h("a", "Details", 1),
+        h("b", "Reviews", 1),
+        h("c", "Returns", 2),
+        { id: "lone", role: "generic", name: "Other", hints: { looksLikeHeading: { fontSizeRatio: 1.5, fontWeight: 700, suggestedLevel: 3 } } },
+        icon("search", "search"),
+        icon("cart", "cart"),
+        icon("dup1", "Menu"),
+        icon("dup2", "menu"),
+      ],
+    });
+    const cands = generateCandidates(page);
+    const group = cands.find((c) => c.kind === "promote-heading" && c.targets.length > 1);
+    expect(group?.targets).toEqual(["a", "b", "c"]);
+    expect(group?.title).toBe("Make the 3 “section-title” blocks real <h2> headings");
+    expect(group?.params.level).toBe(2); // most common level is 1, but after the h1 it cannot be higher than h2
+    expect(group?.patch).toEqual({ selector: "div.section-title", before: '<div class="section-title">Details</div>', after: '<h2 class="section-title">Details</h2>' });
+    // No styleKey: per-node fallback, level from the node itself.
+    expect(cands.find((c) => c.id === "promote-heading:lone")?.params.level).toBe(3);
+    // Labels: icon-btn variants are one component; the two "Menu" buttons collide and are left out.
+    const labels = cands.find((c) => c.kind === "add-label");
+    expect(labels?.targets).toEqual(["search", "cart"]);
+    expect(labels?.title).toBe("Label the 2 unlabeled “icon-btn” buttons: “Search” and “Cart”");
+    expect(labels?.params).toMatchObject({ "label:search": "Search", "label:cart": "Cart" });
+    const out = applyFixes(page, cands);
+    expect(validatePage(out)).toEqual([]);
+    expect(out.nodes["b"].announcement).toBe("heading, level 2, Reviews");
+    expect(out.nodes["cart"].name).toBe("Cart");
+    expect(out.nodes["dup1"].name).toBe("");
+  });
+
   it("offers a content-info-only landmark fix when main already exists", () => {
     const page = buildPage({
       id: "root",

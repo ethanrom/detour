@@ -49,13 +49,16 @@ export function abbreviate(text: string, max = 40): string {
   return t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t;
 }
 
-/** Attributes from the selector in a stable order: id, class, then the rest. */
-function selectorAttrs(node: A11yNode): string[] {
+/** Attributes from the selector in a stable order: id, class, then the rest. `className` (the source
+ *  element's class attribute) replaces the selector's classes when known; `bare` keeps only the class,
+ *  for patches that describe a whole component rather than one element. */
+function selectorAttrs(node: A11yNode, className: string | undefined, bare: boolean): string[] {
   const p = parseSelector(node.selector);
+  const classes = className !== undefined ? className.split(/\s+/).filter(Boolean) : p.classes;
   const attrs: string[] = [];
-  if (p.id) attrs.push(`id="${esc(p.id)}"`);
-  if (p.classes.length) attrs.push(`class="${esc(p.classes.join(" "))}"`);
-  for (const [k, v] of p.attrs) attrs.push(v === null ? k : `${k}="${esc(v)}"`);
+  if (p.id && !bare) attrs.push(`id="${esc(p.id)}"`);
+  if (classes.length) attrs.push(`class="${esc(classes.join(" "))}"`);
+  if (!bare) for (const [k, v] of p.attrs) attrs.push(v === null ? k : `${k}="${esc(v)}"`);
   return attrs;
 }
 
@@ -69,13 +72,17 @@ export interface ElementOptions {
   omit?: string[];
   /** Inner HTML; defaults to the node's name (or an ellipsis when it has none). */
   inner?: string;
+  /** The element's class attribute, when the extractor recorded it (hints.className). */
+  className?: string;
+  /** Describe the component, not one element: no id or other selector attributes. */
+  bare?: boolean;
 }
 
 /** `<tag attrs>inner</tag>` for a node; void elements render without a closing tag. */
 export function renderElement(node: A11yNode, o: ElementOptions = {}): string {
   const tag = o.tag ?? node.tag;
   const omit = new Set(o.omit ?? []);
-  const own = selectorAttrs(node).filter((a) => !omit.has(a.split("=")[0]));
+  const own = selectorAttrs(node, o.className, o.bare ?? false).filter((a) => !omit.has(a.split("=")[0]));
   const attrs = [...(o.leading ?? []), ...own, ...(o.trailing ?? [])];
   const open = `<${tag}${attrs.length ? ` ${attrs.join(" ")}` : ""}>`;
   if (VOID_TAGS.has(tag)) return open;
