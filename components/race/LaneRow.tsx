@@ -200,7 +200,9 @@ function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase }: Props) {
             className="pointer-events-none absolute bottom-1 top-5 z-[5] w-0 border-l-2 border-dashed border-muted"
             style={{ left: pct(predicted, axis.max) }}
           >
-            <span className="absolute bottom-0 left-1 whitespace-nowrap text-[0.8125rem] leading-none text-muted">predicted</span>
+            <span className={`absolute bottom-0 whitespace-nowrap text-[0.8125rem] leading-none text-muted ${predicted / axis.max > 0.85 ? "right-1" : "left-1"}`}>
+              predicted
+            </span>
           </span>
         )}
 
