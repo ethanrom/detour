@@ -76,8 +76,17 @@ export interface FixRunRequest {
 
 export type InsertPosition = "beforebegin" | "afterbegin" | "beforeend" | "afterend";
 
+/** Tags wrapChildren may create. */
+export type WrapTag = "button" | "span";
+
+/** Prefer the ops that keep the original element (setAttributes, removeAttributes, wrapChildren, insert):
+ *  the site's own listeners stay attached. `replace` creates a new element and drops them, so it is the
+ *  last resort. */
 export type EditOp =
   | { op: "replace"; selector: string; html: string }
+  /** Move the element's existing children into a new <tag> inside it (for example a real <button> inside a
+   *  clickable <div>: clicks still bubble to the div's own handler, and Enter on the button fires click). */
+  | { op: "wrapChildren"; selector: string; tag: WrapTag; attributes: Record<string, string> }
   | { op: "setAttributes"; selector: string; attributes: Record<string, string> }
   | { op: "removeAttributes"; selector: string; names: string[] }
   | { op: "insert"; selector: string; position: InsertPosition; html: string }
