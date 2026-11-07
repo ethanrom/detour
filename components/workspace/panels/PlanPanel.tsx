@@ -15,6 +15,8 @@ import { WordingRow } from "./plan/WordingRow";
 const KS = [1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }));
 const block = "rounded bg-paper-2";
 
+// Every branch below puts this group in a wrapper with the same key, so React keeps the radios (and the focus on
+// them) when a new number of fixes clears the plan and the panel switches from its "plan" branch to its "idle" one.
 function NumberOfFixes({ k, onK }: { k: number; onK: (k: number) => void }) {
   return (
     <div className="flex items-center gap-3">
@@ -65,7 +67,7 @@ export function PlanPanel({ headingRef, status, outcome, error, baseline, k, onK
         <p role="alert" className="text-sm leading-5">
           <span className="font-semibold">Could not plan fixes.</span> {error ? `${error} ` : ""}Use the plan button above to try again.
         </p>
-        <div className="mt-4">
+        <div key="number-of-fixes" className="mt-4">
           <NumberOfFixes k={k} onK={onK} />
         </div>
       </>
@@ -77,7 +79,7 @@ export function PlanPanel({ headingRef, status, outcome, error, baseline, k, onK
         <p className="mt-1 max-w-[60ch] text-sm leading-5 text-muted">
           No candidate fix saves a measurable amount of time for these tasks on this page. Detour does not invent problems.
         </p>
-        <div className="mt-4">
+        <div key="number-of-fixes" className="mt-4">
           <NumberOfFixes k={k} onK={onK} />
         </div>
       </>
@@ -92,7 +94,7 @@ export function PlanPanel({ headingRef, status, outcome, error, baseline, k, onK
           {certificate ? `${certificate}.` : "Greedy plan. Exhaustive certification runs for up to 3 fixes."}
           {penalty ? ` ${penalty}` : ""}
         </p>
-        <div className="mt-4">
+        <div key="number-of-fixes" className="mt-4">
           <NumberOfFixes k={k} onK={onK} />
         </div>
         <div className="mt-3">
@@ -107,7 +109,7 @@ export function PlanPanel({ headingRef, status, outcome, error, baseline, k, onK
           Detour tries each candidate fix on this page and keeps the few that win the most seconds back for keyboard and screen-reader users. Choose how many,
           then press Plan fixes in the step rail above.
         </p>
-        <div className="mt-4">
+        <div key="number-of-fixes" className="mt-4">
           <NumberOfFixes k={k} onK={onK} />
         </div>
       </>

@@ -488,10 +488,16 @@ export function useWorkbench() {
     doPlan();
   }, [go, planForSite.status, doPlan]);
 
+  /** "Plan fixes" / "Plan again" on the Plan step. The button turns into "Planning…" (disabled) while it works, so focus goes to the heading. */
+  const planAgain = useCallback(() => {
+    go("plan");
+    doPlan();
+  }, [go, doPlan]);
+
   const chosen = primaryAction(facts);
   const onPrimary: Record<PrimaryKind, (() => void) | undefined> = {
     "plan-fixes": planFixes,
-    plan: doPlan,
+    plan: planAgain,
     fix: fixThisPage,
     retry: fixAgain,
     recheck: () => go("recheck"),
