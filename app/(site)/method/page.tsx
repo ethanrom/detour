@@ -133,9 +133,10 @@ export default function MethodPage() {
               ))}
             </ol>
             <p>
-              Every number and every explanation sentence on screen is produced by deterministic code. A language model is used for two things only:
-              pointing at the page elements a free-text task needs, and proposing clearer wording for headings and unlabeled controls. It never produces a
-              time, and each wording change is kept only if the deterministic model says it saves time.
+              Every number and every explanation sentence on screen is produced by deterministic code. A language model is used for three things only:
+              pointing at the page elements a free-text task needs, proposing clearer wording for headings and unlabeled controls, and writing each planned
+              fix as an edit to the page&apos;s own markup. It never produces a time. Each wording change is kept only if the deterministic model says it
+              saves time, and each edit is validated, applied and re-checked on the fixed page.
             </p>
           </Section>
 

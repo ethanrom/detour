@@ -124,7 +124,9 @@ export function useWorkbench() {
       .listSites()
       .then((list) => {
         if (!alive) return;
-        setSites(list);
+        // Keep a list already loaded: coming back to Analyze re-runs this effect (the route is kept alive while
+        // hidden), and the fresh list would drop typed-in pages and their tasks.
+        setSites((cur) => cur ?? list);
         setSiteId((cur) => cur || list[0]?.id || "");
       })
       .catch((e) => alive && setLoadError(errMsg(e)));
