@@ -13,12 +13,12 @@ export const FIX_BUTTON_CLASS = "detour-fix-btn";
 const SKIP_LINK_TEXT = "Skip to main content";
 const DEFAULT_ANCHOR = "main-content";
 
-const SKIP_LINK_CSS =
+export const SKIP_LINK_CSS =
   `.${SKIP_LINK_CLASS}{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}` +
   `.${SKIP_LINK_CLASS}:focus{clip:auto;width:auto;height:auto;margin:0;padding:8px 14px;overflow:visible;top:8px;left:8px;z-index:2147483647;` +
   `background:#fff;color:#111;outline:3px solid #1a56db;text-decoration:underline;font:600 16px/1.2 system-ui,sans-serif}`;
 
-const BUTTON_CSS =
+export const BUTTON_CSS =
   `.${FIX_BUTTON_CLASS}{font:inherit;color:inherit;text-align:inherit;letter-spacing:inherit;text-transform:inherit;background:none;border:0;padding:0;margin:0;` +
   `width:100%;height:100%;cursor:inherit;box-sizing:border-box;appearance:none}` +
   `.${FIX_BUTTON_CLASS}:focus-visible{outline:3px solid #1a56db;outline-offset:2px}`;

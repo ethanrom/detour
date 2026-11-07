@@ -8,6 +8,7 @@ import { rawEditsSchema, type RawEdits } from "./schemas";
 import type { FixEdits, FixRequestItem } from "./types";
 import { MAX_EDIT_CSS, MAX_EDIT_HTML, MAX_EDITS_PER_FIX } from "./types";
 import { validateEdits } from "./validate";
+import { BUTTON_CSS, FIX_BUTTON_CLASS, SKIP_LINK_CLASS, SKIP_LINK_CSS } from "./fallback";
 
 export const FIX_TOOL_NAME = "submit_edits";
 export const FIX_MAX_TOKENS = 800;
@@ -92,11 +93,11 @@ Rules
 - note: one plain sentence (at most 300 characters) telling the site owner where this change likely belongs in their source, such as the component or template, without inventing file names.
 
 How to fix each kind
-- skip-link: insert <a class="detour-skip-link" href="#ANCHOR">Skip to main content</a> at selector "body", position afterbegin, where ANCHOR is params.anchor; setAttributes id=ANCHOR and tabindex="-1" on the first target. If the target's markup already has an id, link to that id and do not set id. CSS keeps the link visually hidden until :focus, with position:absolute so nothing shifts, and shows it clearly on focus.
+- skip-link: insert <a class="detour-skip-link" href="#ANCHOR">Skip to main content</a> at selector "body", position afterbegin, where ANCHOR is params.anchor; setAttributes id=ANCHOR and tabindex="-1" on the first target. If the target's markup already has an id, link to that id and do not set id. Always include css: it keeps the link visually hidden until :focus, with position:absolute so nothing shifts, and shows it clearly on focus.
 - promote-heading: setAttributes role="heading" and aria-level (params.level) on each target. This keeps the look.
 - add-landmark: setAttributes role="main" on the target whose node id is params.main, and role="contentinfo" on the target whose node id is params.contentinfo.
-- add-label: setAttributes aria-label on each target. The name is short (at most 4 words, sentence case, no trailing punctuation) and says what the control does, taken from its visible text, class names, title, nearby text or the params. Never just "button", "icon" or "link".
-- real-button: wrapChildren on each target with tag "button" and attributes type="button" and class (add aria-pressed="false" when params.pressed is true). CSS resets that class so the page looks the same: font, color and text-align inherit; background none; border 0; padding 0; margin 0; width and height 100%; cursor inherit; keep a visible :focus-visible outline.
+- add-label: setAttributes aria-label on each target. The name is short (at most 4 words, sentence case, no trailing punctuation) and names the ACTION the control performs, not its icon: a heart is "Add to wishlist", a magnifier is "Search", a bag or trolley is "Cart", a cross in a dialog is "Close". Take it from the visible text, class names, title, nearby text or the params. Never just "button", "icon" or "link".
+- real-button: wrapChildren on each target with tag "button" and attributes type="button" and class="${FIX_BUTTON_CLASS}" (add aria-pressed="false" when params.pressed is true). Always include css: it resets that class so the page looks the same: font, color and text-align inherit; background none; border 0; padding 0; margin 0; width and height 100%; cursor inherit; keep a visible :focus-visible outline.
 - remove-positive-tabindex: setAttributes tabindex="0" on each target.`;
 
 function block(label: string, value: unknown): string {
@@ -123,6 +124,31 @@ export function describeFix(item: FixRequestItem, problems: string[] = []): stri
     lines.push("", "Your previous answer was rejected for these reasons:", ...problems.map((p) => `- ${p}`), "Call submit_edits again with corrected edits.");
   }
   return lines.join("\n");
+}
+
+/**
+ * The agent sometimes leaves out the CSS that keeps the page looking the same for the two kinds that add an
+ * element (a skip link, a real button inside a clickable div). Without it a visible skip link pushes the whole
+ * page down and a new button picks up the browser's button styling. When the agent's CSS does not cover the class
+ * the edit introduces, the template CSS for that kind is added (and a real button's class is made to include the
+ * template class). The edit stays the agent's; only the look-preserving CSS is completed.
+ */
+export function completeCss(item: FixRequestItem, edits: Omit<FixEdits, "source" | "ms">): Omit<FixEdits, "source" | "ms"> {
+  let css = edits.css ?? "";
+  let ops = edits.edits;
+  if (item.kind === "skip-link" && !css.includes("." + SKIP_LINK_CLASS)) {
+    const usesClass = ops.some((e) => e.op === "insert" && e.html.includes(SKIP_LINK_CLASS));
+    if (usesClass) css = css ? css + SKIP_LINK_CSS : SKIP_LINK_CSS;
+  }
+  if (item.kind === "real-button") {
+    ops = ops.map((e) => {
+      if (e.op !== "wrapChildren" || e.tag !== "button") return e;
+      const cls = (e.attributes.class ?? "").split(/\s+/).filter(Boolean);
+      return cls.includes(FIX_BUTTON_CLASS) ? e : { ...e, attributes: { ...e.attributes, class: [...cls, FIX_BUTTON_CLASS].join(" ") } };
+    });
+    if (ops.some((e) => e.op === "wrapChildren") && !css.includes("." + FIX_BUTTON_CLASS)) css = css ? css + BUTTON_CSS : BUTTON_CSS;
+  }
+  return { ...edits, edits: ops, ...(css ? { css } : {}) };
 }
 
 /**
@@ -157,7 +183,7 @@ export async function writeEdits(item: FixRequestItem, opts: FixAgentOptions = {
       throw err;
     }
     const checked = validateEdits(item, raw);
-    if ("ok" in checked) return { ...checked.ok, source: "agent", ms: Math.round(performance.now() - started) };
+    if ("ok" in checked) return { ...completeCss(item, checked.ok), source: "agent", ms: Math.round(performance.now() - started) };
     problems = checked.errors;
   }
   throw new Error(`The edits for ${item.kind} failed validation twice (${problems.length} problems).`);
