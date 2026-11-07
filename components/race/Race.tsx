@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PauseIcon, PlayIcon, ReplayIcon } from "@/components/icons";
 import { fmtNum, fmtRange, fmtResultSpoken, fmtSeconds } from "@/lib/ui/format";
+import type { PersonaId, TaskResult } from "@/lib/contracts";
 import { PERSONA_BY_ID, STRATEGY_LABEL, commandKey } from "@/lib/ui/personas";
 import { axis as buildAxis, longestDuration, playbackRate, wallDuration, type Lane } from "@/lib/ui/timeline";
 import { LaneRow } from "./LaneRow";
@@ -19,9 +20,17 @@ interface Props {
   lanes: Lane[];
   /** "Before" lanes, drawn as ghosts behind the solid "after" lanes. */
   ghost?: Lane[];
+  /** What a plan predicted for this task: drawn as a grey mark on each lane, and as a column of the text table. */
+  predicted?: TaskResult;
   clock: RaceClock;
   /** Spoken in the live region when the race ends, e.g. "After the fixes." */
   announcePrefix?: string;
+}
+
+/** Predicted seconds of one person: null when they cannot finish, undefined when nothing was predicted. */
+function predictedSeconds(predicted: TaskResult | undefined, persona: PersonaId): number | null | undefined {
+  const p = predicted?.personas[persona];
+  return p ? (p.blocked ? null : p.seconds) : undefined;
 }
 
 function laneSentence(l: Lane): string {
@@ -30,7 +39,7 @@ function laneSentence(l: Lane): string {
   return `${name}: ${fmtResultSpoken(l.seconds, l.interval)}`;
 }
 
-export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }: Props) {
+export function Race({ idBase, taskLabel, lanes, ghost, predicted, clock, announcePrefix }: Props) {
   const ax = buildAxis(clock.duration);
   const fastWall = wallDuration(clock.duration, playbackRate(clock.duration, "fast"));
   const message = clock.finished
@@ -115,6 +124,7 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
               key={lane.persona}
               lane={lane}
               ghost={ghost?.find((g) => g.persona === lane.persona)}
+              predicted={predictedSeconds(predicted, lane.persona)}
               axis={ax}
               elapsed={clock.elapsed}
               idBase={idBase}
@@ -133,6 +143,7 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
             <th scope="col">Most likely strategy</th>
             {ghost && <th scope="col">Before</th>}
             <th scope="col">{ghost ? "After" : "Prediction"}</th>
+            {predicted && <th scope="col">Predicted</th>}
             <th scope="col">Outcome</th>
           </tr>
         </thead>
@@ -145,6 +156,9 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
                 <td>{STRATEGY_LABEL[l.strategy]}</td>
                 {ghost && <td>{g ? (g.blocked ? "Can't finish" : fmtSeconds(g.seconds)) : "–"}</td>}
                 <td>{l.blocked ? "Can't finish" : `${fmtSeconds(l.seconds)}, 90% interval ${fmtRange(l.interval)} s`}</td>
+                {predicted && (
+                  <td>{predictedSeconds(predicted, l.persona) === null ? "Can't finish" : fmtSeconds(predictedSeconds(predicted, l.persona) ?? 0)}</td>
+                )}
                 <td>{l.blocked ? l.blocked.reason : "Finishes the task"}</td>
               </tr>
             );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ArrowRightIcon } from "@/components/icons";
 import { checkUrl, normalizeUrlInput, urlSiteFromCheck } from "@/lib/ui/any-url";
 import type { SiteInfo } from "@/lib/ui/datasource";
@@ -27,6 +27,18 @@ export function UrlCard({ urlSite, selected, onSelect, onAdd, fetchImpl }: Props
   const [found, setFound] = useState("");
   const checking = check.status === "checking";
   const error = check.status === "error" ? check.message : "";
+  const input = useRef<HTMLInputElement>(null);
+
+  // The Home page links to /analyze#url: land with the cursor in the address field. This card only exists once the
+  // list of pages has loaded, so the browser's own jump to #url cannot find it; focusing the field scrolls to it.
+  useEffect(() => {
+    const toAddress = () => {
+      if (window.location.hash === "#url") input.current?.focus();
+    };
+    toAddress();
+    window.addEventListener("hashchange", toAddress);
+    return () => window.removeEventListener("hashchange", toAddress);
+  }, []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -51,13 +63,14 @@ export function UrlCard({ urlSite, selected, onSelect, onAdd, fetchImpl }: Props
   }
 
   return (
-    <div className={`card p-4 transition-colors ${selected ? "!border-ink !bg-lime" : ""}`}>
+    <div id="url" className={`card p-4 transition-colors ${selected ? "!border-ink !bg-lime" : ""}`}>
       <form onSubmit={submit} noValidate>
         <label htmlFor={`${id}-url`} className="block text-[1.0625rem] font-semibold leading-snug">
           Any public page
         </label>
         <div className="mt-2 flex gap-2">
           <input
+            ref={input}
             id={`${id}-url`}
             type="url"
             inputMode="url"

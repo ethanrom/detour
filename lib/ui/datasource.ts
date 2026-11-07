@@ -6,6 +6,7 @@
 // and it keeps the UI testable without a browser.
 
 import type { FixPlan, PageModel, Task, TaskResult } from "@/lib/contracts";
+import type { LiveFixEvent, LiveFixReport, WordingEdit } from "@/lib/livefix/types";
 import type { RepairReport } from "@/lib/repair/types";
 
 export interface SiteInfo {
@@ -52,6 +53,19 @@ export interface DataSource {
   /** Optional: LLM-proposed, scent-verified heading and label suggestions. Resolves to null when the
    *  server does not offer them. `site.tasks` are the tasks the suggestions are verified against. */
   suggestRepairs?(site: SiteInfo, analysis: Analysis): Promise<RepairReport | null>;
+  /** Optional: fix the page in the preview. One agent per planned fix writes real edits, the browser applies them
+   *  to `frame`'s document in plan order, and Detour re-reads and re-times the patched page against the plan's
+   *  prediction (lib/livefix). Needs the live page: not available in sample mode. Rejects with an AbortError when
+   *  `opts.signal` aborts. */
+  fixPage?(
+    site: SiteInfo,
+    analysis: Analysis,
+    outcome: PlanOutcome,
+    frame: HTMLIFrameElement,
+    opts: { wording?: WordingEdit[]; onEvent: (e: LiveFixEvent) => void; signal?: AbortSignal },
+  ): Promise<LiveFixReport>;
+  /** Optional: tasks for controls some people cannot use (up to 5), found on the page itself. */
+  suggestTasks?(site: SiteInfo, analysis: Analysis): Promise<Task[]>;
 }
 
 /** The LLM proposes, the scent model verifies. This is the response of POST /api/repair. */

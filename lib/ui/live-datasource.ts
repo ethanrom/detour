@@ -15,6 +15,7 @@ import { createEngineClient, type EngineClient } from "./engine-client";
 import { normalizeTasks } from "./pipeline";
 import { sourceUrl, wireSiteId } from "./any-url";
 import { MAX_REPAIR_TASKS } from "@/lib/llm/guard";
+import { runLiveFix } from "@/lib/livefix/run";
 
 const FRAME_TIMEOUT_MS = 10_000;
 
@@ -154,6 +155,29 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
       if (!res.ok) return null;
       const body = (await res.json()) as RepairReport;
       return Array.isArray(body.headings) ? body : null;
+    },
+
+    async fixPage(site, analysis, outcome, frame, opts) {
+      if (analysis.mode === "sample") throw new Error("Fixing needs the live page.");
+      return runLiveFix({
+        frame,
+        siteId: wireSiteId(site.id),
+        url: sourceUrl(site),
+        page: analysis.page,
+        tasks: site.tasks,
+        plan: outcome.plan,
+        before: analysis.results,
+        predicted: outcome.results,
+        wording: opts.wording,
+        engine: eng(),
+        onEvent: opts.onEvent,
+        signal: opts.signal,
+      });
+    },
+
+    async suggestTasks(site, analysis) {
+      if (analysis.mode === "sample") return [];
+      return eng().scan(analysis.page, site.id);
     },
   };
 }

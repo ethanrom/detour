@@ -6,6 +6,7 @@ import {
   applyButton,
   openAnalyze,
   planButton,
+  proofSummary,
   readAfter,
   runButton,
   siteRadio,
@@ -63,10 +64,11 @@ test("the whole flow works with the keyboard alone", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page.getByRole("list", { name: "Chosen fixes, best first" })).toBeVisible({ timeout: PIPELINE_MS });
 
-  // Apply with Space. Focus moves to the "After the fixes" heading.
+  // Fix the page with Space, wait for the run to finish. Focus moves to the "Same task, same three people" heading.
   await tabTo(page, applyButton(page));
   await page.keyboard.press("Space");
-  await expect(afterRegion(page).getByRole("heading", { level: 2, name: /Same task, same three people/ })).toBeFocused();
+  await expect(afterRegion(page).getByRole("heading", { level: 2, name: /Same task, same three people/ })).toBeFocused({ timeout: PIPELINE_MS });
+  await expect(proofSummary(page)).toBeVisible();
 
   const result = await readAfter(page, NORTHWIND_TASK);
   expect(result.after.Keyboard.seconds, "keyboard can finish after the fixes").toBeGreaterThan(0);
