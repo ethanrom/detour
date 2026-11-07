@@ -43,7 +43,7 @@ export function Panel({
     <section
       aria-labelledby={title ? id : undefined}
       aria-label={title ? undefined : label}
-      className={cx("flex min-h-0 flex-col overflow-hidden rounded-xl border border-rule bg-surface", className)}
+      className={cx("relative flex min-h-0 flex-col overflow-hidden rounded-xl border border-rule bg-surface", className)}
     >
       {(title || actions) && (
         <div className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-rule px-4 py-2">
@@ -57,7 +57,8 @@ export function Panel({
           {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
         </div>
       )}
-      <div className={cx("min-h-0 flex-1 overflow-auto", bodyClassName ?? "p-4")}>{children}</div>
+      {/* relative: absolutely positioned sr-only text stays inside the scrolling body instead of growing the page. */}
+      <div className={cx("relative min-h-0 flex-1 overflow-auto", bodyClassName ?? "p-4")}>{children}</div>
       {footer && <div className="shrink-0 border-t border-rule px-4 py-3">{footer}</div>}
     </section>
   );
