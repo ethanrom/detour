@@ -168,6 +168,8 @@ export interface FixOutcome {
   edits?: FixEdits;
   /** Original outer HTML per edited selector (for the patch and to restore before a retry). */
   originals?: Record<string, string>;
+  /** Outer HTML per edited selector right after the edit (for the patch). */
+  applied?: Record<string, string>;
   /** Cumulative checks after this fix, in plan order. */
   checks?: TaskCheck[];
   /** Why a fix is partial or failed, in Detour's words. */
@@ -210,6 +212,8 @@ export interface LiveFixInput {
   predicted: TaskResult[];
   wording?: WordingEdit[];
   engine: { evaluate(page: PageModel, tasks: Task[]): Promise<TaskResult[]> };
+  /** Test seam: the document to patch (defaults to frame.contentDocument). */
+  doc?: Document;
   /** Test seam and offline switch: defaults to globalThis.fetch. */
   fetchImpl?: typeof fetch;
   onEvent: (e: LiveFixEvent) => void;
