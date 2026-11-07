@@ -4,8 +4,10 @@
 
 import { evaluate } from "@/lib/engine";
 import { applyFixes, planFixes } from "@/lib/fixes";
-import type { FixPlan, PageModel, SearchEstimate, Task, TaskResult } from "@/lib/contracts";
+import { componentKey } from "@/lib/fixes/candidates";
+import type { A11yNode, FixPlan, PageModel, SearchEstimate, Task, TaskResult } from "@/lib/contracts";
 import { lexicalScorer, searchTask } from "@/lib/scent";
+import { roleWord, taskForNode } from "./pick";
 
 export const MC_SAMPLES = 400;
 
@@ -104,4 +106,70 @@ export function planAll(page: PageModel, tasks: Task[], k: number): PlanResult {
   const plan = planFixes(page, t, evaluate, { k });
   const patched = applyFixes(page, plan.chosen);
   return { plan, page: patched, results: evaluateAll(patched, t) };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Suggested tasks: controls some people cannot use
+
+const SCAN_CAP = 200;
+/** A component repeated this many times counts as one suggestion. */
+const COLLAPSE_AT = 4;
+const clean = (s: string) => s.replace(/\s+/g, " ").trim();
+
+/** The task for a control, worded for the card: an unnamed control is described by what it looks like. */
+function barrierTask(page: PageModel, siteId: string, node: A11yNode): Task | null {
+  const task = taskForNode(page, siteId, node.id);
+  if (!task || clean(node.name)) return task;
+  const look = clean(node.hints.visualLabel ?? "");
+  const what = ["generic", "text", "paragraph"].includes(node.role) ? "control" : roleWord(node);
+  return { ...task, label: `Reach and activate the unnamed ${what}${look ? ` (looks like “${look}”)` : ""}` };
+}
+
+/**
+ * Controls some people cannot use, as ready-made tasks: every actionable reading stop (up to 200) is timed for
+ * the keyboard and screen-reader personas without Monte Carlo, and the ones where either is blocked come
+ * first (blocked for both, then document order). A component repeated four or more times (five size options)
+ * is offered once; a smaller group (three icon buttons) is listed in full. Short of `limit`, the slowest
+ * screen-reader tasks fill the rest.
+ */
+export function scanBarriers(page: PageModel, siteId: string, limit = 5): Task[] {
+  const tasks: Task[] = [];
+  const owners: A11yNode[] = [];
+  for (const id of page.readingOrder) {
+    if (tasks.length >= SCAN_CAP) break;
+    const n = page.nodes[id];
+    if (!n?.actionable || owners.includes(n)) continue;
+    const t = barrierTask(page, siteId, n);
+    if (!t) continue;
+    tasks.push(t);
+    owners.push(n);
+  }
+  const results = evaluate(page, tasks, { samples: 0, personas: ["keyboard", "screenreader"] });
+
+  const rows = tasks.map((task, order) => {
+    const p = results[order].personas;
+    return { task, node: owners[order], order, blocked: Number(!!p.keyboard.blocked) + Number(!!p.screenreader.blocked), sr: p.screenreader.seconds };
+  });
+  const blocked = rows.filter((r) => r.blocked > 0).sort((a, b) => b.blocked - a.blocked || a.order - b.order);
+  const groupSize = new Map<string, number>();
+  for (const r of blocked) {
+    const key = componentKey(r.node);
+    if (key !== undefined) groupSize.set(key, (groupSize.get(key) ?? 0) + 1);
+  }
+  const seen = new Set<string>();
+  const barriers = blocked
+    .filter((r) => {
+      const key = componentKey(r.node);
+      if (key === undefined || (groupSize.get(key) ?? 0) < COLLAPSE_AT) return true;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, limit);
+  const chosen = new Set(barriers.map((r) => r.task.id));
+  const slowest = rows
+    .filter((r) => r.blocked === 0 && !chosen.has(r.task.id))
+    .sort((a, b) => b.sr - a.sr || a.order - b.order)
+    .slice(0, Math.max(0, limit - barriers.length));
+  return [...barriers, ...slowest].map((r) => r.task);
 }
