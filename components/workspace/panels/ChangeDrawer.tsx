@@ -5,7 +5,7 @@
 // opened it, so none of that is re-implemented here.
 
 import { useEffect, useId, useRef, useState } from "react";
-import { CssView, DiffView } from "@/components/plan/DiffView";
+import { CssView, DiffView } from "./fix/DiffView";
 import { SOURCE_NOTE, STAGE_WORD, displaySelector, tidyHtml } from "@/lib/ui/fix-run";
 import { wordingTitle, wordingWhy } from "./fix/wording";
 import type { ChangeDrawerProps } from "../contract";

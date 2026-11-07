@@ -5,8 +5,6 @@
 // The components of components/workspace/ are presentational over what this returns.
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import type { CustomState } from "@/components/analyze/CustomTaskBox";
-import { useFixRun } from "@/components/analyze/useFixRun";
 import { useDataSource, useDataSourceMode } from "@/components/DataSourceProvider";
 import type { A11yNode, SearchEstimate, Task, TaskResult } from "@/lib/contracts";
 import type { ExportMeta } from "@/lib/livefix/export";
@@ -17,7 +15,9 @@ import { buildWordingEdits, taskLabels, wordingWcag } from "@/lib/ui/fix-run";
 import { nodeLabel, roleWord, taskForNode } from "@/lib/ui/pick";
 import { buildRenameStory, hideSearchInsight } from "@/lib/ui/rename-story";
 import { PERSONA_ORDER, buildLane, type Lane } from "@/lib/ui/timeline";
+import type { CustomState } from "./CustomTaskBox";
 import { currentStep, primaryAction, stepStates, type PrimaryKind, type StepFacts } from "./steps";
+import { useFixRun } from "./useFixRun";
 import type { ChangeDrawerProps, PlanPanelProps, PlanStatus, RacePanelProps, RecheckPanelProps, RepairStatus, RepairView, StepId, FixPanelProps } from "./contract";
 
 export type { CustomState };

@@ -1,67 +1,18 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { SpeakerIcon, StopIcon } from "@/components/icons";
 import { LITERATURE } from "@/lib/params/literature";
 import { commandKey } from "@/lib/ui/personas";
 import { splitUtterance } from "@/lib/ui/speech";
 import { laneFrame, type Lane } from "@/lib/ui/timeline";
 import { useReducedMotion } from "@/lib/ui/use-reduced-motion";
 import type { RaceClock } from "./useRaceClock";
-import { useHearIt, type HearIt } from "./useHearIt";
-
-interface Props {
-  lane: Lane;
-  clock: RaceClock;
-}
-
-export function Transcript({ lane, clock }: Props) {
-  const wpm = LITERATURE.speech.wpm.value;
-  const hear = useHearIt(lane.events, wpm);
-  const spoken = lane.events.filter((e) => e.utterance).length;
-
-  return (
-    <section aria-labelledby="transcript-h" className="card p-5 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0">
-          <h2 id="transcript-h" className="h-card">
-            What the listener hears
-          </h2>
-          <p className="mt-1 max-w-md text-sm text-muted">
-            Every stop on the shortest path, in order. Faded words are what the modelled listener skips past.
-          </p>
-        </div>
-        <div className="flex flex-col items-start gap-1 sm:items-end">
-          <button
-            type="button"
-            className={`btn btn-sm max-sm:min-h-11 ${hear.speaking ? "!border-ink !bg-lime" : ""}`}
-            onClick={hear.speaking ? hear.stop : hear.start}
-            disabled={!hear.supported || spoken === 0}
-          >
-            {hear.speaking ? <StopIcon size={16} /> : <SpeakerIcon size={16} />}
-            {hear.speaking ? "Stop" : "Hear it"}
-          </button>
-          <span className="text-[0.8125rem] text-muted">
-            {hear.supported ? `Spoken at ${hear.rate.toFixed(2)}× (${wpm} words/min)` : "Speech is not available in this browser"}
-          </span>
-        </div>
-      </div>
-
-      <TranscriptBody
-        lane={lane}
-        clock={clock}
-        hear={hear}
-        className="relative mt-4 max-h-[22rem] overflow-y-auto rounded-lg border border-rule bg-paper"
-      />
-    </section>
-  );
-}
+import type { HearIt } from "./useHearIt";
 
 /**
  * The scrolling list of what the listener hears, without a card, a heading or a button. It follows the race
- * clock (or the spoken line while `hear` is speaking). `Transcript` wraps it with its own "Hear it" button;
- * a panel that puts "Hear it" elsewhere owns `hear` (useHearIt) and passes it in. `className` styles the
- * scroller. `compact` uses the app's 14 and 12 px sizes and narrower columns, for a card in a workspace column.
+ * clock (or the spoken line while `hear` is speaking). The panel owns `hear` (useHearIt) and its "Hear it"
+ * button, and passes it in. `className` styles the scroller. `compact` uses the app's 14 and 12 px sizes and narrower columns, for a card in a workspace column.
  */
 export function TranscriptBody({
   lane,

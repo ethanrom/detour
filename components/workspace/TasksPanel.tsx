@@ -1,9 +1,9 @@
 "use client";
 
 import { useId, useState } from "react";
-import { CustomTaskBox } from "@/components/analyze/CustomTaskBox";
 import type { Task, TaskResult } from "@/lib/contracts";
 import { PERSONA_ORDER } from "@/lib/ui/timeline";
+import { CustomTaskBox } from "./CustomTaskBox";
 import { PickBox } from "./PickBox";
 import { Bars, Disclosure, GroupLabel, Panel, PersonaTime } from "./ui";
 import { useMediaQuery } from "./useMediaQuery";
