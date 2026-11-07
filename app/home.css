@@ -1,0 +1,816 @@
+/*
+ * Home page. Direction "The sentence is the layout", palette Frost and slate, type Switzer.
+ * Colours and type steps come from globals.css. Every move is transform or opacity (the shutter also uses clip-path),
+ * and every hidden state lives inside prefers-reduced-motion: no-preference, so the reduced page is the finished page.
+ * Interface fragments (data-ui) are the page's pictures: the hero race, the three inline chips, the stage bar and the
+ * three switch bands.
+ */
+
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.home {
+  --display: 14vw;
+  --display-cta: 17vw;
+  --stmt: 1.5rem;
+  --band: 1.5rem;
+  --gap: 6rem;
+  /* The dimmed ink of the proof sentence: 4.6:1 on the field it sits on. */
+  --dim: #5f6d74;
+  color: var(--ink);
+}
+
+@media (min-width: 640px) {
+  .home {
+    --display: clamp(4rem, 11vw, 10.5rem);
+    --display-cta: clamp(4rem, 11vw, 10.5rem);
+    --stmt: clamp(1.5rem, 0.9rem + 1.6vw, 2.25rem);
+    --band: clamp(1.5rem, 3.6vw, 3.75rem);
+    --gap: clamp(6rem, 10vw, 10rem);
+  }
+}
+
+/* One pair of page margins, used by every section, the header and the footer. */
+.hm-wrap {
+  width: 100%;
+  max-width: 1360px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .hm-wrap {
+    padding-inline: 2rem;
+  }
+}
+
+.hm-sec {
+  padding-block: calc(var(--gap) / 2);
+}
+
+/* ---------- Hero ---------- */
+
+.hm-hero {
+  padding-top: clamp(1.5rem, 4vw, 3.5rem);
+  padding-bottom: calc(var(--gap) / 2);
+}
+
+.hm-display {
+  margin: 0;
+  font-size: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.hm-hl {
+  display: block;
+}
+
+.hm-hl2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.12em;
+}
+
+.hm-hero-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem 3rem;
+  margin-top: clamp(2rem, 3.2vw, 3rem);
+}
+
+.hm-lede {
+  margin: 0;
+  max-width: 40rem;
+  font-size: var(--step-lead);
+  line-height: 1.4;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.hm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 2rem;
+}
+
+.btn.hm-btn-lg {
+  min-height: 3.5rem;
+  padding-inline: 1.75rem;
+  font-size: var(--step-body);
+}
+
+.hm-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: var(--step-body);
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 0.07em;
+  text-underline-offset: 0.3em;
+  transition: text-decoration-thickness 160ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hm-link:hover {
+    text-decoration-thickness: 0.16em;
+  }
+}
+
+/* The word in the headline: a live crop of the race, one cap height tall and 2.4em wide, on the baseline. */
+.race {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 2.4em;
+  height: 0.72em;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.race-in {
+  position: absolute;
+  inset: 0;
+}
+
+.race-lane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+}
+
+.race-lane:nth-child(1) {
+  top: 8%;
+}
+.race-lane:nth-child(2) {
+  top: 39%;
+}
+.race-lane:nth-child(3) {
+  top: 70%;
+}
+
+.race-lane-in,
+.race-clock {
+  position: absolute;
+  left: 5%;
+  right: 9%;
+  overflow: hidden;
+}
+
+.race-lane-in {
+  top: 0;
+  bottom: 0;
+}
+
+.race-clock {
+  top: 5%;
+  bottom: 5%;
+}
+
+.race-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 40%;
+  height: 20%;
+  background: var(--rule-strong);
+}
+
+.race-run {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--end);
+}
+
+.race-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18%;
+  bottom: 18%;
+}
+
+.race-mk {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  aspect-ratio: 1;
+}
+
+.race-mk-circle {
+  border-radius: 50%;
+}
+
+.race-mk-diamond {
+  transform: rotate(45deg) scale(0.72);
+}
+
+.race-x {
+  position: absolute;
+  left: 100%;
+  top: 10%;
+  height: 80%;
+  aspect-ratio: 1;
+  margin-left: 12%;
+  color: var(--blocked);
+}
+
+.race-hand-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.race-hand {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 0.025em;
+  min-width: 2px;
+  background: var(--ink);
+}
+
+@media (max-width: 639.98px) {
+  .hm-hl2 {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .race {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    margin-block: 0.12em 0.04em;
+  }
+}
+
+/* ---------- Statements ---------- */
+
+.hm-stmt {
+  margin: 0;
+  text-wrap: pretty;
+  font-size: var(--stmt);
+  font-weight: 500;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.nb {
+  white-space: nowrap;
+}
+
+.hm-note {
+  margin: 2rem 0 0;
+  max-width: 52rem;
+  font-size: var(--step-body);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* A small inline frame: the persona's icon on its tint, part of the line. */
+.hm-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3em;
+  height: 0.85em;
+  margin-inline: 0.12em;
+  vertical-align: -0.1em;
+}
+
+.hm-chip-icon {
+  width: 0.62em;
+  height: 0.62em;
+}
+
+/* ---------- Section headings ---------- */
+
+.hm-h {
+  margin: 0;
+  font-size: var(--step-head);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-wrap: balance;
+  color: var(--ink);
+}
+
+/* ---------- How it works: stages as one bar ---------- */
+
+.loop {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.loop-stage {
+  display: flex;
+  flex: var(--w) 1 0;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 12%;
+  color: var(--ink);
+}
+
+.loop-seg {
+  height: max(15rem, 22vh);
+  padding: 1.25rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.loop-label {
+  display: block;
+  font-size: var(--step-lead);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+@media (min-width: 56rem) {
+  .loop-label {
+    font-size: clamp(1.5rem, 2.8vw, 2.75rem);
+    letter-spacing: -0.03em;
+  }
+}
+
+.loop-time {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: var(--step-body);
+}
+
+.loop-clause {
+  margin: 0;
+  max-width: min(22ch, 100%);
+  font-size: var(--step-body);
+  line-height: 1.45;
+  color: inherit;
+}
+
+@media (max-width: 55.99rem) {
+  .loop {
+    flex-direction: column;
+    min-height: 70svh;
+  }
+  .loop-stage {
+    flex: var(--w) 1 0;
+    gap: 0.5rem;
+    min-width: 0;
+    min-height: 72px;
+    padding: 1rem 1.25rem;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .loop-seg {
+    height: auto;
+    padding: 0;
+    background: transparent;
+  }
+  .loop-clause {
+    max-width: none;
+  }
+}
+
+/* ---------- Proof: names as one sentence ---------- */
+
+.hm-field {
+  padding-block: var(--gap);
+  background: var(--paper-2);
+}
+
+.proof {
+  text-wrap: pretty;
+  font-size: var(--stmt);
+  font-weight: 500;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.proof-lead,
+.proof-run {
+  display: inline;
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+.proof-lead {
+  font-weight: 600;
+}
+
+.proof-item {
+  transition: color 400ms ease;
+}
+
+.proof[data-cycling="true"] .proof-item {
+  color: var(--dim);
+}
+
+.proof[data-cycling="true"] .proof-item.is-lit {
+  color: var(--ink);
+}
+
+/* ---------- Sentences with switches ---------- */
+
+.hm-sec-switch {
+  padding-bottom: calc(var(--gap) / 2);
+}
+
+.sw-list {
+  margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sw-band {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 8.25rem;
+  background: var(--paper);
+  cursor: pointer;
+  transition: background-color 240ms ease;
+}
+
+.sw-band[data-on="true"] {
+  background: var(--field);
+}
+
+.sw-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1.5rem;
+  padding-block: 1.5rem;
+}
+
+.sw-btn {
+  margin-top: -0.5rem;
+}
+
+.sw-sentence {
+  margin: 0;
+  font-size: var(--band);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--muted);
+  transition: color 240ms ease;
+}
+
+.sw-band[data-on="true"] .sw-sentence {
+  color: var(--ink);
+}
+
+.sw-line {
+  margin: 0.75rem 0 0;
+  min-height: 3em;
+  font-size: var(--step-body);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.sw-line span {
+  display: block;
+}
+
+.sw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--band);
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Off: a hollow track and a slate knob. On: a filled track and a white knob. Shape and fill carry the state, not colour alone. */
+.sw-track {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 2em;
+  height: 1.1em;
+  border: 0.07em solid var(--muted);
+  border-radius: 999px;
+  background: transparent;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    transform 140ms var(--ease-out);
+}
+
+.sw-knob {
+  position: absolute;
+  left: 0.1em;
+  top: 50%;
+  width: 0.76em;
+  height: 0.76em;
+  margin-top: -0.38em;
+  border-radius: 50%;
+  background: var(--muted);
+  transition:
+    transform 260ms var(--ease-out),
+    background-color 200ms ease;
+}
+
+.sw-band[data-on="true"] .sw-track {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.sw-band[data-on="true"] .sw-knob {
+  background: #ffffff;
+  transform: translateX(0.9em);
+}
+
+.sw-band:active .sw-track {
+  transform: scale(0.95);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sw-band:hover:not([data-on="true"]) {
+    background: var(--paper-2);
+  }
+  .sw-band:hover .sw-track {
+    transform: scale(1.04);
+  }
+  .sw-band:active .sw-track {
+    transform: scale(0.95);
+  }
+}
+
+.hm-caption {
+  margin-top: clamp(2rem, 3vw, 3rem);
+}
+
+@media (min-width: 640px) {
+  .sw-band {
+    min-height: 13rem;
+  }
+  .sw-inner {
+    align-items: center;
+    gap: 3rem;
+    padding-block: 2rem;
+  }
+  .sw-btn {
+    margin-top: 0;
+  }
+}
+
+/* ---------- Call to action: a question at both edges ---------- */
+
+.cta {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  min-height: min(82svh, 40rem);
+  padding: 1.5rem 1.25rem 1.25rem;
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.cta-h {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  font-size: var(--display-cta);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  text-align: center;
+  color: #ffffff;
+}
+
+.cta-h > span {
+  display: block;
+}
+
+.cta-row {
+  grid-area: 1 / 1;
+  place-self: center;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.cta-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 72%;
+}
+
+.btn.hm-btn-xl {
+  width: 100%;
+  min-height: 3.5rem;
+  padding-inline: 1.75rem;
+  font-size: var(--step-body);
+}
+
+.btn.hm-btn-light {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.btn.hm-btn-light:hover:not(:disabled) {
+  background: var(--paper-2);
+}
+
+.btn.hm-btn-line {
+  border-color: #ffffff;
+  background: transparent;
+  color: #ffffff;
+}
+
+.btn.hm-btn-line:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.cta-or {
+  font-size: var(--step-body);
+  color: #cdd7dc;
+}
+
+.cta-note {
+  margin: 0;
+  max-width: 34rem;
+  font-size: var(--step-body);
+  line-height: 1.5;
+  text-align: center;
+  color: #ffffff;
+  text-wrap: balance;
+}
+
+@media (min-width: 640px) {
+  .cta {
+    min-height: min(100svh, 52rem);
+    padding: 2rem 2rem 1.5rem;
+  }
+  .cta-buttons {
+    flex-direction: row;
+    justify-content: center;
+    gap: 2rem;
+    width: auto;
+  }
+  .btn.hm-btn-xl {
+    width: auto;
+    min-width: 14rem;
+  }
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes hm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes race-open {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes race-settle {
+  from {
+    transform: scale(1.12);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* One loop of the race. Lanes run at the same speed on one clock: mouse ends at 5 s of 17, keyboard stops at 35%. */
+@keyframes race-mouse {
+  0% { transform: translateX(-100%); opacity: 1; }
+  19.6% { transform: translateX(0); }
+  90% { transform: translateX(0); opacity: 1; }
+  96% { transform: translateX(0); opacity: 0; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+@keyframes race-keyboard {
+  0% { transform: translateX(-100%); opacity: 1; }
+  23.3% { transform: translateX(0); }
+  90% { transform: translateX(0); opacity: 1; }
+  96% { transform: translateX(0); opacity: 0; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+@keyframes race-screenreader {
+  0% { transform: translateX(-100%); opacity: 1; }
+  66.7% { transform: translateX(0); }
+  90% { transform: translateX(0); opacity: 1; }
+  96% { transform: translateX(0); opacity: 0; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes sw-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * These openings end on the finished state. Under prefers-reduced-motion globals.css collapses every animation to its
+ * last frame (0.001ms, no delay), so the reduced page is the finished page and nothing waits for them.
+ */
+.hm-load {
+  animation: hm-rise 700ms var(--ease-out) var(--d, 0ms) both;
+}
+
+/* Signature: the frame opens like a shutter while the picture inside settles from 1.12 scale. */
+.race {
+  animation: race-open 1100ms var(--ease-in-out) 120ms both;
+}
+.race-in {
+  animation: race-settle 1500ms var(--ease-soft) 120ms both;
+}
+
+.sw-line span {
+  animation: sw-in 420ms var(--ease-out) both;
+}
+
+/* Loops, travel and hidden states exist only when motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  .race-run-mouse {
+    animation: race-mouse 9s linear 1.2s infinite both;
+  }
+  .race-run-keyboard {
+    animation: race-keyboard 9s linear 1.2s infinite both;
+  }
+  .race-run-screenreader,
+  .race-hand-wrap {
+    animation: race-screenreader 9s linear 1.2s infinite both;
+  }
+
+  .hm-chip {
+    transition:
+      transform 600ms var(--ease-out) calc(350ms + var(--c, 0) * 110ms),
+      opacity 400ms ease calc(350ms + var(--c, 0) * 110ms);
+  }
+  .rv-hide:not(.rv-in) .hm-chip {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+
+  /* Entrances: hidden only after hydration and only for parts below the fold (see RevealRoot). */
+  .rv-hide {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 700ms var(--ease-out) calc(var(--i, 0) * 80ms),
+      transform 900ms var(--ease-expo) calc(var(--i, 0) * 80ms);
+  }
+  .rv-hide.rv-in {
+    opacity: 1;
+    transform: none;
+  }
+}

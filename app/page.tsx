@@ -1,137 +1,157 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowRightIcon } from "@/components/icons";
-import { HeroTeaser } from "@/components/home/HeroTeaser";
+import "./home.css";
+import { Chip } from "@/components/home/Chip";
+import { HeroRace } from "@/components/home/HeroRace";
+import { LOOP, durationText, loopIsMeasured } from "@/components/home/loop";
+import { ProofCycle } from "@/components/home/ProofCycle";
+import { RevealRoot } from "@/components/home/RevealRoot";
+import { Switches } from "@/components/home/Switches";
 
-const FACTS = [
-  {
-    lead: "95.9%",
-    text: "of home pages fail WCAG checks",
-    cite: "WebAIM Million, 2026",
-  },
-  {
-    lead: "Which?",
-    text: "Audits don’t say which failures cost people the most time",
-  },
-  {
-    lead: "Rare",
-    text: "User studies with disabled participants are slow and rare",
-  },
-];
+const stagger = (i: number) => ({ "--i": i }) as CSSProperties;
 
-const STEPS = [
-  {
-    title: "Extract the accessibility tree",
-    body: "Load the real page, read roles, names, focus order, headings and landmarks the way assistive technology does.",
-  },
-  {
-    title: "Model each persona",
-    detail: "KLM-GOMS, Fitts, screen-reader shortest paths",
-    body: "A mouse user, a keyboard-only user and a screen-reader user each get a cost model built from published human-performance research.",
-  },
-  {
-    title: "Measure with uncertainty",
-    body: "Monte Carlo over the literature’s parameter ranges turns one guess into a 90% interval, so every time is a range you can trust.",
-  },
-  {
-    title: "Plan the smallest fix set",
-    body: "Re-measure after each candidate code fix, keep the few that win the most seconds, and check the choice against an exhaustive search over the most promising fixes.",
-  },
-];
+/** Segment colours: flat steps of the palette, light to dark, ending on the one accent. */
+const SEGMENT_FIELDS = [
+  { bg: "var(--lime-deep)", fg: "var(--ink)" },
+  { bg: "var(--rule-strong)", fg: "var(--ink)" },
+  { bg: "var(--muted)", fg: "#ffffff" },
+  { bg: "var(--ink-2)", fg: "#ffffff" },
+  { bg: "var(--accent)", fg: "#ffffff" },
+] as const;
 
 export default function Home() {
+  const measured = loopIsMeasured();
+
   return (
-    <>
-      {/* Hero */}
-      <section aria-labelledby="hero-h" className="mx-auto grid w-full max-w-[1360px] items-center gap-12 px-5 pb-16 pt-12 sm:px-8 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-24 lg:pt-20">
-        <div className="rise-in">
-          <p className="eyebrow">Detour · accessibility, with a stopwatch</p>
-          <h1 id="hero-h" className="display mt-5 text-[2.9rem] sm:text-6xl lg:text-[4.6rem]">
-            Accessibility, measured in <span className="mark">seconds.</span>
-          </h1>
-          <p className="lede mt-6 max-w-xl">
-            Audits list violations. Detour shows the time they cost real people, and the smallest fix that wins it back.
+    <div className="home">
+      {/* Hero: the sentence is the layout */}
+      <section aria-labelledby="hero-h" className="hm-hero hm-wrap">
+        <h1 id="hero-h" className="hm-display">
+          <span className="hm-hl">Not everyone</span>{" "}
+          <span className="hm-hl hm-hl2">
+            <HeroRace /> <span>gets there.</span>
+          </span>
+        </h1>
+        <div className="hm-hero-foot">
+          <p className="hm-lede hm-load" style={{ "--d": "520ms" } as CSSProperties}>
+            Detour times a mouse user, a keyboard-only user and a blind screen-reader user on any web page, then fixes
+            what stops them and re-checks the fix.
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-4">
-            <Link href="/analyze" className="btn btn-primary !min-h-12 !px-6 text-base">
-              Analyze a page <ArrowRightIcon size={18} />
+          <div className="hm-actions hm-load" style={{ "--d": "620ms" } as CSSProperties}>
+            <Link href="/analyze#url" className="btn btn-accent hm-btn-lg">
+              Try your own page
             </Link>
-            <Link href="/method" className="btn !min-h-12 !px-6 text-base">
-              How the model works
+            <Link href="/analyze" className="hm-link">
+              See the demo store
             </Link>
           </div>
         </div>
-        <div className="rise-in [animation-delay:150ms]">
-          <HeroTeaser />
-        </div>
       </section>
 
-      {/* The problem */}
-      <section aria-labelledby="problem-h" className="border-y border-rule bg-paper-2">
-        <div className="mx-auto w-full max-w-[1360px] px-5 py-16 sm:px-8 lg:py-20">
-          <p className="eyebrow">The problem</p>
-          <h2 id="problem-h" className="h-section mt-3 max-w-2xl">
-            We know pages are broken. We don’t know what it costs.
-          </h2>
-          <ul className="mt-10 grid gap-5 md:grid-cols-3">
-            {FACTS.map((f, i) => (
-              <li key={f.lead} className="card flex flex-col p-6 sm:p-7">
-                <span className="eyebrow">0{i + 1}</span>
-                <span className="display mt-4 text-5xl sm:text-6xl">{f.lead}</span>
-                <p className="mt-4 text-lg leading-snug">
-                  {f.text}
-                  {f.cite && (
-                    <>
-                      {" "}
-                      <span className="text-muted">({f.cite})</span>
-                    </>
-                  )}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section aria-labelledby="how-h" className="mx-auto w-full max-w-[1360px] px-5 py-16 sm:px-8 lg:py-24">
-        <p className="eyebrow">How it works</p>
-        <h2 id="how-h" className="h-section mt-3 max-w-2xl">
-          From a page to a plan, in four steps
+      {/* Intro: a statement with inline frames */}
+      <section aria-labelledby="cost-h" className="hm-sec">
+        <h2 id="cost-h" className="sr-only">
+          Why it matters
         </h2>
-        <ol className="mt-12 grid gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="relative">
-              <span className="grid size-12 place-items-center rounded-full bg-ink font-serif text-xl font-bold text-lime" aria-hidden="true">
-                {i + 1}
-              </span>
-              {i < STEPS.length - 1 && (
-                <span aria-hidden="true" className="absolute left-14 top-6 hidden h-px w-[calc(100%-3.5rem+2rem)] bg-ink/25 lg:block" />
-              )}
-              <h3 className="h-card mt-5">
-                <span className="sr-only">Step {i + 1}: </span>
-                {s.title}
-              </h3>
-              {s.detail && <p className="mt-1 font-mono text-xs text-muted">{s.detail}</p>}
-              <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted">{s.body}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {/* CTA */}
-      <section aria-labelledby="cta-h" className="mx-auto w-full max-w-[1360px] px-5 sm:px-8">
-        <div className="on-ink flex flex-wrap items-center justify-between gap-8 rounded-3xl bg-ink px-7 py-10 text-paper sm:px-12 sm:py-14">
-          <div className="max-w-xl">
-            <h2 id="cta-h" className="h-section">
-              Race three people through <span className="mark">your</span> page.
-            </h2>
-            <p className="mt-3 text-[#b8c0cc]">Pick a page, pick a task, watch the seconds add up, then hear what a screen-reader user hears.</p>
-          </div>
-          <Link href="/analyze" className="btn btn-primary !min-h-12 !px-6 text-base !text-ink">
-            Open the workbench <ArrowRightIcon size={18} />
-          </Link>
+        <div className="hm-wrap">
+          <p className="hm-stmt" data-reveal>
+            95.9% of home pages fail an accessibility check. Detour counts what that costs people:{" "}
+            <span className="nb">
+              <Chip persona="mouse" order={0} /> 5 s
+            </span>{" "}
+            by{" "}
+            <span className="nb">
+              mouse, <Chip persona="keyboard" order={1} /> no
+            </span>{" "}
+            way through by{" "}
+            <span className="nb">
+              keyboard, <Chip persona="screenreader" order={2} /> 17 s
+            </span>{" "}
+            by&nbsp;screen&nbsp;reader.
+          </p>
+          <p className="hm-note" data-reveal style={stagger(1)}>
+            WebAIM Million, 2026. Times are Detour’s predictions for the demo store task “Add the Trail Jacket in size M to
+            the cart”.
+          </p>
         </div>
       </section>
-    </>
+
+      {/* How it works: stages as one bar */}
+      <section aria-labelledby="loop-h" className="hm-sec">
+        <div className="hm-wrap">
+          <h2 id="loop-h" className="hm-h" data-reveal>
+            From page to proof
+          </h2>
+          <ol className="loop" data-ui>
+            {LOOP.map((s, i) => {
+              const field = SEGMENT_FIELDS[i];
+              const duration = durationText(s.seconds);
+              return (
+                <li
+                  key={s.id}
+                  className="loop-stage"
+                  data-reveal
+                  style={{ "--i": i, "--w": measured ? s.seconds : 1, "--bg": field.bg, "--fg": field.fg } as CSSProperties}
+                >
+                  <div className="loop-seg">
+                    <span className="loop-label">{s.label}</span>
+                    {duration && <span className="loop-time">{duration}</span>}
+                  </div>
+                  <p className="loop-clause">{s.clause}</p>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      </section>
+
+      {/* Proof: names as one sentence */}
+      <section aria-labelledby="proof-h" className="hm-sec hm-field">
+        <div className="hm-wrap">
+          <div data-reveal>
+            <ProofCycle headingId="proof-h" />
+          </div>
+        </div>
+      </section>
+
+      {/* Features: sentences with switches */}
+      <section aria-labelledby="switch-h" className="hm-sec hm-sec-switch">
+        <div className="hm-wrap">
+          <h2 id="switch-h" className="hm-h" data-reveal>
+            Flip a fix, see the seconds
+          </h2>
+        </div>
+        <Switches labelledBy="switch-h" />
+        <div className="hm-wrap">
+          <p className="hm-note hm-caption" data-reveal>
+            Northwind demo store, predicted seconds. Fixes that only pay off together are why Detour plans them as a set.
+          </p>
+        </div>
+      </section>
+
+      {/* Call to action: a question at both edges */}
+      <section aria-labelledby="cta-h" className="cta on-ink">
+        <h2 id="cta-h" className="cta-h">
+          <span data-reveal>Your page,</span>
+          <span data-reveal style={stagger(1)}>
+            or ours?
+          </span>
+        </h2>
+        <div className="cta-row" data-reveal style={stagger(2)}>
+          <div className="cta-buttons">
+            <Link href="/analyze#url" className="btn hm-btn-xl hm-btn-light">
+              Try your own page
+            </Link>
+            <span className="cta-or">or</span>
+            <Link href="/analyze" className="btn hm-btn-xl hm-btn-line">
+              Open the demo store
+            </Link>
+          </div>
+          <p className="cta-note">Either way, every number is worked out in your browser, and the AI never writes one.</p>
+        </div>
+      </section>
+
+      <RevealRoot />
+    </div>
   );
 }
