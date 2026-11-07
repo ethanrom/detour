@@ -39,15 +39,15 @@ Riverside County FreshStart Food Assistance, same method: "Switch the page to Sp
 
 ## Screenshots
 
-<!-- Captured from the production build by a Playwright script: 1600 x 1000 viewport at 2x, prefers-reduced-motion: reduce so races show their final state. Keep these exact names. -->
+<!-- Captured from the production build by a Playwright script (internal/capture.mjs): 1600 x 1000 viewport at 2x, prefers-reduced-motion: reduce so races show their final state. Keep these exact names. -->
 | | |
 |---|---|
-| ![Home: the headline "Not everyone gets there." with a small three-lane race set inside it, where the keyboard lane stops with a cross, and the actions Try your own page and See the demo store](docs/img/home.png) | ![Analyze: Northwind Outfitters, "Add the Trail Jacket in size M to the cart". The mouse user needs 5 s, the keyboard user can't finish because the size option is a clickable div, the screen-reader user needs 17 s](docs/img/analyze.png) |
-| **Home**: the race inside the headline, then the problem, the loop and the fixes you can switch on | **Analyze**: pick a page and a task, race the three users, read why the keyboard lane stops |
-| ![Plan and fix: three ranked fixes, each written by Claude, with its real HTML change, WCAG criteria and re-checked times, under a summary that reads 3 of 3 proven and 497 elements kept their place](docs/img/plan.png) | ![After the fixes: the same race re-checked on the fixed page. The keyboard user goes from can't finish to 4.4 s, with the before run drawn as a ghost and the predicted time in grey](docs/img/after.png) |
-| **Plan and fix**: ranked fixes, Claude's real edits, WCAG criteria, proven on the page | **After**: the same race re-checked on the fixed page, before (ghost), predicted (grey) |
-| ![Riverside County: Claude's wording suggestion renames "More information" to "Monthly income limits by household size", verified by the scent model with the seconds saved, above the realistic heading-search panel](docs/img/riverside.png) | ![Method: Fitts's law formula and the table of parameters with ranges and sources](docs/img/method.png) |
-| **Riverside County**: Claude proposes wording, the scent model checks the seconds | **Method**: every formula, parameter and source, in the open |
+| ![Home: the headline "Not everyone gets there." with a small three-lane race set inside it, an address field to analyse any public page, and links to the three demo pages](docs/img/home.png) | ![Analyze, Race step on Northwind Outfitters: the page and its tasks on the left; the race on the right says "Keyboard can't finish this task" because the size option M is a clickable div; the mouse user needs 5 s and the screen-reader user 17 s](docs/img/analyze.png) |
+| **Home**: what Detour is, a field to try any page, three real findings | **Race**: the page and its tasks beside the race, with the reason anyone gets stuck |
+| ![Analyze, Fix step: 3 of 3 proven and 497 elements kept their place; each fix row shows who it unblocked, re-checked against the prediction, with View change for the real edit](docs/img/plan.png) | ![Analyze, Re-check step: per person before and after, keyboard from can't finish to 4.4 s (predicted 4.4 s), and the race again on the fixed page with the before run as a ghost](docs/img/after.png) |
+| **Fix**: one agent per planned fix, every fix re-checked on the page | **Re-check**: the same race on the fixed page, predicted seconds in grey |
+| ![Analyze, Plan step on Riverside County: three fixes win back 316 s, certified optimal; verified wording renames "More information" to "Monthly income limits by household size", screen-reader search 160 s to 42 s](docs/img/riverside.png) | ![Method: the formulas, the parameters with their ranges and sources, and the limitations](docs/img/method.png) |
+| **Plan**: the certified smallest set of fixes, and Claude's wording checked by the scent model | **Method**: every formula, parameter and source, in the open |
 
 ## Architecture
 
@@ -187,7 +187,7 @@ npm run dev        # http://localhost:3000
 
 No model id appears in the code.
 
-Then try it: open **Analyze**, choose **Northwind Outfitters**, press **Run** on "Add the Trail Jacket in size M to the cart", press **Hear it**, then **Plan fixes** and **Fix this page**. Or paste any public address into **Any public page** and run one of the suggested tasks.
+Then try it: open **Analyze**, choose **Northwind Outfitters**, press **Run** on "Add the Trail Jacket in size M to the cart", press **Hear it**, then **Plan fixes** and **Fix this page**. Or press **Change page**, paste any public address into **Any public page**, and run one of the suggested tasks.
 
 ```bash
 npm run typecheck   # next typegen + tsc
