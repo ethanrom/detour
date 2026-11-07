@@ -1,3 +1,133 @@
 {
-  "fixes": []
+  "fixes": [
+    {
+      "fixId": "remove-positive-tabindex",
+      "outerHTML": [
+        "<button class=\"chat-launcher\" id=\"chat-launcher\" type=\"button\" tabindex=\"1\" aria-label=\"Chat with us\" data-detour-id=\"chat-launcher\"><svg viewBox=\"0 0 24 24\"><path d=\"M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z\"></path><path d=\"M8 10h8M8 13h5\"></path></svg></button>",
+        "<button class=\"feedback-tab\" id=\"feedback-tab\" type=\"button\" tabindex=\"2\" data-detour-id=\"feedback-tab\">Give feedback</button>"
+      ],
+      "result": {
+        "edits": [
+          {
+            "op": "setAttributes",
+            "selector": "[data-detour-id=\"chat-launcher\"]",
+            "attributes": {
+              "tabindex": "0"
+            }
+          },
+          {
+            "op": "setAttributes",
+            "selector": "[data-detour-id=\"feedback-tab\"]",
+            "attributes": {
+              "tabindex": "0"
+            }
+          }
+        ],
+        "note": "Positive tabindex values on the chat launcher and feedback tab (likely in the chat widget and feedback component templates) were reset to 0 so they follow natural DOM focus order.",
+        "fixId": "remove-positive-tabindex",
+        "source": "agent",
+        "ms": 1898
+      }
+    },
+    {
+      "fixId": "promote-heading:style:div.aside-title|20|800",
+      "outerHTML": [
+        "<div class=\"aside-title\" data-detour-id=\"n262\">At a glance</div>",
+        "<div class=\"aside-title\" data-detour-id=\"n315\">Larger household?</div>"
+      ],
+      "result": {
+        "edits": [
+          {
+            "op": "setAttributes",
+            "selector": "[data-detour-id=\"n262\"]",
+            "attributes": {
+              "role": "heading",
+              "aria-level": "3"
+            }
+          },
+          {
+            "op": "setAttributes",
+            "selector": "[data-detour-id=\"n315\"]",
+            "attributes": {
+              "role": "heading",
+              "aria-level": "3"
+            }
+          }
+        ],
+        "note": "The \"aside-title\" divs in the who-aside and limits-note components should be real h3 elements in the source; until then they are exposed as level 3 headings via ARIA, with no visual change.",
+        "fixId": "promote-heading:style:div.aside-title|20|800",
+        "source": "agent",
+        "ms": 2188
+      }
+    },
+    {
+      "fixId": "real-button:lang-picker",
+      "outerHTML": [
+        "<span class=\"lang-opt is-selected\" data-lang=\"en\" data-detour-id=\"lang-en\">English</span>",
+        "<span class=\"lang-opt\" data-lang=\"es\" data-detour-id=\"lang-es\">Español</span>",
+        "<span class=\"lang-opt\" data-lang=\"vi\" data-detour-id=\"lang-vi\">Tiếng Việt</span>",
+        "<span class=\"lang-opt\" data-lang=\"zh\" data-detour-id=\"lang-zh\">中文</span>",
+        "<span class=\"lang-opt\" data-lang=\"tl\" data-detour-id=\"lang-tl\">Tagalog</span>"
+      ],
+      "result": {
+        "fixId": "real-button:lang-picker",
+        "edits": [
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"lang-en\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "true"
+            }
+          },
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"lang-es\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          },
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"lang-vi\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          },
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"lang-zh\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          },
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"lang-tl\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          }
+        ],
+        "css": ".detour-fix-btn{font:inherit;color:inherit;text-align:inherit;background:none;border:0;padding:0;margin:0;width:100%;height:100%;cursor:inherit;}\n.detour-fix-btn:focus-visible{outline:2px solid #1b4a7a;outline-offset:2px;}",
+        "note": "The language picker options are rendered as spans in the language picker component (lang-row); wrap them in real buttons there and keep the selected state as aria-pressed.",
+        "source": "agent",
+        "ms": 2975
+      }
+    }
+  ]
 }

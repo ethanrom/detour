@@ -1,3 +1,139 @@
 {
-  "fixes": []
+  "fixes": [
+    {
+      "fixId": "add-label:style:button.icon-btn|13|400",
+      "outerHTML": [
+        "<button class=\"icon-btn icon-search\" type=\"button\" data-detour-id=\"search-button\"><svg viewBox=\"0 0 24 24\"><circle cx=\"11\" cy=\"11\" r=\"7\"></circle><path d=\"M20 20l-4-4\"></path></svg></button>",
+        "<button class=\"icon-btn icon-heart\" type=\"button\" data-detour-id=\"wishlist-button\"><svg viewBox=\"0 0 24 24\"><path d=\"M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.4-7 10-7 10z\"></path></svg></button>",
+        "<button class=\"icon-btn icon-cart\" type=\"button\" data-detour-id=\"cart-button\"><svg viewBox=\"0 0 24 24\"><path d=\"M5 8h14l-1 12H6L5 8z\"></path><path d=\"M9 8V6a3 3 0 0 1 6 0v2\"></path></svg><span class=\"cart-count\" aria-hidden=\"true\" hidden=\"\">0</span></button>"
+      ],
+      "result": {
+        "edits": [
+          {
+            "op": "setAttributes",
+            "selector": "[data-detour-id=\"search-button\"]",
+            "attributes": {
+              "aria-label": "Search"
+            }
+          },
+          {
+            "op": "setAttributes",
+            "selector": "[data-detour-id=\"wishlist-button\"]",
+            "attributes": {
+              "aria-label": "Wishlist"
+            }
+          },
+          {
+            "op": "setAttributes",
+            "selector": "[data-detour-id=\"cart-button\"]",
+            "attributes": {
+              "aria-label": "Cart"
+            }
+          }
+        ],
+        "note": "Add aria-label attributes to the icon-only search, wishlist and cart buttons in the header icons template (the header-icons container).",
+        "fixId": "add-label:style:button.icon-btn|13|400",
+        "source": "agent",
+        "ms": 1873
+      }
+    },
+    {
+      "fixId": "skip-link:main",
+      "outerHTML": [
+        "<h1 data-detour-id=\"product-title\">Trail Jacket</h1>"
+      ],
+      "result": {
+        "edits": [
+          {
+            "op": "insert",
+            "selector": "body",
+            "position": "afterbegin",
+            "html": "<a class=\"detour-skip-link\" href=\"#main-content\">Skip to main content</a>"
+          },
+          {
+            "op": "setAttributes",
+            "selector": "[data-detour-id=\"product-title\"]",
+            "attributes": {
+              "id": "main-content",
+              "tabindex": "-1"
+            }
+          }
+        ],
+        "css": ".detour-skip-link{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.detour-skip-link:focus{clip:auto;width:auto;height:auto;margin:0;padding:8px 14px;overflow:visible;top:8px;left:8px;z-index:2147483647;background:#fff;color:#111;outline:3px solid #1a56db;text-decoration:underline;font:600 16px/1.2 system-ui,sans-serif}",
+        "note": "Add a skip link as the first child of the body in the base layout template, and give the product title heading in the product page template the main-content id as the skip target.",
+        "fixId": "skip-link:main",
+        "source": "agent",
+        "ms": 2159
+      }
+    },
+    {
+      "fixId": "real-button:sizes",
+      "outerHTML": [
+        "<div class=\"size-opt\" data-size=\"XS\" data-detour-id=\"size-xs\">XS</div>",
+        "<div class=\"size-opt\" data-size=\"S\" data-detour-id=\"size-s\">S</div>",
+        "<div class=\"size-opt\" data-size=\"M\" data-detour-id=\"size-m\">M</div>",
+        "<div class=\"size-opt\" data-size=\"L\" data-detour-id=\"size-l\">L</div>",
+        "<div class=\"size-opt\" data-size=\"XL\" data-detour-id=\"size-xl\">XL</div>"
+      ],
+      "result": {
+        "fixId": "real-button:sizes",
+        "edits": [
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"size-xs\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          },
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"size-s\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          },
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"size-m\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          },
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"size-l\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          },
+          {
+            "op": "wrapChildren",
+            "selector": "[data-detour-id=\"size-xl\"]",
+            "tag": "button",
+            "attributes": {
+              "type": "button",
+              "class": "detour-fix-btn",
+              "aria-pressed": "false"
+            }
+          }
+        ],
+        "css": ".detour-fix-btn{font:inherit;color:inherit;text-align:inherit;background:none;border:0;padding:0;margin:0;width:100%;height:100%;cursor:inherit;}.detour-fix-btn:focus-visible{outline:2px solid #1b2420;outline-offset:2px;}",
+        "note": "Size option markup lives in the size selector component; wrap each option's label in a native button with type=\"button\" so it is focusable and announced as a button.",
+        "source": "agent",
+        "ms": 2925
+      }
+    }
+  ]
 }
