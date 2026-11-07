@@ -14,15 +14,16 @@ interface Props {
   onRun: (taskId: string) => void;
 }
 
+/** A small status chip: a pale persona tint with the persona's colour as text. 24px tall. */
 function Chip({ result, persona }: { result: TaskResult; persona: PersonaId }) {
   const meta = PERSONAS.find((p) => p.id === persona)!;
   const pr = result.personas[persona];
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+      className="inline-flex h-6 items-center gap-1 rounded px-2 text-[0.8125rem] font-medium"
       style={{ background: meta.tint, color: pr.blocked ? "var(--blocked)" : meta.color }}
     >
-      {pr.blocked ? <CrossIcon size={12} /> : <PersonaIcon persona={persona} size={12} />}
+      {pr.blocked ? <CrossIcon size={14} /> : <PersonaIcon persona={persona} size={14} />}
       <span className="sr-only">{meta.label}: </span>
       <span className="tnum">{pr.blocked ? "Can’t finish" : fmtSeconds(pr.seconds)}</span>
     </span>
@@ -31,29 +32,31 @@ function Chip({ result, persona }: { result: TaskResult; persona: PersonaId }) {
 
 export function TaskList({ tasks, results, selectedId, busyId, onRun }: Props) {
   return (
-    <ul className="divide-y divide-rule rounded-xl border border-rule bg-surface">
-      {tasks.map((t) => {
+    <ul className="divide-y divide-rule overflow-hidden rounded-lg border border-rule bg-surface">
+      {tasks.map((t, i) => {
         const selected = t.id === selectedId;
         const busy = t.id === busyId;
         const result = results?.find((r) => r.taskId === t.id);
         const verb = busy ? "Analyzing…" : selected && result ? "Run again" : "Run";
+        // The one primary: the first task until a task has been run; after that the next step (planning) is primary.
+        const primary = selectedId === null && i === 0;
         return (
           <li
             key={t.id}
-            className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-l-4 px-4 py-3 ${
-              selected ? "border-ink bg-lime/30" : "border-transparent"
-            }`}
+            className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 ${selected ? "bg-lime" : ""}`}
           >
             <div className="min-w-0 flex-1 basis-56">
-              <p className="font-semibold leading-snug">
+              <p className="text-base font-semibold leading-snug">
                 {t.label}
-                {t.grounding === "llm" && <span className="ml-2 rounded bg-lime px-1.5 py-px align-middle text-[0.6875rem] font-bold">your task</span>}
+                {t.grounding === "llm" && (
+                  <span className="ml-2 rounded bg-paper-2 px-1.5 py-0.5 align-middle text-[0.8125rem] font-medium text-ink-2">your task</span>
+                )}
               </p>
-              <p className="mt-0.5 text-xs text-muted">
-                {t.steps.length} step{t.steps.length === 1 ? "" : "s"}: {t.steps.map((s) => s.note ?? s.action).join(" → ")}
+              <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
+                <span className="tnum">{t.steps.length}</span> step{t.steps.length === 1 ? "" : "s"}: {t.steps.map((s) => s.note ?? s.action).join(" → ")}
               </p>
               {result && (
-                <p className="mt-1.5 flex flex-wrap gap-1.5">
+                <p className="mt-2 flex flex-wrap gap-1.5">
                   {PERSONAS.map((p) => (
                     <Chip key={p.id} result={result} persona={p.id} />
                   ))}
@@ -62,7 +65,7 @@ export function TaskList({ tasks, results, selectedId, busyId, onRun }: Props) {
             </div>
             <button
               type="button"
-              className={`btn btn-sm ${selected ? "btn-primary" : ""}`}
+              className={`btn btn-sm max-sm:min-h-11 ${primary ? "btn-primary" : ""}`}
               onClick={() => onRun(t.id)}
               disabled={busyId !== null}
               aria-busy={busy}

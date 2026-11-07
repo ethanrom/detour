@@ -32,8 +32,8 @@ export function TargetPicker({ page, picking, onPicking, hovered, onChoose, onAc
   const disabled = !page || busy;
 
   return (
-    <section aria-labelledby={`${id}-h`} className="rounded-xl border border-rule bg-surface p-4">
-      <h3 id={`${id}-h`} className="text-sm font-bold">
+    <section aria-labelledby={`${id}-h`} className="card p-4">
+      <h3 id={`${id}-h`} className="text-[0.9375rem] font-semibold">
         Choose a target on the page
       </h3>
       <p className="mt-1 text-sm text-muted">
@@ -42,7 +42,7 @@ export function TargetPicker({ page, picking, onPicking, hovered, onChoose, onAc
 
       <button
         type="button"
-        className={`btn btn-sm mt-3 ${picking ? "btn-primary" : ""}`}
+        className={`btn btn-sm mt-3 max-sm:min-h-11 ${picking ? "!border-ink !bg-lime" : ""}`}
         aria-pressed={picking}
         aria-disabled={disabled}
         onClick={() => {
@@ -51,7 +51,7 @@ export function TargetPicker({ page, picking, onPicking, hovered, onChoose, onAc
       >
         Click to choose a target
       </button>
-      <p className="mt-2 text-xs text-muted">
+      <p className="mt-2 text-[0.8125rem] text-muted">
         {!page
           ? "Reading the page…"
           : picking
@@ -152,7 +152,7 @@ function TargetCombobox({
       <label htmlFor={`${id}-in`} className="block text-sm font-semibold">
         Or search the page’s controls and headings
       </label>
-      <p id={`${id}-hint`} className="mt-0.5 text-xs text-muted">
+      <p id={`${id}-hint`} className="mt-0.5 text-[0.8125rem] text-muted">
         Type a name, then use the arrow keys and Enter.
       </p>
       <input
@@ -179,7 +179,7 @@ function TargetCombobox({
           setActive(-1);
         }}
         onKeyDown={onKeyDown}
-        className="mt-1.5 min-h-11 w-full rounded-lg border-2 border-ink bg-paper px-3 text-[0.9375rem] placeholder:text-muted disabled:cursor-not-allowed disabled:border-rule-strong"
+        className="mt-1.5 min-h-11 w-full rounded-md border border-rule-strong bg-surface px-3 text-[0.9375rem] placeholder:text-muted disabled:cursor-not-allowed disabled:bg-paper-2"
       />
       <ul
         id={listId}
@@ -189,7 +189,7 @@ function TargetCombobox({
         hidden={!open || shown.length === 0}
         // Keep focus in the input: pressing an option or the scrollbar must not blur (and so close) the list first.
         onMouseDown={(e) => e.preventDefault()}
-        className="mt-1 max-h-60 overflow-auto rounded-lg border-2 border-ink bg-surface"
+        className="mt-1 max-h-60 overflow-auto rounded-md border border-rule-strong bg-surface"
       >
         {shown.map((o, i) => (
           <li
@@ -201,15 +201,15 @@ function TargetCombobox({
             onMouseMove={() => i !== active && setActive(i)}
             className={`flex cursor-pointer items-baseline gap-2 px-3 py-2 text-sm ${i === active ? "bg-lime" : "hover:bg-paper-2"}`}
           >
-            <span className="w-24 shrink-0 font-mono text-[0.6875rem] uppercase tracking-wide text-muted">{o.role}</span>
+            <span className="w-24 shrink-0 text-[0.8125rem] text-muted">{o.role}</span>
             <span className="min-w-0 break-words">
               <span className="font-semibold">{o.name}</span>{" "}
-              {o.where && <span className="text-xs text-muted">in {o.where}</span>}
+              {o.where && <span className="text-[0.8125rem] text-muted">in {o.where}</span>}
             </span>
           </li>
         ))}
       </ul>
-      <p role="status" aria-live="polite" className={none ? "mt-1.5 text-xs text-muted" : "sr-only"}>
+      <p role="status" aria-live="polite" className={none ? "mt-1.5 text-[0.8125rem] text-muted" : "sr-only"}>
         {!open
           ? ""
           : none

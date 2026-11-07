@@ -26,11 +26,10 @@ const TOC = [
   ["limits", "Limitations"],
 ] as const;
 
-function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: ReactNode }) {
+function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section id={id} aria-labelledby={`${id}-h`} className="scroll-mt-24 border-t border-rule py-10 first:border-t-0 first:pt-0">
-      <p className="eyebrow">{eyebrow}</p>
-      <h2 id={`${id}-h`} className="h-section mt-2.5">
+      <h2 id={`${id}-h`} className="h-section">
         {title}
       </h2>
       <div className="prose-detour mt-5 space-y-4 text-[1.0625rem] leading-relaxed">{children}</div>
@@ -86,8 +85,7 @@ export default function MethodPage() {
   return (
     <div className="mx-auto w-full max-w-[1360px] px-5 pb-8 pt-10 sm:px-8 sm:pt-14">
       <header className="mb-12 max-w-3xl">
-        <p className="eyebrow">Method</p>
-        <h1 className="display mt-3 text-4xl sm:text-6xl">
+        <h1 className="display text-4xl sm:text-6xl">
           Every second has <span className="mark">a source</span>
         </h1>
         <p className="lede mt-5">
@@ -99,7 +97,7 @@ export default function MethodPage() {
       <div className="grid gap-12 lg:grid-cols-[14rem_minmax(0,1fr)]">
         <nav aria-label="On this page" className="hidden lg:block">
           <div className="sticky top-24">
-            <p className="eyebrow">On this page</p>
+            <p className="text-[0.8125rem] text-muted">On this page</p>
             <ol className="mt-4 space-y-0.5 border-l border-rule text-[0.9375rem]">
               {TOC.map(([id, label]) => (
                 <li key={id}>
@@ -113,7 +111,7 @@ export default function MethodPage() {
         </nav>
 
         <div className="max-w-3xl">
-          <Section id="overview" eyebrow="01" title="What Detour predicts">
+          <Section id="overview" title="What Detour predicts">
             <p>
               For a page and a task (“add the Trail Jacket in size M to the cart”), Detour predicts how many <strong>seconds</strong> the task takes
               for three people, and how that changes after code fixes.
@@ -126,8 +124,8 @@ export default function MethodPage() {
                 "Generate candidate code fixes, re-measure after each, and pick the smallest set that saves the most time.",
               ].map((t, i) => (
                 <li key={i} className="card flex gap-3 p-4 text-[0.9375rem]">
-                  <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-full bg-ink font-serif font-bold text-lime">
-                    {i + 1}
+                  <span aria-hidden="true" className="tnum shrink-0 font-semibold text-muted">
+                    {i + 1}.
                   </span>
                   <span>{t}</span>
                 </li>
@@ -140,7 +138,7 @@ export default function MethodPage() {
             </p>
           </Section>
 
-          <Section id="personas" eyebrow="02" title="Three personas">
+          <Section id="personas" title="Three personas">
             <ul className="grid gap-4 sm:grid-cols-3">
               {[
                 ["Mouse", "var(--mouse)", "Points and clicks. Each step costs a mental operator, a Fitts’s-law pointing movement and a click. Long pages add scrolling."],
@@ -161,7 +159,7 @@ export default function MethodPage() {
             </p>
           </Section>
 
-          <Section id="klm" eyebrow="03" title="KLM operators">
+          <Section id="klm" title="KLM operators">
             <p>
               The Keystroke-Level Model (Card, Moran &amp; Newell, 1980) prices a task by summing the time of primitive operators. Detour uses five of
               them. Values and ranges are in the parameter table below.
@@ -170,7 +168,7 @@ export default function MethodPage() {
               <table className="w-full min-w-[30rem] border-collapse text-left text-[0.9375rem]">
                 <caption className="sr-only">KLM operators used by Detour</caption>
                 <thead>
-                  <tr className="border-b-2 border-ink">
+                  <tr className="border-b border-rule-strong">
                     <th scope="col" className="py-2 pr-4">Operator</th>
                     <th scope="col" className="py-2 pr-4">Meaning</th>
                     <th scope="col" className="py-2 pr-4">Used by</th>
@@ -185,7 +183,7 @@ export default function MethodPage() {
                     ["P", "Point at a target (fallback when geometry is missing)", "mouse"],
                   ].map(([op, m, u]) => (
                     <tr key={op} className="border-b border-rule">
-                      <th scope="row" className="py-2 pr-4 font-mono">{op}</th>
+                      <th scope="row" className="py-2 pr-4 font-semibold">{op}</th>
                       <td className="py-2 pr-4">{m}</td>
                       <td className="py-2 pr-4 text-muted">{u}</td>
                     </tr>
@@ -195,7 +193,7 @@ export default function MethodPage() {
             </div>
           </Section>
 
-          <Section id="fitts" eyebrow="04" title="Fitts’s law for the mouse">
+          <Section id="fitts" title="Fitts’s law for the mouse">
             <p>
               When the page has layout, pointing time uses the Shannon formulation of Fitts’s law (MacKenzie, 1992), with the target’s distance from the
               last pointer position and its width taken from its bounding box.
@@ -209,7 +207,7 @@ export default function MethodPage() {
             </p>
           </Section>
 
-          <Section id="graph" eyebrow="05" title="Screen-reader navigation as shortest paths">
+          <Section id="graph" title="Screen-reader navigation as shortest paths">
             <p>
               A screen-reader user moves a virtual cursor through the page. Detour models this as a graph: <strong>nodes</strong> are reading stops (a
               link, a heading, a paragraph) and <strong>edges</strong> are commands (next item, previous item, Tab, next heading, next landmark, find,
@@ -229,7 +227,7 @@ export default function MethodPage() {
             </p>
           </Section>
 
-          <Section id="mixture" eyebrow="06" title="Strategy mixture">
+          <Section id="mixture" title="Strategy mixture">
             <p>
               People do not all navigate the same way. For a screen-reader user, the strategies are jumping by headings, reading line by line, using
               find, jumping by landmarks, and tabbing. Detour computes a path for each and weights them by how often users report choosing them when
@@ -239,7 +237,7 @@ export default function MethodPage() {
               <table className="w-full min-w-[26rem] border-collapse text-left text-[0.9375rem]">
                 <caption className="sr-only">Screen-reader strategy shares</caption>
                 <thead>
-                  <tr className="border-b-2 border-ink">
+                  <tr className="border-b border-rule-strong">
                     <th scope="col" className="py-2 pr-4">Strategy</th>
                     <th scope="col" className="py-2 pr-4">Share</th>
                   </tr>
@@ -272,7 +270,7 @@ export default function MethodPage() {
             </p>
           </Section>
 
-          <Section id="scent" eyebrow="07" title="Realistic heading search">
+          <Section id="scent" title="Realistic heading search">
             <p>
               The shortest path assumes the listener already knows which heading holds the answer. Real listeners judge each heading by its words
               (information scent: Pirolli &amp; Card, 1999), open the section if it smells right, back out of it if it does not, and press H again.
@@ -294,7 +292,7 @@ export default function MethodPage() {
             </p>
           </Section>
 
-          <Section id="montecarlo" eyebrow="08" title="Monte Carlo intervals">
+          <Section id="montecarlo" title="Monte Carlo intervals">
             <p>
               A single number would be false precision. Each parameter has a plausible range from the literature, with a distribution (uniform,
               triangular or log-normal). Detour draws every parameter and a strategy for each sample, re-costs each strategy’s path under those
@@ -307,7 +305,7 @@ export default function MethodPage() {
             </p>
           </Section>
 
-          <Section id="optimiser" eyebrow="09" title="The optimiser: greedy, certified by exhaustive search">
+          <Section id="optimiser" title="The optimiser: greedy, certified by exhaustive search">
             <p>
               Candidate fixes are small code changes: add a skip link, promote a styled heading to a real heading, wrap a region in a landmark, name an
               unlabelled control, turn a clickable div into a button, drop a positive tabindex. Each is a deterministic transform of the page model with
@@ -327,7 +325,7 @@ export default function MethodPage() {
             </p>
           </Section>
 
-          <Section id="llm" eyebrow="10" title="What the language model does, and does not do">
+          <Section id="llm" title="What the language model does, and does not do">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="card p-5">
                 <h3 className="h-card">Does</h3>
@@ -350,16 +348,16 @@ export default function MethodPage() {
             </div>
           </Section>
 
-          <Section id="parameters" eyebrow="11" title="Parameters and sources">
+          <Section id="parameters" title="Parameters and sources">
             <p>
-              Everything the engine assumes is in one file, <code className="font-mono text-[0.9em]">lib/params/literature.ts</code>. This table is
+              Everything the engine assumes is in one file, <code className="text-[0.9em]">lib/params/literature.ts</code>. This table is
               rendered from it, so it cannot drift from the code.
             </p>
-            <div className="overflow-x-auto rounded-xl border border-rule bg-surface">
+            <div className="overflow-x-auto rounded-lg border border-rule bg-surface">
               <table className="w-full min-w-[46rem] border-collapse text-left text-sm">
                 <caption className="sr-only">Human-performance parameters used by the model, with value, range, unit and source</caption>
                 <thead>
-                  <tr className="border-b-2 border-ink bg-paper-2">
+                  <tr className="border-b border-rule-strong">
                     <th scope="col" className="px-3 py-2.5">Parameter</th>
                     <th scope="col" className="px-3 py-2.5">Value</th>
                     <th scope="col" className="px-3 py-2.5">Range (low–high)</th>
@@ -370,14 +368,14 @@ export default function MethodPage() {
                 <tbody>
                   {ROWS.map(({ name, r, note }) => (
                     <tr key={name} className="border-b border-rule align-top last:border-b-0">
-                      <th scope="row" className="px-3 py-2.5 font-semibold">
+                      <th scope="row" className="px-3 py-2.5 font-medium">
                         {name}
-                        {note && <span className="block text-xs font-normal text-muted">{note}</span>}
-                        {isAssumption(r) && <span className="mt-1 inline-block rounded bg-paper-2 px-1.5 py-px text-[0.6875rem] font-bold">modelling assumption</span>}
+                        {note && <span className="block text-[0.8125rem] font-normal text-muted">{note}</span>}
+                        {isAssumption(r) && <span className="mt-1 inline-block rounded bg-paper-2 px-1.5 py-0.5 text-[0.8125rem] font-medium">modelling assumption</span>}
                       </th>
-                      <td className="tnum px-3 py-2.5 font-bold">{fmt(r.value)}</td>
+                      <td className="tnum px-3 py-2.5 font-medium">{fmt(r.value)}</td>
                       <td className="tnum px-3 py-2.5">
-                        {fmt(r.low)}–{fmt(r.high)} <span className="text-xs text-muted">({r.dist})</span>
+                        {fmt(r.low)}–{fmt(r.high)} <span className="text-[0.8125rem] text-muted">({r.dist})</span>
                       </td>
                       <td className="px-3 py-2.5">{r.unit}</td>
                       <td className="px-3 py-2.5 text-muted">{r.source}</td>
@@ -385,12 +383,12 @@ export default function MethodPage() {
                   ))}
                   {FORAGING.map(({ name, value, note }) => (
                     <tr key={name} className="border-b border-rule align-top last:border-b-0">
-                      <th scope="row" className="px-3 py-2.5 font-semibold">
+                      <th scope="row" className="px-3 py-2.5 font-medium">
                         {name}
-                        <span className="block text-xs font-normal text-muted">{note}</span>
-                        <span className="mt-1 inline-block rounded bg-paper-2 px-1.5 py-px text-[0.6875rem] font-bold">modelling assumption</span>
+                        <span className="block text-[0.8125rem] font-normal text-muted">{note}</span>
+                        <span className="mt-1 inline-block rounded bg-paper-2 px-1.5 py-0.5 text-[0.8125rem] font-medium">modelling assumption</span>
                       </th>
-                      <td className="tnum px-3 py-2.5 font-bold">{fmt(value)}</td>
+                      <td className="tnum px-3 py-2.5 font-medium">{fmt(value)}</td>
                       <td className="px-3 py-2.5 text-muted">fixed</td>
                       <td className="px-3 py-2.5">{name.startsWith("Enter") ? "per unit of scent" : "fraction"}</td>
                       <td className="px-3 py-2.5 text-muted">Chosen to give plausible behaviour in the SNIF-ACT style of foraging model (Fu &amp; Pirolli, 2007). Not fitted to data.</td>
@@ -401,7 +399,7 @@ export default function MethodPage() {
             </div>
           </Section>
 
-          <Section id="limits" eyebrow="12" title="Limitations, stated plainly">
+          <Section id="limits" title="Limitations, stated plainly">
             <ul className="list-disc space-y-2.5 pl-5">
               <li>
                 <strong>It is a model, not a measurement.</strong> The intervals cover parameter and strategy uncertainty only. They do not cover error in

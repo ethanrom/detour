@@ -46,31 +46,31 @@ const CHANGE_LABEL: Record<Change, string> = {
   "still-blocked": "still blocked",
 };
 
+
 function Tile({ d }: { d: PersonaDelta }) {
   const meta = PERSONA_BY_ID[d.persona];
-  const good = d.change === "faster" || d.change === "unblocked";
   return (
-    <div className="rounded-2xl border-2 border-ink bg-surface p-4 sm:p-5" style={{ boxShadow: good ? "4px 4px 0 var(--ink)" : undefined }}>
-      <p className="flex items-center gap-2 text-sm font-bold" style={{ color: meta.color }}>
-        <PersonaIcon persona={d.persona} size={18} />
+    <div className="p-4 sm:p-5">
+      <p className="flex items-center gap-2 text-sm font-medium" style={{ color: meta.color }}>
+        <PersonaIcon persona={d.persona} size={16} />
         {meta.label}
       </p>
-      <p className="tnum mt-2 font-serif text-3xl font-bold leading-none tracking-tight sm:text-4xl">
+      <p className="tnum mt-2 text-2xl font-semibold leading-tight">
         <Headline d={d} />
       </p>
       <p className="mt-2.5">
         {d.change === "faster" && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-lime px-2.5 py-0.5 text-sm font-bold">
-            <CheckIcon size={14} /> {fmtPercentLess(d.before.seconds!, d.after.seconds!)}
+          <span className="inline-flex items-center gap-1 rounded bg-lime px-2 py-0.5 text-sm font-medium">
+            <CheckIcon size={14} /> <span className="tnum">{fmtPercentLess(d.before.seconds!, d.after.seconds!)}</span>
           </span>
         )}
         {d.change === "unblocked" && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-lime px-2.5 py-0.5 text-sm font-bold">
+          <span className="inline-flex items-center gap-1 rounded bg-lime px-2 py-0.5 text-sm font-medium">
             <CheckIcon size={14} /> Unblocked
           </span>
         )}
         {d.change !== "faster" && d.change !== "unblocked" && (
-          <span className="rounded-full border border-rule-strong px-2.5 py-0.5 text-sm font-semibold text-muted">
+          <span className="rounded border border-rule-strong px-2 py-0.5 text-sm text-muted">
             {d.change === "slower" ? `${fmtPercentLess(d.before.seconds!, d.after.seconds!)}` : d.change === "same" ? sameLabel(d) : CHANGE_LABEL[d.change]}
           </span>
         )}
@@ -97,21 +97,20 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
 
   return (
     <section aria-labelledby="after-h" className="scroll-mt-24">
-      <div className="on-ink rounded-3xl bg-ink p-5 text-paper sm:p-8">
-        <p className="eyebrow !text-[#b8c0cc]">After the fixes</p>
-        <h2 id="after-h" ref={headingRef} tabIndex={-1} className="h-section mt-2 outline-none">
-          Same task, same three people, <span className="mark">fewer seconds</span>
+      <div className="card p-5 sm:p-6">
+        <h2 id="after-h" ref={headingRef} tabIndex={-1} className="h-card outline-none">
+          Same task, same three people, fewer seconds
         </h2>
 
-        <div role="group" aria-label="Task to race" className="mt-5 flex flex-wrap gap-2">
+        <div role="group" aria-label="Task to race" className="mt-4 flex flex-wrap gap-2">
           {tasks.map((t) => (
             <button
               key={t.id}
               type="button"
               aria-pressed={t.id === task?.id}
               onClick={() => onTask(t.id)}
-              className={`min-h-10 rounded-full border-2 px-4 text-sm font-semibold transition-colors ${
-                t.id === task?.id ? "border-lime bg-lime text-ink" : "border-[#b8c0cc] text-paper hover:bg-ink-2"
+              className={`min-h-10 rounded-md border px-3.5 text-sm font-medium transition-colors max-sm:min-h-11 ${
+                t.id === task?.id ? "border-ink bg-lime text-ink" : "border-rule-strong bg-surface text-ink hover:bg-paper-2"
               }`}
             >
               {t.label}
@@ -119,14 +118,14 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
           ))}
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3 text-ink">
+        <div className="mt-5 grid divide-y divide-rule overflow-hidden rounded-lg border border-rule md:grid-cols-3 md:divide-x md:divide-y-0">
           {deltas.map((d) => (
             <Tile key={d.persona} d={d} />
           ))}
         </div>
         <p className="sr-only">{describeComparison(task?.label ?? "", deltas)}</p>
 
-        <div className="on-paper mt-6 rounded-2xl bg-surface p-4 text-ink sm:p-6">
+        <div className="mt-6 border-t border-rule pt-5">
           <AfterRace
             key={`${runKey}-${afterTask.taskId}`}
             taskLabel={task?.label ?? ""}
@@ -146,19 +145,19 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
       <div className="card mt-6 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="h-card">Every task, before and after</h3>
-          <button type="button" className="btn btn-sm" aria-expanded={openTable} onClick={() => setOpenTable((o) => !o)}>
+          <button type="button" className="btn btn-sm max-sm:min-h-11" aria-expanded={openTable} onClick={() => setOpenTable((o) => !o)}>
             {openTable ? "Hide table" : "Show table"}
           </button>
         </div>
         {openTable && (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+          <div className="relative mt-4 overflow-x-auto">
+            <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
               <caption className="sr-only">Predicted time for each task and persona, before and after the fixes</caption>
               <thead>
-                <tr className="border-b-2 border-ink">
-                  <th scope="col" className="py-2 pr-3 font-bold">Task</th>
+                <tr className="border-b border-rule-strong text-[0.8125rem]">
+                  <th scope="col" className="py-2 pr-3 font-medium text-muted">Task</th>
                   {PERSONAS.map((p) => (
-                    <th key={p.id} scope="col" className="py-2 pr-3 font-bold" style={{ color: p.color }}>
+                    <th key={p.id} scope="col" className="py-2 pl-3 text-right font-medium" style={{ color: p.color }}>
                       {p.label}
                     </th>
                   ))}
@@ -172,13 +171,13 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
                   const ds = compareTask(b, a);
                   return (
                     <tr key={t.id} className="border-b border-rule align-top">
-                      <th scope="row" className="py-3 pr-3 font-semibold">{t.label}</th>
+                      <th scope="row" className="py-3 pr-3 font-medium">{t.label}</th>
                       {PERSONA_ORDER.map((pid: PersonaId) => {
                         const d = ds.find((x) => x.persona === pid)!;
                         return (
-                          <td key={pid} className="tnum py-3 pr-3">
-                            <span className="font-semibold"><Headline d={d} /></span>
-                            <span className="block text-xs text-muted">
+                          <td key={pid} className="tnum py-3 pl-3 text-right">
+                            <span className="font-medium"><Headline d={d} /></span>
+                            <span className="block text-[0.8125rem] text-muted">
                               {d.change === "faster" ? fmtPercentLess(d.before.seconds!, d.after.seconds!) : d.change === "slower" ? `▲ ${fmtPercentLess(d.before.seconds!, d.after.seconds!)}` : d.change === "same" ? sameLabel(d) : CHANGE_LABEL[d.change]}
                             </span>
                           </td>

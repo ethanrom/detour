@@ -100,7 +100,7 @@ function Inspector({
         aria-valuetext={
           curEv ? `Event ${cur + 1} of ${n}: ${curEv.label}, at ${curEv.start.toFixed(1)} seconds` : "No events"
         }
-        className="absolute inset-0 z-10 cursor-crosshair rounded-xl"
+        className="absolute inset-0 z-10 cursor-crosshair rounded-lg"
         onPointerMove={onMove}
         onPointerLeave={() => setHover(null)}
         onFocus={() => setKb((k) => k ?? Math.max(activeIndex, 0))}
@@ -113,12 +113,12 @@ function Inspector({
       {ev && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-full z-30 mb-1.5 w-max max-w-[19rem] rounded-lg bg-ink px-2.5 py-1.5 text-xs leading-snug text-paper shadow-lg"
+          className="pointer-events-none absolute bottom-full z-30 mb-1.5 w-max max-w-[19rem] rounded-md bg-ink px-2.5 py-1.5 text-[0.8125rem] leading-snug text-paper"
           style={{ left: pct(ev.start, axisMax), transform: `translateX(${align})` }}
         >
-          <span className="mr-1.5 inline-block rounded bg-lime px-1.5 py-px font-mono text-[0.6875rem] font-bold text-ink">
+          <kbd className="mr-1.5 inline-block rounded bg-lime px-1.5 py-px font-mono text-[0.8125rem] font-semibold text-ink">
             {commandKey(ev.command)}
-          </span>
+          </kbd>
           <span className="tnum text-[#b8c0cc]">{ev.start.toFixed(1)} s</span>
           <br />
           <span className="font-medium">{ev.label}</span>
@@ -138,19 +138,18 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
     <div
       role="group"
       aria-label={`${meta.label} lane`}
-      className="grid items-center gap-x-4 gap-y-1 py-2.5 sm:grid-cols-[9.5rem_minmax(0,1fr)_9.25rem]"
+      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)_9.25rem] sm:gap-y-1"
     >
-      {/* Who */}
-      <div className="flex items-center gap-2.5">
-        <span
-          className="grid size-10 shrink-0 place-items-center rounded-xl"
-          style={{ background: meta.tint, color: meta.color }}
-        >
-          <PersonaIcon persona={lane.persona} size={22} />
+      {/* Who: a plain 16px icon in the persona colour, no container */}
+      <div className="flex items-start gap-2 max-sm:col-start-1 max-sm:row-start-1">
+        <span className="mt-0.5 shrink-0" style={{ color: meta.color }}>
+          <PersonaIcon persona={lane.persona} size={16} />
         </span>
         <span className="min-w-0">
-          <span className="block font-semibold leading-tight">{meta.label}</span>
-          <span className="block text-xs leading-snug text-muted">
+          <span className="block font-semibold leading-tight" style={{ color: meta.color }}>
+            {meta.label}
+          </span>
+          <span className="block text-[0.8125rem] leading-snug text-muted">
             {STRATEGY_LABEL[lane.strategy]}
             {weight}
           </span>
@@ -158,8 +157,8 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
       </div>
 
       {/* Track */}
-      <div className="relative h-14 rounded-xl border border-rule" style={{ background: meta.tint }}>
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl" aria-hidden="true">
+      <div className="relative h-14 rounded-lg border border-rule bg-paper max-sm:col-span-2 max-sm:row-start-2">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg" aria-hidden="true">
           {axis.ticks.map((t) => (
             <span key={t} className="absolute inset-y-0 w-px bg-ink/10" style={{ left: pct(t, axis.max) }} />
           ))}
@@ -182,7 +181,7 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
         {ghost && (
           <span
             aria-hidden="true"
-            className="absolute top-1 text-[0.625rem] font-semibold uppercase tracking-wider text-muted"
+            className="absolute top-0.5 text-[0.8125rem] leading-none text-muted"
             style={{
               left: pct(ghost.duration, axis.max),
               transform: ghost.duration / axis.max > 0.85 ? "translateX(-110%)" : "translateX(-50%)",
@@ -201,12 +200,12 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
           style={{ left: pct(frame.clock, axis.max) }}
         >
           {frame.state === "blocked" ? (
-            <span className="grid size-6 place-items-center rounded-md border-2 border-white bg-blocked text-white shadow">
+            <span className="grid size-6 place-items-center rounded-md border-2 border-white bg-blocked text-white">
               <CrossIcon size={14} />
             </span>
           ) : frame.state === "finished" ? (
             <span
-              className="grid size-6 place-items-center rounded-full border-2 border-white text-white shadow"
+              className="grid size-6 place-items-center rounded-full border-2 border-white text-white"
               style={{ background: meta.color }}
             >
               <CheckIcon size={14} />
@@ -225,27 +224,27 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
       </div>
 
       {/* Result (decorative duplicate of the results table, so hidden from assistive tech) */}
-      <div aria-hidden="true" className="tnum leading-tight">
+      <div aria-hidden="true" className="tnum leading-tight max-sm:col-start-2 max-sm:row-start-1 max-sm:text-right">
         {!done ? (
           <>
-            <span className="block text-2xl font-bold" style={{ color: meta.color }}>
+            <span className="block text-2xl font-semibold" style={{ color: meta.color }}>
               {fmtElapsed(frame.clock)}
             </span>
-            <span className="block text-xs text-muted">{frame.state === "ready" ? "ready" : "elapsed"}</span>
+            <span className="block text-[0.8125rem] text-muted">{frame.state === "ready" ? "ready" : "elapsed"}</span>
           </>
         ) : frame.state === "blocked" ? (
           <>
-            <span className="flex items-center gap-1.5 text-lg font-bold text-blocked">
+            <span className="flex items-center gap-1.5 text-lg font-semibold text-blocked max-sm:justify-end">
               <CrossIcon size={18} /> Can’t finish
             </span>
-            <span className="block text-xs text-muted">stopped at {fmtSeconds(lane.duration)}</span>
+            <span className="block text-[0.8125rem] text-muted">stopped at {fmtSeconds(lane.duration)}</span>
           </>
         ) : (
           <>
-            <span className="block text-3xl font-bold" style={{ color: meta.color }}>
+            <span className="block text-3xl font-semibold" style={{ color: meta.color }}>
               {fmtSeconds(lane.seconds)}
             </span>
-            <span className="block text-xs text-muted">
+            <span className="block text-[0.8125rem] text-muted">
               {Math.abs(lane.seconds - lane.duration) > Math.max(1, 0.15 * lane.seconds) ? (
                 <>
                   expected · this path {fmtSeconds(lane.duration)}
@@ -272,10 +271,10 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
 
       {/* Why it stopped */}
       {frame.state === "blocked" && lane.blocked && (
-        <p className="rise-in col-span-full flex items-start gap-2 rounded-lg border border-blocked/40 bg-white px-3 py-2 text-sm text-blocked sm:col-start-2 sm:col-end-4">
+        <p className="rise-in col-span-full flex items-start gap-2 rounded-md border border-blocked/30 bg-del-bg px-3 py-2 text-sm text-del-fg sm:col-start-2 sm:col-end-4">
           <CrossIcon size={16} className="mt-0.5 shrink-0" />
           <span>
-            <strong>Can’t finish.</strong> {lane.blocked.reason}
+            <span className="font-semibold">Can’t finish.</span> {lane.blocked.reason}
           </span>
         </p>
       )}

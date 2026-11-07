@@ -43,12 +43,12 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
     <div>
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-        <button type="button" className="btn btn-ink btn-sm" onClick={clock.toggle}>
+        <button type="button" className="btn btn-sm max-sm:min-h-11" onClick={clock.toggle}>
           <ControlIcon size={16} />
           {controlLabel}
         </button>
 
-        <div role="group" aria-label="Playback speed" className="inline-flex rounded-full border-2 border-ink bg-surface p-0.5">
+        <div role="group" aria-label="Playback speed" className="inline-flex rounded-md border border-rule-strong bg-surface p-0.5">
           {(
             [
               ["fast", `Fast · ${fmtNum(fastWall)} s`],
@@ -60,8 +60,8 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
               type="button"
               aria-pressed={clock.speed === id}
               onClick={() => clock.setSpeed(id)}
-              className={`min-h-8 rounded-full px-3.5 text-sm font-semibold transition-colors ${
-                clock.speed === id ? "bg-ink text-paper" : "text-ink hover:bg-paper-2"
+              className={`min-h-8 rounded border px-3 text-sm font-medium transition-colors max-sm:min-h-10 ${
+                clock.speed === id ? "border-ink bg-lime text-ink" : "border-transparent text-ink hover:bg-paper-2"
               }`}
             >
               {label}
@@ -70,7 +70,7 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
         </div>
 
         <label className="flex min-w-[10rem] flex-1 items-center gap-2.5 text-sm text-muted">
-          <span className="shrink-0 font-semibold text-ink">Position</span>
+          <span className="shrink-0 font-medium text-ink">Position</span>
           <input
             type="range"
             min={0}
@@ -97,7 +97,7 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
             {ax.ticks.map((t, i) => (
               <span
                 key={t}
-                className="tnum absolute top-0 whitespace-nowrap text-[0.6875rem] font-medium text-muted"
+                className="tnum absolute top-0 whitespace-nowrap text-[0.8125rem] text-muted"
                 style={{
                   left: `${(t / ax.max) * 100}%`,
                   transform: i === 0 ? "none" : "translateX(-50%)",
@@ -109,7 +109,7 @@ export function Race({ idBase, taskLabel, lanes, ghost, clock, announcePrefix }:
           </div>
           <span />
         </div>
-        <div className="divide-y divide-rule/70">
+        <div className="divide-y divide-rule">
           {lanes.map((lane) => (
             <LaneRow
               key={lane.persona}
@@ -166,29 +166,29 @@ function EventLog({ lanes }: { lanes: Lane[] }) {
   const [open, setOpen] = useState(false);
   const total = lanes.reduce((n, l) => n + l.events.length, 0);
   return (
-    <details className="mt-3 rounded-lg border border-rule bg-surface px-3 py-2 text-sm" onToggle={(e) => setOpen(e.currentTarget.open)}>
-      <summary className="cursor-pointer font-semibold">Event log: all {total} events as a table</summary>
+    <details className="mt-3 rounded-lg border border-rule bg-surface px-3 py-2.5 text-sm" onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary className="cursor-pointer font-medium">Event log: all {total} events as a table</summary>
       {open && (
         <div className="mt-3 max-h-72 overflow-auto" tabIndex={0} role="region" aria-label="Event log table">
           <table className="w-full border-collapse text-left text-[0.8125rem]">
-            <thead className="sticky top-0 bg-paper-2">
+            <thead className="sticky top-0 border-b border-rule bg-surface text-muted">
               <tr>
-                <th scope="col" className="px-2 py-1.5">Persona</th>
-                <th scope="col" className="px-2 py-1.5">Time</th>
-                <th scope="col" className="px-2 py-1.5">Key</th>
-                <th scope="col" className="px-2 py-1.5">What happens</th>
-                <th scope="col" className="px-2 py-1.5">Cost</th>
+                <th scope="col" className="px-2 py-1.5 font-medium">Persona</th>
+                <th scope="col" className="px-2 py-1.5 text-right font-medium">Time</th>
+                <th scope="col" className="px-2 py-1.5 font-medium">Key</th>
+                <th scope="col" className="px-2 py-1.5 font-medium">What happens</th>
+                <th scope="col" className="px-2 py-1.5 text-right font-medium">Cost</th>
               </tr>
             </thead>
             <tbody>
               {lanes.flatMap((l) =>
                 l.events.map((e) => (
-                  <tr key={`${l.persona}-${e.index}`} className="border-t border-rule/70">
+                  <tr key={`${l.persona}-${e.index}`} className="border-t border-rule">
                     <th scope="row" className="px-2 py-1 font-semibold">{PERSONA_BY_ID[l.persona].label}</th>
-                    <td className="tnum px-2 py-1">{e.start.toFixed(1)} s</td>
-                    <td className="px-2 py-1 font-mono">{commandKey(e.command)}</td>
+                    <td className="tnum px-2 py-1 text-right">{e.start.toFixed(1)} s</td>
+                    <td className="px-2 py-1"><kbd className="font-mono">{commandKey(e.command)}</kbd></td>
                     <td className="px-2 py-1">{e.label}</td>
-                    <td className="tnum px-2 py-1">{e.dt.toFixed(2)} s</td>
+                    <td className="tnum px-2 py-1 text-right">{e.dt.toFixed(2)} s</td>
                   </tr>
                 )),
               )}

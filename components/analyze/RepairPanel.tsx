@@ -31,11 +31,10 @@ export function RepairPanel({ status, report, page, story, task }: Props) {
   if (status === "loading") {
     return (
       <section aria-labelledby="repair-h" className="card p-5 sm:p-6" aria-busy="true">
-        <p className="eyebrow">Wording</p>
-        <h2 id="repair-h" className="h-card mt-1.5">
+        <h2 id="repair-h" className="h-card">
           Heading and label suggestions
         </h2>
-        <p role="status" className="mt-2 animate-pulse text-sm text-muted">
+        <p role="status" className="mt-2 text-sm text-muted">
           Asking Claude for clearer headings, then checking each one against the scent model…
         </p>
       </section>
@@ -50,8 +49,7 @@ export function RepairPanel({ status, report, page, story, task }: Props) {
 
   return (
     <section aria-labelledby="repair-h" className="card p-5 sm:p-6">
-      <p className="eyebrow">Wording</p>
-      <h2 id="repair-h" className="h-card mt-1.5">
+      <h2 id="repair-h" className="h-card">
         Heading and label suggestions
       </h2>
       <p className="mt-1 text-sm text-muted">
@@ -61,14 +59,14 @@ export function RepairPanel({ status, report, page, story, task }: Props) {
 
       {accepted.length > 0 && (
         <>
-          <h3 className="mt-5 text-sm font-bold">
+          <h3 className="mt-5 text-[0.9375rem] font-semibold">
             Accepted renames{total > 0 ? ` · ${fmtSeconds(total)} saved across all tasks` : ""}
           </h3>
           <ul className="mt-2 space-y-3">
             {accepted.map((h) => {
               const line = task ? story?.find((s) => s.nodeId === h.nodeId)?.lines.find((l) => l.taskId === task.id) : undefined;
               return (
-              <li key={h.nodeId} className="rounded-xl border-2 border-ink bg-lime/30 p-3.5">
+              <li key={h.nodeId} className="rounded-lg border border-rule bg-paper p-3.5">
                 <p className="flex items-start gap-2 font-semibold leading-snug">
                   <CheckIcon size={16} className="mt-1 shrink-0" />
                   <span>
@@ -94,7 +92,7 @@ export function RepairPanel({ status, report, page, story, task }: Props) {
                     )}
                   </p>
                 )}
-                <p className="mt-1 pl-6 text-sm text-ink/80">
+                <p className="mt-1 pl-6 text-sm text-muted">
                   <span className="tnum">
                     All tasks together: {fmtNum(h.before)} s <span aria-hidden="true">→</span>
                     <span className="sr-only"> becomes </span> {fmtNum(h.after)} s
@@ -109,8 +107,8 @@ export function RepairPanel({ status, report, page, story, task }: Props) {
       )}
 
       {rejected.length > 0 && (
-        <details className="mt-4 rounded-xl border border-rule bg-paper-2 p-3">
-          <summary className="cursor-pointer text-sm font-bold">
+        <details className="mt-4 rounded-lg border border-rule bg-paper p-3">
+          <summary className="cursor-pointer text-sm font-semibold">
             {rejected.length} suggestion{rejected.length === 1 ? "" : "s"} rejected by the model
           </summary>
           <ul className="mt-2 space-y-2 text-sm">
@@ -133,7 +131,7 @@ export function RepairPanel({ status, report, page, story, task }: Props) {
 
       {report.labels.length > 0 && (
         <>
-          <h3 className="mt-5 text-sm font-bold">Accessible names for unlabeled controls</h3>
+          <h3 className="mt-5 text-[0.9375rem] font-semibold">Accessible names for unlabeled controls</h3>
           <ul className="mt-2 space-y-1.5 text-sm">
             {report.labels.map((l) => (
               <li key={l.nodeId}>

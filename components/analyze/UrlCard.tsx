@@ -1,9 +1,10 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { ArrowRightIcon, CheckIcon } from "@/components/icons";
+import { ArrowRightIcon } from "@/components/icons";
 import { checkUrl, normalizeUrlInput, urlSiteFromCheck } from "@/lib/ui/any-url";
 import type { SiteInfo } from "@/lib/ui/datasource";
+import { RadioMark } from "./RadioMark";
 
 interface Props {
   /** The page added through this card, if any. */
@@ -50,65 +51,54 @@ export function UrlCard({ urlSite, selected, onSelect, onAdd, fetchImpl }: Props
   }
 
   return (
-    <div
-      className={`card flex h-full flex-col border-dashed p-4 transition-[box-shadow,transform,border-color] duration-150 ${
-        selected ? "!border-solid !border-ink shadow-[4px_4px_0_var(--ink)] -translate-y-0.5" : "border-rule-strong"
-      }`}
-    >
-      <p className="flex items-center justify-between gap-2">
-        <span className="eyebrow">Any public page</span>
-        <span className="rounded-full bg-lime px-2 py-0.5 text-[0.6875rem] font-bold text-ink">New</span>
-      </p>
-      <form onSubmit={submit} noValidate className="mt-2.5">
-        <label htmlFor={`${id}-url`} className="block font-serif text-xl font-bold leading-tight tracking-tight">
-          Page address
+    <div className={`card p-4 transition-colors ${selected ? "!border-ink !bg-lime" : ""}`}>
+      <form onSubmit={submit} noValidate>
+        <label htmlFor={`${id}-url`} className="block text-[1.0625rem] font-semibold leading-snug">
+          Any public page
         </label>
-        <input
-          id={`${id}-url`}
-          type="url"
-          inputMode="url"
-          name="page-address"
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            if (check.status === "error") setCheck({ status: "idle" });
-          }}
-          placeholder="https://example.com"
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          aria-invalid={!!error}
-          aria-describedby={`${id}-note${error ? ` ${id}-err` : ""}`}
-          className="mt-2 min-h-11 w-full rounded-lg border-2 border-ink bg-paper px-3 text-[0.9375rem] placeholder:text-muted"
-        />
-        <button type="submit" className="btn btn-primary btn-sm mt-2.5 w-full" aria-busy={checking} aria-disabled={checking}>
-          {checking ? "Checking the page…" : "Analyze"}
-          {!checking && <ArrowRightIcon size={14} />}
-        </button>
+        <div className="mt-2 flex gap-2">
+          <input
+            id={`${id}-url`}
+            type="url"
+            inputMode="url"
+            name="page-address"
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (check.status === "error") setCheck({ status: "idle" });
+            }}
+            placeholder="https://www.gov.uk"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            aria-invalid={!!error}
+            aria-describedby={`${id}-note${error ? ` ${id}-err` : ""}`}
+            className="min-h-11 min-w-0 flex-1 rounded-md border border-rule-strong bg-surface px-3 text-[0.9375rem] placeholder:text-muted"
+          />
+          <button type="submit" className="btn shrink-0 px-3" aria-busy={checking} aria-disabled={checking}>
+            {checking ? "Checking…" : "Analyze"}
+            {!checking && <ArrowRightIcon size={14} />}
+          </button>
+        </div>
       </form>
       <div role="status" aria-live="polite" id={`${id}-st`} className="sr-only">
         {checking ? "Checking the page…" : found}
       </div>
-      <p id={`${id}-err`} role={error ? "alert" : undefined} className={error ? "mt-2.5 rounded-lg border border-blocked bg-surface p-2.5 text-sm font-semibold text-blocked" : "hidden"}>
+      <p id={`${id}-err`} role={error ? "alert" : undefined} className={error ? "mt-2.5 rounded-md border border-blocked bg-surface p-2.5 text-sm font-medium text-blocked" : "hidden"}>
         {error}
       </p>
-      <p id={`${id}-note`} className="mt-3 text-xs leading-snug text-muted">
+      <p id={`${id}-note`} className="mt-2 text-[0.8125rem] leading-snug text-muted">
         Pages render without their JavaScript. Server-rendered pages work best.
       </p>
 
       {urlSite && (
         <label className="group relative mt-3 block cursor-pointer border-t border-rule pt-3">
           <input type="radio" name="site" value={urlSite.id} checked={selected} onChange={() => onSelect(urlSite.id)} className="peer sr-only" />
-          <span className="flex items-start gap-2.5 rounded-lg p-1 peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink peer-focus-visible:shadow-[0_0_0_6px_var(--lime)]">
-            <span
-              aria-hidden="true"
-              className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border-2 border-ink ${selected ? "bg-lime" : "bg-transparent"}`}
-            >
-              {selected && <CheckIcon size={14} />}
-            </span>
+          <span className="flex items-start gap-2.5 rounded-md p-1 peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+            <RadioMark selected={selected} />
             <span className="min-w-0">
-              <span className="block truncate text-sm font-bold group-hover:underline">{urlSite.name}</span>
-              <span className="mt-0.5 line-clamp-2 block text-xs leading-snug text-muted">{urlSite.tagline}</span>
+              <span className="block truncate text-sm font-semibold group-hover:underline">{urlSite.name}</span>
+              <span className="mt-0.5 line-clamp-2 block text-[0.8125rem] leading-snug text-muted">{urlSite.tagline}</span>
             </span>
           </span>
         </label>

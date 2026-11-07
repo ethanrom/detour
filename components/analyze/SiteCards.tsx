@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckIcon } from "@/components/icons";
 import type { SiteInfo } from "@/lib/ui/datasource";
+import { RadioMark } from "./RadioMark";
 import { UrlCard } from "./UrlCard";
 
 interface Props {
@@ -22,7 +22,7 @@ export function SiteCards({ sites, value, onChange, onAddUrl }: Props) {
         {fixed.map((s) => {
           const selected = s.id === value;
           return (
-            <label key={s.id} className="group relative block cursor-pointer">
+            <label key={s.id} className="group relative flex cursor-pointer">
               <input
                 type="radio"
                 name="site"
@@ -32,25 +32,22 @@ export function SiteCards({ sites, value, onChange, onAddUrl }: Props) {
                 className="peer sr-only"
               />
               <span
-                className={`card block h-full p-4 transition-[box-shadow,transform,border-color] duration-150 group-hover:border-ink peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink peer-focus-visible:shadow-[0_0_0_6px_var(--lime)] ${
-                  selected ? "!border-ink bg-surface shadow-[4px_4px_0_var(--ink)] -translate-y-0.5" : ""
+                className={`card flex w-full flex-col p-4 transition-colors group-hover:border-rule-strong peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent ${
+                  selected ? "!border-ink !bg-lime" : ""
                 }`}
               >
-                <span className="flex items-center justify-between gap-2">
-                  <span className="eyebrow">
-                    {s.kind === "demo" ? "Demo · inaccessible by design" : "Control · well built"}
+                <span className="flex items-start justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block text-[1.0625rem] font-semibold leading-snug">{s.name}</span>
+                    <span className="mt-0.5 block text-[0.8125rem] leading-snug text-muted">
+                      {s.kind === "demo" ? "Demo · inaccessible by design" : "Control · well built"}
+                    </span>
                   </span>
-                  <span
-                    aria-hidden="true"
-                    className={`grid size-6 place-items-center rounded-full border-2 border-ink ${selected ? "bg-lime" : "bg-transparent"}`}
-                  >
-                    {selected && <CheckIcon size={14} />}
-                  </span>
+                  <RadioMark selected={selected} />
                 </span>
-                <span className="mt-2.5 block font-serif text-xl font-bold leading-tight tracking-tight">{s.name}</span>
-                <span className="mt-1.5 block text-sm leading-snug text-muted">{s.tagline}</span>
-                <span className="mt-3 block text-xs font-semibold text-ink">
-                  {s.tasks.length} tasks <span className="font-normal text-muted">· {s.path}</span>
+                <span className="mt-2.5 block text-sm leading-snug text-ink-2">{s.tagline}</span>
+                <span className="mt-auto block pt-3 text-[0.8125rem] text-muted">
+                  <span className="tnum font-medium text-ink">{s.tasks.length}</span> tasks · {s.path}
                 </span>
               </span>
             </label>

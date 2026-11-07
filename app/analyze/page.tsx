@@ -8,13 +8,12 @@ export const metadata: Metadata = {
 
 export default function AnalyzePage() {
   return (
-    <div className="mx-auto w-full max-w-[1360px] px-5 pb-8 pt-6 sm:px-8 sm:pt-8">
-      <header className="mb-6 max-w-3xl">
-        <p className="eyebrow">Workbench</p>
-        <h1 className="display mt-2.5 text-3xl sm:text-[2.6rem]">
-          Race three people through <span className="mark">one page</span>
-        </h1>
-        <p className="lede mt-2">Pick a page and a task. Detour predicts the seconds it takes, shows why, and plans the smallest set of fixes.</p>
+    <div className="mx-auto w-full max-w-[1360px] px-5 pb-12 pt-8 sm:px-8 sm:pt-10">
+      <header className="mb-8 max-w-3xl">
+        <h1 className="text-2xl font-semibold leading-tight tracking-tight sm:text-[1.75rem]">Analyze a page</h1>
+        <p className="mt-2 text-base leading-relaxed text-muted">
+          Pick a page and a task. Detour times a mouse, keyboard-only and screen-reader user, shows why anyone gets stuck, and plans the fixes.
+        </p>
       </header>
       <Workbench />
     </div>
