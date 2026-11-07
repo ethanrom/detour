@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { reportMarkdown } from "@/lib/livefix/export";
-import { personaChips, previousChecks, taskLabels } from "@/lib/ui/fix-run";
+import { appliedText, personaChips, previousChecks, taskLabels } from "@/lib/ui/fix-run";
 import type { FixPanelProps } from "../contract";
 import { Empty, Panel } from "../ui";
 import { FixRow } from "./fix/FixRow";
@@ -66,7 +66,8 @@ export function FixPanel({ headingRef, available, outcome, run, tasks, meta, onF
           <ol aria-label="Fix progress" className="divide-y divide-rule">
             {planIds.map((id, i) => {
               const o = run.outcomes[id];
-              const title = specs.get(id)?.title ?? o?.title ?? id;
+              const spec = specs.get(id);
+              const title = spec ? appliedText(spec, o, spec.title) : (o?.title ?? id);
               return (
                 <li key={id}>
                   <FixRow

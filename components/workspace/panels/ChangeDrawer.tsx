@@ -6,7 +6,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { CssView, DiffView } from "./fix/DiffView";
-import { SOURCE_NOTE, STAGE_WORD, displaySelector, tidyHtml } from "@/lib/ui/fix-run";
+import { SOURCE_NOTE, STAGE_WORD, appliedText, displaySelector, tidyHtml } from "@/lib/ui/fix-run";
 import { wordingTitle, wordingWhy } from "./fix/wording";
 import type { ChangeDrawerProps } from "../contract";
 import { Chip, GroupLabel } from "../ui";
@@ -26,9 +26,9 @@ export function ChangeDrawer({ open, onClose, fix, wording, outcome, page }: Cha
     else if (!open && d.open) d.close();
   }, [open]);
 
-  const title = fix?.title ?? (wording ? wordingTitle(wording, outcome) : outcome?.title ?? "");
+  const title = fix ? appliedText(fix, outcome, fix.title) : wording ? wordingTitle(wording, outcome) : (outcome?.title ?? "");
   const wcag = fix?.wcag ?? (wording ? (wording.kind === "heading" ? ["2.4.6 Headings and Labels"] : ["4.1.2 Name, Role, Value"]) : []);
-  const why = fix?.rationale ?? (wording ? wordingWhy(wording) : "");
+  const why = fix ? appliedText(fix, outcome, fix.rationale) : wording ? wordingWhy(wording) : "";
 
   return (
     <dialog

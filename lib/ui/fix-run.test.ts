@@ -88,3 +88,28 @@ describe("personaChips", () => {
     expect(personaChips(now, prev).map(chipSentence)).toEqual(["Screen reader: 17 s → 16 s (predicted 9 s)"]);
   });
 });
+
+describe("appliedText", () => {
+  it("replaces the planner's guessed name with the label the agent applied", async () => {
+    const { appliedText } = await import("./fix-run");
+    const fix = {
+      id: "add-label:n10",
+      kind: "add-label" as const,
+      title: "Label the unlabeled link “Y18”",
+      rationale: "Screen readers announce this link with no name; “Y18” tells users what it does.",
+      targets: ["n10"],
+      params: { label: "Y18" },
+      patch: { selector: "a", before: "", after: "" },
+      wcag: [],
+    };
+    const outcome = {
+      fixId: fix.id,
+      title: fix.title,
+      stage: "proven",
+      attempts: 1,
+      edits: { fixId: fix.id, note: "", source: "agent", edits: [{ op: "setAttributes", selector: '[data-detour-id="n10"]', attributes: { "aria-label": "Hacker News" } }] },
+    } as FixOutcome;
+    expect(appliedText(fix, outcome, fix.title)).toBe("Label the unlabeled link “Hacker News”");
+    expect(appliedText(fix, undefined, fix.title)).toBe(fix.title);
+  });
+});

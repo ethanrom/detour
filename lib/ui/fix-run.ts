@@ -4,7 +4,7 @@
 // The seconds on these cards are the model's, computed on the really patched page. Words: "re-checked on the
 // fixed page", never "measured".
 
-import type { PageModel, PersonaId, Task } from "@/lib/contracts";
+import type { FixSpec, PageModel, PersonaId, Task } from "@/lib/contracts";
 import type { EditSource, FixOutcome, FixStage, LayoutReport, LiveFixEvent, LiveFixReport, PersonaSeconds, TaskCheck, WordingEdit } from "@/lib/livefix/types";
 import type { RepairReport } from "@/lib/repair/types";
 import { fmtElapsed, fmtSeconds } from "./format";
@@ -280,4 +280,34 @@ export function taskLabels(tasks: readonly Task[]): Record<string, string> {
 /** "0.4 s" for the time a fix's edit took to arrive; empty when unknown. */
 export function elapsedText(o: FixOutcome | undefined): string {
   return o?.ms === undefined ? "" : fmtElapsed(o.ms / 1000);
+}
+
+/** The accessible names an add-label fix's edits really set, by node id (from `[data-detour-id="…"]` selectors). */
+function appliedLabels(outcome: FixOutcome | undefined): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const e of outcome?.edits?.edits ?? []) {
+    if (e.op !== "setAttributes" || typeof e.attributes["aria-label"] !== "string") continue;
+    const id = /\[data-detour-id="([^"]+)"\]/.exec(e.selector)?.[1];
+    if (id) out.set(id, e.attributes["aria-label"]);
+  }
+  return out;
+}
+
+/**
+ * A plan fix's title or rationale as it reads once the page is fixed. For an add-label fix the planner quotes its
+ * own guess at each name (from a class, an icon or a file name); the agent may have written a better one, so each
+ * quoted guess is replaced by the label really applied. Other fixes, and fixes not yet applied, are unchanged.
+ */
+export function appliedText(fix: FixSpec | undefined, outcome: FixOutcome | undefined, text: string): string {
+  if (!fix || fix.kind !== "add-label") return text;
+  const applied = appliedLabels(outcome);
+  if (applied.size === 0) return text;
+  let out = text;
+  for (const id of fix.targets) {
+    const guess = fix.targets.length === 1 ? fix.params.label : fix.params[`label:${id}`];
+    const real = applied.get(id);
+    if (typeof guess !== "string" || !real || real === guess) continue;
+    out = out.split(`“${guess}”`).join(`“${real}”`);
+  }
+  return out;
 }

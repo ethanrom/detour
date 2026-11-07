@@ -428,8 +428,10 @@ export function useWorkbench() {
 
   const fixAgain = useCallback(() => {
     fixerRef.current.reset();
+    // The header button unmounts while the run restarts: keep keyboard focus on the Fix heading.
+    go("fix");
     void fixerRef.current.fix();
-  }, []);
+  }, [go]);
 
   // Heading and label suggestions: the server asks the LLM for wording and the scent model verifies it.
   useEffect(() => {
