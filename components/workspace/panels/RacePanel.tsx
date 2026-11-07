@@ -58,7 +58,7 @@ export function RacePanel({ headingRef, task, result, lanes, loading, runKey, is
           />
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 @[900px]:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-3 @[600px]:grid-cols-2">
           <RaceCard id={`${ids}-hears`} title="What the listener hears" note="Faded words are what the listener skips past.">
             <TranscriptBody lane={sr} clock={clock} hear={hear} compact className={`${CARD_SCROLL} border-t border-rule bg-paper`} />
           </RaceCard>

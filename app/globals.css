@@ -236,8 +236,8 @@ a {
   color: #ffffff;
 }
 
-.btn-primary:hover:not(:disabled),
-.btn-ink:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled):not([aria-disabled="true"]),
+.btn-ink:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--ink-2);
 }
 
@@ -248,7 +248,7 @@ a {
   color: var(--accent-ink);
 }
 
-.btn-accent:hover:not(:disabled) {
+.btn-accent:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--accent-deep);
 }
 

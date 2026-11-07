@@ -41,7 +41,7 @@ export function RaceSkeleton({ message }: { message: string }) {
           <div className={`h-9 w-24 rounded-md ${block}`} />
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 @[900px]:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-3 @[600px]:grid-cols-2">
           {[0, 1].map((i) => (
             <div key={i} className="rounded-lg border border-rule p-3" style={{ height: CARD_HEIGHT }}>
               <Bars widths={["45%"]} className="mb-4" />

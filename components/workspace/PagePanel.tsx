@@ -56,7 +56,7 @@ export function PagePanel({ wb, fill, className, onClose }: { wb: WorkbenchApi; 
   return (
     // The frame is 1280 × 800 whatever the panel's size (the engine's scroll model reads that height), so the panel is
     // as tall as the scaled frame needs. Only the pick overlay is as tall as the column.
-    <Panel title="Page" actions={actions} className={`${fill ? "xl:h-full" : ""} ${className ?? ""}`} bodyClassName="flex flex-col p-0">
+    <Panel title="Page" actions={actions} className={`${fill ? "lg:h-full" : ""} ${className ?? ""}`} bodyClassName="flex flex-col p-0">
       {site ? (
         <>
           <p className="shrink-0 truncate px-4 py-2 text-xs leading-4 text-muted" title={address}>

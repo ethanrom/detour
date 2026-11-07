@@ -12,13 +12,10 @@ interface Props {
   onMenu: (open: boolean, restoreFocus?: boolean) => void;
   menuButtonRef: RefObject<HTMLButtonElement | null>;
   /** Under 1280 px the page column is a drawer, opened from here. */
-  pageOpen: boolean;
-  onTogglePage: () => void;
-  pageButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
 /** The mark, the page name (the h1), what the numbers are made of, "Change page", and the Method link. */
-export function TopBar({ wb, menu, onMenu, menuButtonRef, pageOpen, onTogglePage, pageButtonRef }: Props) {
+export function TopBar({ wb, menu, onMenu, menuButtonRef }: Props) {
   const { site, sites, status, address } = wb;
   const menuId = "page-menu";
 
@@ -66,16 +63,6 @@ export function TopBar({ wb, menu, onMenu, menuButtonRef, pageOpen, onTogglePage
         <Link href="/method" className="inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-ink">
           Method
         </Link>
-        <button
-          ref={pageButtonRef}
-          type="button"
-          className="btn btn-sm xl:hidden!"
-          aria-expanded={pageOpen}
-          aria-controls="page-column"
-          onClick={onTogglePage}
-        >
-          Show page
-        </button>
       </div>
     </header>
   );
