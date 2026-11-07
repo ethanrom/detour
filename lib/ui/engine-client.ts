@@ -2,17 +2,22 @@
 // (yielding with setTimeout first so React can paint a "Planning…" state).
 
 import type { PageModel, Task, TaskResult } from "@/lib/contracts";
-import { evaluateAll, planAll, type PlanResult } from "./pipeline";
+import { evaluateAll, planAll, scanBarriers, type PlanResult } from "./pipeline";
 
 export type EngineRequest =
   | { id: number; type: "evaluate"; page: PageModel; tasks: Task[] }
-  | { id: number; type: "plan"; page: PageModel; tasks: Task[]; k: number };
+  | { id: number; type: "plan"; page: PageModel; tasks: Task[]; k: number }
+  | { id: number; type: "scan"; page: PageModel; siteId: string };
 
-export type EngineResponse = { id: number; ok: true; value: TaskResult[] | PlanResult } | { id: number; ok: false; error: string };
+type EngineValue = TaskResult[] | PlanResult | Task[];
+
+export type EngineResponse = { id: number; ok: true; value: EngineValue } | { id: number; ok: false; error: string };
 
 export interface EngineClient {
   evaluate(page: PageModel, tasks: Task[]): Promise<TaskResult[]>;
   plan(page: PageModel, tasks: Task[], k: number): Promise<PlanResult>;
+  /** Suggested tasks: controls some people cannot use (see scanBarriers). */
+  scan(page: PageModel, siteId: string): Promise<Task[]>;
   /** Where the work last ran. "worker" unless the worker could not start. */
   readonly where: "worker" | "main";
 }
@@ -33,6 +38,10 @@ export function createMainThreadEngine(): EngineClient {
       await yieldToUi();
       return planAll(page, tasks, k);
     },
+    async scan(page, siteId) {
+      await yieldToUi();
+      return scanBarriers(page, siteId);
+    },
   };
 }
 
@@ -42,7 +51,7 @@ export function createEngineClient(): EngineClient {
   let worker: Worker | null = null;
   let dead = false;
   let seq = 0;
-  const pending = new Map<number, { resolve: (v: TaskResult[] | PlanResult) => void; reject: (e: Error) => void }>();
+  const pending = new Map<number, { resolve: (v: EngineValue) => void; reject: (e: Error) => void }>();
 
   const start = (): Worker | null => {
     if (dead) return null;
@@ -73,12 +82,12 @@ export function createEngineClient(): EngineClient {
     }
   };
 
-  function call<T extends TaskResult[] | PlanResult>(req: (id: number) => EngineRequest, retry: () => Promise<T>): Promise<T> {
+  function call<T extends EngineValue>(req: (id: number) => EngineRequest, retry: () => Promise<T>): Promise<T> {
     const w = start();
     if (!w) return retry();
     const id = ++seq;
     return new Promise<T>((resolve, reject) => {
-      pending.set(id, { resolve: resolve as (v: TaskResult[] | PlanResult) => void, reject });
+      pending.set(id, { resolve: resolve as (v: EngineValue) => void, reject });
       w.postMessage(req(id));
     }).catch((e: Error) => (e.message === WORKER_FAILED ? retry() : Promise.reject(e)));
   }
@@ -89,5 +98,6 @@ export function createEngineClient(): EngineClient {
     },
     evaluate: (page, tasks) => call((id) => ({ id, type: "evaluate", page, tasks }), () => fallback.evaluate(page, tasks)),
     plan: (page, tasks, k) => call((id) => ({ id, type: "plan", page, tasks, k }), () => fallback.plan(page, tasks, k)),
+    scan: (page, siteId) => call((id) => ({ id, type: "scan", page, siteId }), () => fallback.scan(page, siteId)),
   };
 }
