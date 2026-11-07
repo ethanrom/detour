@@ -205,7 +205,9 @@ function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase, compact }:
             className={`absolute top-0.5 leading-none text-muted ${small}`}
             style={{
               left: pct(ghost.duration, axis.max),
-              transform: ghost.duration / axis.max > 0.85 ? "translateX(-110%)" : "translateX(-50%)",
+              // near the end: left of the flag; near the start (a run blocked at 0 s): inside the track
+              transform:
+                ghost.duration / axis.max > 0.85 ? "translateX(-110%)" : ghost.duration / axis.max < 0.08 ? "translateX(6px)" : "translateX(-50%)",
             }}
           >
             before

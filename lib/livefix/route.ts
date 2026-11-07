@@ -44,8 +44,10 @@ export async function handleFixRequest(req: Request, deps: FixRouteDeps = {}): P
   const { siteId, pageTitle, fixes } = parsed.data;
 
   // Recordings need no model and no guard. The guard counts one call per run, and only when a model may be used.
+  // LIVEFIX_LIVE=1 (server only, off by default) skips them so a demo site's run is written by the agent live.
   const recorded = new Map<string, FixEdits>();
-  for (const item of fixes) {
+  const useRecordings = env.LIVEFIX_LIVE?.trim() !== "1";
+  for (const item of useRecordings ? fixes : []) {
     const hit = recordedEdits(siteId, item);
     if (hit) recorded.set(item.fixId, hit);
   }
