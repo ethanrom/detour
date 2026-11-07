@@ -18,7 +18,7 @@ export function DiffView({ patch }: { patch: HtmlPatch }) {
   const lines = diffHtml(patch.before, patch.after);
   return (
     <figure className="m-0 overflow-hidden rounded-lg border border-rule bg-surface">
-      <figcaption className="flex items-center justify-between gap-3 border-b border-rule px-3 py-1.5 text-[0.8125rem]">
+      <figcaption className="flex items-center justify-between gap-3 border-b border-rule px-3 py-1.5 text-xs">
         <span className="font-medium">HTML change</span>
         <code className="truncate font-mono text-muted">{patch.selector}</code>
       </figcaption>
@@ -27,7 +27,7 @@ export function DiffView({ patch }: { patch: HtmlPatch }) {
         role="group"
         aria-label={`Code change for ${patch.selector}`}
         tabIndex={0}
-        className="max-h-64 overflow-auto py-1 font-mono text-[0.8125rem] leading-6"
+        className="max-h-64 overflow-auto py-1 font-mono text-xs leading-5"
       >
         {lines.map((l, i) => {
           const s = STYLE[l.kind];
@@ -53,8 +53,8 @@ export function CssView({ css }: { css: string }) {
   const lines = cssLines(css).split("\n");
   return (
     <figure className="m-0 overflow-hidden rounded-lg border border-rule bg-surface">
-      <figcaption className="border-b border-rule px-3 py-1.5 text-[0.8125rem] font-medium">CSS added</figcaption>
-      <div role="group" aria-label="CSS added by this fix" tabIndex={0} className="max-h-64 overflow-auto py-1 font-mono text-[0.8125rem] leading-6">
+      <figcaption className="border-b border-rule px-3 py-1.5 text-xs font-medium">CSS added</figcaption>
+      <div role="group" aria-label="CSS added by this fix" tabIndex={0} className="max-h-64 overflow-auto py-1 font-mono text-xs leading-5">
         {lines.map((l, i) => (
           <div key={i} className={`grid min-w-max grid-cols-[1.75rem_1fr] border-l-4 pr-3 ${STYLE.add.row}`}>
             <span aria-hidden="true" className="select-none text-center font-semibold">
