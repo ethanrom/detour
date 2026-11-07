@@ -114,10 +114,6 @@ body {
   border-radius: 4px;
 }
 
-.on-ink :focus-visible {
-  outline-color: #ffffff;
-}
-
 a {
   text-underline-offset: 0.18em;
   text-decoration-thickness: 1px;
@@ -149,17 +145,6 @@ a {
   font-size: 1.125rem;
 }
 
-/* Formerly a tracked uppercase eyebrow. Kept as a quiet sentence-case note so old markup stays legible;
-   screens the video shows drop these labels altogether. */
-.eyebrow {
-  font-family: var(--font-sans);
-  font-size: var(--step-small);
-  line-height: 1.4;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--muted);
-}
-
 .tnum {
   font-variant-numeric: tabular-nums;
 }
@@ -171,25 +156,11 @@ a {
   text-wrap: pretty;
 }
 
-/* The old highlighter. No styled accent words: the words carry the emphasis. */
-.mark {
-  background: none;
-}
-
 /* ---------- Surfaces ---------- */
 .card {
   background: var(--surface);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
-}
-
-.rule-top {
-  border-top: 1px solid var(--rule);
-}
-
-/* Shadows only on what floats. */
-.hard-shadow {
-  box-shadow: none;
 }
 
 /* ---------- Buttons: flat, one fill, a tight 6px radius ---------- */
@@ -229,15 +200,13 @@ a {
 }
 
 /* The app screens' one primary: near-black fill, white label. */
-.btn-primary,
-.btn-ink {
+.btn-primary {
   background: var(--ink);
   border-color: var(--ink);
   color: #ffffff;
 }
 
-.btn-primary:hover:not(:disabled):not([aria-disabled="true"]),
-.btn-ink:hover:not(:disabled):not([aria-disabled="true"]) {
+.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--ink-2);
 }
 
@@ -256,17 +225,6 @@ a {
   min-height: 2.25rem;
   padding: 0.25rem 0.85rem;
   font-size: 0.875rem;
-}
-
-.on-ink .btn {
-  border-color: #ffffff;
-}
-
-.on-ink .on-paper .btn {
-  border-color: var(--rule-strong);
-}
-.on-ink .on-paper :focus-visible {
-  outline-color: var(--accent);
 }
 
 /* ---------- Race ---------- */

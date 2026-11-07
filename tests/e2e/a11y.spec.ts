@@ -1,11 +1,15 @@
 import { expect, test } from "@playwright/test";
 import {
   NORTHWIND_TASK,
-  chooseSite,
+  applyButton,
+  changeDrawer,
   expectNoAxeViolations,
   openAnalyze,
-  planAndFixWithMouse,
+  openRecheck,
+  planWithMouse,
   runTaskWithMouse,
+  viewChange,
+  waitForFixRun,
 } from "./helpers";
 
 // Detour is judged by its own standard: every screen must pass axe (WCAG 2.0 to 2.2, A and AA) with 0 violations.
@@ -25,9 +29,8 @@ test("axe: method page", async ({ page }) => {
   await expectNoAxeViolations(page, "/method");
 });
 
-test("axe: analyze page, empty / after a race / after the page is fixed", async ({ page }) => {
+test("axe: analyze page, empty / after a race / plan / after the page is fixed / change drawer / re-check", async ({ page }) => {
   await openAnalyze(page);
-  await chooseSite(page, /Northwind/);
   // The preview iframe is excluded from the scan but must have settled, or the layout would still be moving.
   await expect(page.getByTitle(/Preview of Northwind/)).toBeVisible();
   await expectNoAxeViolations(page, "/analyze (empty)");
@@ -36,7 +39,20 @@ test("axe: analyze page, empty / after a race / after the page is fixed", async 
   await expect(page.getByRole("status").filter({ hasText: /Race finished/ })).toHaveCount(1);
   await expectNoAxeViolations(page, "/analyze (after a race)");
 
-  await planAndFixWithMouse(page);
-  await expect(page.getByRole("status").filter({ hasText: /After the fixes\./ })).toHaveCount(1);
+  await planWithMouse(page);
+  await expectNoAxeViolations(page, "/analyze (plan)");
+
+  await applyButton(page).click();
+  await waitForFixRun(page);
   await expectNoAxeViolations(page, "/analyze (after the page is fixed)");
+
+  await viewChange(page, /^View change: /).first().click();
+  await expect(changeDrawer(page)).toBeVisible();
+  await expectNoAxeViolations(page, "/analyze (change drawer open)");
+  await page.keyboard.press("Escape");
+  await expect(changeDrawer(page)).toBeHidden();
+
+  await openRecheck(page);
+  await expect(page.getByRole("status").filter({ hasText: /After the fixes\./ })).toHaveCount(1);
+  await expectNoAxeViolations(page, "/analyze (re-check)");
 });

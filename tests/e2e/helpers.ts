@@ -3,6 +3,11 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 // Selectors use roles and accessible names only, so they survive restyling and the move from sample data to the
 // live pipeline. Waits are generous because the live pipeline extracts, evaluates and plans for real.
+//
+// The Analyze workspace: a top bar (the h1 is the page's name, "Change page" opens the page menu), a left column
+// (the Page region and the Tasks region) and a centre column (the "Steps" tablist with its one primary action, and
+// four tab panels, of which only the open one is visible). Role queries skip hidden panels, so a helper only finds a
+// panel's content while that step is open.
 
 export const PERSONAS = ["Mouse", "Keyboard", "Screen reader"] as const;
 export type PersonaName = (typeof PERSONAS)[number];
@@ -15,31 +20,82 @@ export const PIPELINE_MS = 90_000;
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-export async function openAnalyze(page: Page) {
-  await page.goto("/analyze");
-  await expect(page.getByRole("heading", { level: 1, name: "Analyze a page" })).toBeVisible();
-  // The radio group renders once the list of pages has loaded.
-  await expect(page.getByRole("radio", { name: /Northwind/ })).toBeAttached();
+// --- pages ----------------------------------------------------------------------------------------------------------
+
+/** The demo pages by id (the `?site=` deep link) and by the name their h1 and radio carry. */
+const DEMO = {
+  northwind: /Northwind/,
+  riverside: /Riverside/,
+  alpine: /Alpine/,
+} as const;
+export type DemoSite = keyof typeof DEMO;
+
+/** The page's name: the h1 of the top bar. It reads "Analyze a page" until the list of pages has loaded. */
+export const pageHeading = (page: Page) => page.getByRole("heading", { level: 1 });
+
+/** Opens the workspace on a demo page (Northwind is the first, so the plain address shows it). */
+export async function openAnalyze(page: Page, site: DemoSite = "northwind") {
+  await page.goto(site === "northwind" ? "/analyze" : `/analyze?site=${site}`);
+  // The name appears once the pages have loaded, which only happens after hydration: from here the page takes clicks.
+  await expect(pageHeading(page)).toHaveText(DEMO[site]);
+  await expect(page.getByRole("region", { name: "Tasks" }).getByRole("button", { name: /^Run: / }).first()).toBeVisible();
 }
 
-export const siteRadio = (page: Page, name: RegExp) => page.getByRole("radio", { name });
+export const menuButton = (page: Page) => page.getByRole("button", { name: "Change page" });
+export const pageMenu = (page: Page) => page.getByRole("dialog", { name: "Change page" });
+export const siteRadio = (page: Page, name: RegExp) => pageMenu(page).getByRole("radio", { name });
 
-/** Clicks the card, like a person would: the radio inside it is visually hidden, so it cannot be clicked itself. */
+/** Opens the "Change page" popover (mouse). */
+export async function openPageMenu(page: Page) {
+  await menuButton(page).click();
+  await expect(pageMenu(page)).toBeVisible();
+  await expect(page.getByRole("radiogroup", { name: "Choose a page to analyze" })).toBeVisible();
+}
+
+/** Chooses a demo page from the "Change page" popover (mouse); a click closes the menu and the h1 takes the new name. */
 export async function chooseSite(page: Page, name: RegExp) {
-  await page.locator("label").filter({ has: siteRadio(page, name) }).click();
-  await expect(siteRadio(page, name)).toBeChecked();
+  await openPageMenu(page);
+  await siteRadio(page, name).click();
+  await expect(pageMenu(page)).toBeHidden();
+  await expect(pageHeading(page)).toHaveText(name);
 }
+
+// --- steps ----------------------------------------------------------------------------------------------------------
+
+export type StepName = "Race" | "Plan" | "Fix" | "Re-check";
+
+/** A tab of the "Steps" rail. Its name carries "Done" for a finished step, so it is matched by its first word. */
+export const stepTab = (page: Page, step: StepName) => page.getByRole("tab", { name: new RegExp(`^${escapeRe(step)}\\b`) });
+
+export const raceRegion = (page: Page) => page.getByRole("region", { name: "The race", exact: true });
+export const planRegion = (page: Page) => page.getByRole("region", { name: "The plan", exact: true });
+export const fixRegion = (page: Page) => page.getByRole("region", { name: "Fixes on the page", exact: true });
+export const afterRegion = (page: Page) => page.getByRole("region", { name: /Same task, same three people/ });
 
 /** The "Run" button of a task. Its name is "Run: <task>", "Run again: <task>" or "Analyzing…: <task>". */
 export const runButton = (page: Page, task: string) =>
   page.getByRole("button", { name: new RegExp(`^(Run|Run again|Analyzing…): ${escapeRe(task)}$`) });
 
-export const raceRegion = (page: Page) => page.getByRole("region", { name: /The race/ });
-export const afterRegion = (page: Page) => page.getByRole("region", { name: /Same task, same three people/ });
+// The one primary action of the step rail, by what it says.
 export const planButton = (page: Page) => page.getByRole("button", { name: /^(Plan fixes|Plan again)$/ });
-export const applyButton = (page: Page) => page.getByRole("button", { name: /^(Fix this page|Fix again)$/ });
-/** The summary row of a finished fix run: "3 of 3 proven". It only exists once the run is over. */
-export const proofSummary = (page: Page) => page.getByText(/\d+ of \d+ proven/);
+export const applyButton = (page: Page) => page.getByRole("button", { name: "Fix this page", exact: true });
+export const recheckButton = (page: Page) => page.getByRole("button", { name: "See the re-check", exact: true });
+
+/** The plan: the chosen fixes, and the radio group that sets how many. */
+export const plannedFixes = (page: Page) => page.getByRole("list", { name: "Chosen fixes, best first" });
+export const fixCount = (page: Page) => page.getByRole("radiogroup", { name: "Number of fixes" });
+
+/** The fix run: the "Fix results" group ("3 of 3 proven" only exists once the run is over) and the list of fixes. */
+export const fixResults = (page: Page) => page.getByRole("group", { name: "Fix results" });
+export const proofSummary = (page: Page) => fixResults(page).getByText(/\d+ of \d+ proven/);
+export const fixProgress = (page: Page) => page.getByRole("list", { name: "Fix progress" });
+
+/** The "View change: <title>" button of a fix. Pass a RegExp to match part of the title. */
+export const viewChange = (page: Page, title: string | RegExp) =>
+  fixProgress(page).getByRole("button", { name: typeof title === "string" ? `View change: ${title}` : title });
+
+/** The change drawer: a modal dialog whose heading starts "Change: ". */
+export const changeDrawer = (page: Page) => page.getByRole("dialog", { name: /^Change: / });
 
 /** The text alternative of a race: one row per person. */
 export const resultsTable = (scope: Locator, task: string) =>
@@ -92,28 +148,35 @@ export async function waitForRace(page: Page, task: string): Promise<Record<Pers
   return readRace(table, "Prediction");
 }
 
-/** Waits for the fix run to finish: the summary row shows "N of M proven" and the after section is on screen. */
+/** Waits for the fix run to finish: "N of M proven" shows and the rail offers the re-check. */
 export async function waitForFixRun(page: Page) {
   await expect(proofSummary(page)).toBeVisible({ timeout: PIPELINE_MS });
-  await expect(afterRegion(page)).toBeVisible({ timeout: PIPELINE_MS });
+  await expect(recheckButton(page)).toBeEnabled({ timeout: PIPELINE_MS });
 }
 
-/** Chooses 3 fixes and plans (mouse). Resolves once the chosen fixes are listed. */
+/** Plans 3 fixes from the rail (mouse). Resolves once the chosen fixes are listed; the Plan step is open. */
 export async function planWithMouse(page: Page) {
-  await page.locator("label").filter({ has: page.getByRole("radio", { name: "3", exact: true }) }).click();
-  await expect(page.getByRole("radio", { name: "3", exact: true })).toBeChecked();
   await planButton(page).click();
-  await expect(page.getByRole("list", { name: "Chosen fixes, best first" })).toBeVisible({ timeout: PIPELINE_MS });
+  // Three is the number the plan starts with; the radios sit in labels and are visually hidden, so a click goes to the label.
+  await expect(page.getByRole("radio", { name: "3", exact: true })).toBeChecked();
+  await expect(plannedFixes(page)).toBeVisible({ timeout: PIPELINE_MS });
+  await expect(plannedFixes(page).getByRole("listitem")).toHaveCount(3);
 }
 
-/** Chooses 3 fixes, plans, fixes the page (mouse) and waits for the before/after section. */
+/** Chooses 3 fixes, plans, fixes the page (mouse) and waits for the run to finish. The Fix step is open. */
 export async function planAndFixWithMouse(page: Page) {
   await planWithMouse(page);
   await applyButton(page).click();
   await waitForFixRun(page);
 }
 
-/** The results of the applied plan for one task: the "Before" and "After" columns of the after-section race. */
+/** Opens the Re-check step (mouse). Focus moves to its heading. */
+export async function openRecheck(page: Page) {
+  await recheckButton(page).click();
+  await expect(afterRegion(page).getByRole("heading", { level: 2, name: /Same task, same three people/ })).toBeFocused();
+}
+
+/** The results of the applied plan for one task: the "Before" and "After" columns of the Re-check race. */
 export async function readAfter(page: Page, task: string) {
   const table = resultsTable(afterRegion(page), task);
   return { before: await readRace(table, "Before"), after: await readRace(table, "After") };
