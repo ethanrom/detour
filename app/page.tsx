@@ -3,7 +3,7 @@ import Link from "next/link";
 import "./home.css";
 import { Chip } from "@/components/home/Chip";
 import { HeroRace } from "@/components/home/HeroRace";
-import { LOOP, durationText, loopIsMeasured } from "@/components/home/loop";
+import { LOOP, LOOP_SOURCE, durationText, loopIsMeasured } from "@/components/home/loop";
 import { ProofCycle } from "@/components/home/ProofCycle";
 import { RevealRoot } from "@/components/home/RevealRoot";
 import { Switches } from "@/components/home/Switches";
@@ -102,6 +102,11 @@ export default function Home() {
               );
             })}
           </ol>
+          {measured && (
+            <p className="hm-note hm-caption" data-reveal>
+              {LOOP_SOURCE}
+            </p>
+          )}
         </div>
       </section>
 

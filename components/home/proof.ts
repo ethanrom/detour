@@ -5,9 +5,10 @@
 export const PROOF_LEAD = "Read so far:";
 
 export const PROOF_ITEMS: readonly string[] = [
-  "usa.gov pages",
+  "usa.gov and gov.uk, which it leaves alone",
+  "Hacker News, whose logo link had no name until Claude labelled it",
   "Wikipedia articles of 2,000 to 3,500 elements",
   "a county food-assistance page",
   "an outdoor store",
-  "a well-built control store that Detour leaves alone",
+  "a well-built control store that Detour also leaves alone",
 ];
