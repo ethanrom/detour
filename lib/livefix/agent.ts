@@ -19,6 +19,8 @@ export interface FixAgentOptions {
   send?: ConverseSend;
   /** Test seam: replaces process.env. */
   env?: Env;
+  /** The page's title, given to the agent as context (for example to name a site logo link). */
+  pageTitle?: string;
 }
 
 const SELECTOR = { type: "string", description: "Copied exactly from a target's selector or from the extra selectors." };
@@ -96,7 +98,7 @@ How to fix each kind
 - skip-link: insert <a class="detour-skip-link" href="#ANCHOR">Skip to main content</a> at selector "body", position afterbegin, where ANCHOR is params.anchor; setAttributes id=ANCHOR and tabindex="-1" on the first target. If the target's markup already has an id, link to that id and do not set id. Always include css: it keeps the link visually hidden until :focus, with position:absolute so nothing shifts, and shows it clearly on focus.
 - promote-heading: setAttributes role="heading" and aria-level (params.level) on each target. This keeps the look.
 - add-landmark: setAttributes role="main" on the target whose node id is params.main, and role="contentinfo" on the target whose node id is params.contentinfo.
-- add-label: setAttributes aria-label on each target. The name is short (at most 4 words, sentence case, no trailing punctuation) and names the ACTION the control performs, not its icon: a heart is "Add to wishlist", a magnifier is "Search", a bag or trolley is "Cart", a cross in a dialog is "Close". Take it from the visible text, class names, title, nearby text or the params. Never just "button", "icon" or "link".
+- add-label: setAttributes aria-label on each target. The name is short (at most 4 words, sentence case, no trailing punctuation) and names the ACTION the control performs, not its icon: a heart is "Add to wishlist", a magnifier is "Search", a bag or trolley is "Cart", a cross in a dialog is "Close". Take it from the visible text, class names, title, the link's destination (href), the page title, nearby text or the params. params.label is only a guess from file names, classes or icons: if it looks like a file name, code or id (such as "y18", "icon-2" or "img_04"), ignore it; a logo that links to the site's home page is named after the site, taken from the page title. Never just "button", "icon" or "link".
 - real-button: wrapChildren on each target with tag "button" and attributes type="button" and class="${FIX_BUTTON_CLASS}" (add aria-pressed="false" when params.pressed is true). Always include css: it resets that class so the page looks the same: font, color and text-align inherit; background none; border 0; padding 0; margin 0; width and height 100%; cursor inherit; keep a visible :focus-visible outline.
 - remove-positive-tabindex: setAttributes tabindex="0" on each target.`;
 
@@ -105,8 +107,9 @@ function block(label: string, value: unknown): string {
 }
 
 /** The user message: the fix and every target's context, all as quoted data. */
-export function describeFix(item: FixRequestItem, problems: string[] = []): string {
+export function describeFix(item: FixRequestItem, problems: string[] = [], pageTitle?: string): string {
   const lines: string[] = [
+    ...(pageTitle ? [block("page title", pageTitle), ""] : []),
     "Fix",
     block("kind", item.kind),
     block("title", item.title),
@@ -164,7 +167,7 @@ export async function writeEdits(item: FixRequestItem, opts: FixAgentOptions = {
       raw = await converseTool({
         tier: "fast",
         system: FIX_SYSTEM_PROMPT,
-        user: describeFix(item, problems),
+        user: describeFix(item, problems, opts.pageTitle),
         toolName: FIX_TOOL_NAME,
         description: "Submit the edits that fix this barrier in the page's markup.",
         inputSchema: FIX_INPUT_SCHEMA,

@@ -374,6 +374,17 @@ export function Workbench() {
   // The tasks are the screen's main job, so on the fixed demo pages they sit above the preview, in view on the first screen.
   const ownTasks = site.tasks.filter((t) => !suggestedIds.has(t.id));
   const suggestedTasks = isUrl ? site.tasks.filter((t) => suggestedIds.has(t.id)) : [];
+  // The scan lists blocked controls first and tops up with the slowest ones; the heading says which it found.
+  const blockedSuggested = suggestedTasks.filter((t) => {
+    const r = ready?.results.find((x) => x.taskId === t.id);
+    return !!(r?.personas.keyboard.blocked || r?.personas.screenreader.blocked);
+  }).length;
+  const suggestedHeading =
+    blockedSuggested === 0
+      ? "Suggested: the controls that take longest to reach"
+      : blockedSuggested === suggestedTasks.length
+        ? "Suggested: controls some people can’t use"
+        : "Suggested: controls some people can’t use, then the slowest to reach";
   const taskList =
     site.tasks.length > 0 ? (
       <div className="space-y-5">
@@ -383,7 +394,7 @@ export function Workbench() {
         {suggestedTasks.length > 0 && (
           <div>
             <h3 id="suggested-h" className="mb-2 text-[0.9375rem] font-semibold">
-              Suggested: controls some people can’t use
+              {suggestedHeading}
             </h3>
             <TaskList
               tasks={suggestedTasks}

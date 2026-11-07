@@ -361,26 +361,54 @@ async function run(input: LiveFixInput, emit: (e: LiveFixEvent) => void): Promis
     });
   }
 
-  // ---- verified wording: deterministic, one outcome each
-  for (let k = 0; k < wording.length; k++) {
+  // ---- verified wording: deterministic text edits, independent of each other, so they are applied together and
+  // the page is re-read and re-timed once (a real page can carry a dozen label proposals).
+  if (wording.length > 0) {
     checkAbort();
-    const i = chosen.length + k;
-    const w = wording[k];
-    const node = input.page.nodes[w.nodeId];
-    const edits = node ? wordingEdits(w, selectorFor(node)) : null;
-    if (!edits) {
-      set(i, { stage: "failed", reason: "That element is no longer on the page." });
-      continue;
-    }
     const wasAt = secondsOf(results);
-    const on = (stage: FixStage, extra?: Partial<FixOutcome>) => set(i, { stage, attempts: 1, ...extra });
-    const a = await attempt(edits, (id) => wasAt.get(id) ?? {}, (id) => finalPredicted.get(id) ?? {}, on);
-    if (a.verdict === "unusable") {
-      set(i, { stage: "failed", reason: a.reason, edits });
-      continue;
+    const applied: Array<{ i: number; fixId: string; edits: FixEdits; apply: ReturnType<typeof applyEdits> }> = [];
+    for (let k = 0; k < wording.length; k++) {
+      const i = chosen.length + k;
+      const w = wording[k];
+      const node = input.page.nodes[w.nodeId];
+      const edits = node ? wordingEdits(w, selectorFor(node)) : null;
+      if (!edits) {
+        set(i, { stage: "failed", reason: "That element is no longer on the page." });
+        continue;
+      }
+      const apply = applyEdits(doc, edits);
+      if (apply.ok === 0) {
+        restore(doc, apply.originals, edits.fixId);
+        set(i, { stage: "failed", reason: apply.errors[0] ?? "None of the edits could be applied.", edits });
+        continue;
+      }
+      set(i, { stage: "applied", attempts: 1, edits, originals: apply.originals, applied: apply.applied });
+      applied.push({ i, fixId: w.fixId, edits, apply });
     }
-    keep(w.fixId, a);
-    set(i, { stage: a.verdict, checks: a.checks, ...(a.reason ? { reason: a.reason } : {}) });
+    if (applied.length > 0) {
+      for (const a of applied) set(a.i, { stage: "rereading" });
+      try {
+        await nextFrame(doc.defaultView);
+        await nextFrame(doc.defaultView);
+        const nextPage = extractPage(doc, { url: input.url });
+        const nextResults = await input.engine.evaluate(nextPage, input.tasks);
+        const checks = checksOf(input.tasks, before, (id) => finalPredicted.get(id) ?? {}, secondsOf(nextResults));
+        const reason = shortfall((id) => wasAt.get(id) ?? {}, checks, nextResults);
+        page = nextPage;
+        results = nextResults;
+        for (const a of applied) {
+          edited.set(a.fixId, a.apply.edited);
+          set(a.i, { stage: reason === null ? "proven" : "partial", checks, ...(reason === null ? {} : { reason }) });
+        }
+      } catch (e) {
+        if (isAbort(e)) throw e;
+        const why = `Couldn't re-check the page after the wording edits: ${e instanceof Error ? e.message : String(e)}`;
+        for (const a of [...applied].reverse()) {
+          restore(doc, a.apply.originals, a.edits.fixId);
+          set(a.i, { stage: "failed", reason: why });
+        }
+      }
+    }
   }
 
   // ---- layout, then the report

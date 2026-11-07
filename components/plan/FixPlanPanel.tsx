@@ -144,8 +144,8 @@ export function FixPlanPanel({ baseline, k, onK, status, outcome, error, onPlan,
             <div className="flex items-start gap-3 rounded-lg border border-rule bg-paper p-4">
               <CheckIcon size={18} className="mt-1 shrink-0" />
               <p>
-                <span className="font-semibold">Nothing worth fixing.</span> No candidate fix saves a measurable amount of time on this page. That is the answer
-                a control page should get.
+                <span className="font-semibold">Nothing worth fixing.</span> No candidate fix saves a measurable amount of time for these tasks on this
+                page. Detour does not invent problems.
               </p>
             </div>
           ) : (

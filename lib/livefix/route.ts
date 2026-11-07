@@ -41,7 +41,7 @@ export async function handleFixRequest(req: Request, deps: FixRouteDeps = {}): P
     const details = parsed.error.issues.slice(0, 10).map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`);
     return Response.json({ error: "bad-request", details }, { status: 400 });
   }
-  const { siteId, fixes } = parsed.data;
+  const { siteId, pageTitle, fixes } = parsed.data;
 
   // Recordings need no model and no guard. The guard counts one call per run, and only when a model may be used.
   const recorded = new Map<string, FixEdits>();
@@ -62,7 +62,7 @@ export async function handleFixRequest(req: Request, deps: FixRouteDeps = {}): P
       if (hit) return done(hit);
       if (agentAllowed) {
         try {
-          const result = await writeEdits(item, { send: deps.send, env: deps.env });
+          const result = await writeEdits(item, { send: deps.send, env: deps.env, pageTitle });
           await recordEdits(siteId, item, result, { env, dir: deps.recordDir });
           return done(result);
         } catch {
