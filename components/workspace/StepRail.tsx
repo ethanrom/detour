@@ -73,7 +73,7 @@ export function StepRail({ steps, step, onStep, primary }: Props) {
                 "-mb-px flex items-center gap-1.5 border-b-2 px-3 text-sm font-medium max-sm:h-11 max-sm:flex-1 max-sm:justify-center max-sm:px-1",
                 active ? "border-ink text-ink" : "border-transparent",
                 !active && s.ready && "text-ink-2 hover:text-ink",
-                !s.ready && "cursor-not-allowed text-[#78858b]",
+                !s.ready && "cursor-not-allowed text-muted",
               )}
             >
               {s.done && <CheckIcon size={12} />}

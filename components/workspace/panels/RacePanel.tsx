@@ -19,6 +19,7 @@ import { ExplainCard } from "./race/ExplainCard";
 import { raceFinding } from "./race/finding";
 import { HearButton } from "./race/HearButton";
 import { RaceSkeleton } from "./race/RaceSkeleton";
+import { RaceAtRest } from "./race/RaceAtRest";
 
 const NO_EVENTS: readonly LaneEvent[] = [];
 
@@ -38,7 +39,7 @@ export function RacePanel({ headingRef, task, result, lanes, loading, runKey, is
   if (loading) {
     body = <RaceSkeleton message={isUrl ? "Reading the page…" : "Reading the page’s accessibility tree and modelling each person…"} />;
   } else if (showEmpty || !task || !result || !lanes || !sr) {
-    body = <Empty>Pick a task on the left. Detour races a mouse, keyboard-only and screen-reader user through it.</Empty>;
+    body = <RaceAtRest />;
   } else {
     const finding = raceFinding(lanes);
     body = (
