@@ -290,11 +290,52 @@ For scale: with 14 candidates and `k = 3` the search evaluates 14 + 91 + 364 = 4
 greedy was optimal (gap 0) on both inaccessible sites: Northwind (18 candidates, pool of 11) and Riverside (10
 candidates, pool of all 10).
 
+## 9a. Fixing the page and re-checking it
+
+A plan is a prediction made on the model of the page: `applyFix` edits the `PageModel`, not the page. **Fix this
+page** turns each planned fix into a real edit on the page in the preview and checks it there.
+
+1. **Stable ids.** Before the first edit, every element that has a node in the `PageModel` gets
+   `data-detour-id` set to its node id. On a page read through the proxy the ids are otherwise generated from
+   document order, and an inserted skip link would renumber every one of them.
+2. **One agent per fix, in parallel** (`lib/livefix/agent.ts`, POST `/api/fix`). The fast model tier gets the
+   fix (kind, title, parameters, WCAG criteria) and each target's real markup: its outer HTML, its parent with the
+   target marked, the announcements just before and after it, and a few computed styles. With forced tool use it
+   returns edit operations: `setAttributes`, `removeAttributes`, `wrapChildren`, `insert`, `setText` and, as a
+   last resort, `replace`. It is told to keep the original element whenever it can (`wrapChildren` puts a real
+   `<button>` inside a clickable `<div>`, so the page's own click handler still fires) and to add scoped CSS so
+   the page looks the same. The answers stream back as each call settles.
+3. **Validation** (`lib/livefix/validate.ts` on the server, `sanitize.ts` again in the browser). Every selector
+   must be one of the fix's targets (plus `body` for a skip link); at most 8 edits, 4 KB of HTML and 2 KB of CSS per
+   fix; no script, frame, object, embed, link, meta, style or base elements, no `on*` attributes, no
+   `javascript:` or other dangerous URLs; attributes set directly come from an allow-list (`aria-*`, `role`,
+   `tabindex` of 0 or less, `type`, `id`, `class`, `lang`, `href` starting with `#`); CSS may not load anything
+   and every rule must be scoped to a class. A failed validation is retried once with the errors; a second failure,
+   no credentials, or a refused rate limit falls back to deterministic edits for the same fix kind, labelled as
+   such. Demo pages are served from one recorded agent run when their markup still matches.
+4. **Apply in plan order, then re-check.** Edits are applied in the order the planner chose them, even when they
+   arrive out of order. After each fix the page is read again with `extractPage` and every task is timed again
+   with the same engine. The result is compared with the plan's prediction for that point
+   (`FixPlan.gains[i].after`): a fix is **proven** when every persona the plan unblocked is unblocked and every
+   re-checked time is within 0.5 s of the prediction or better. Otherwise it is **partial**, its edits are undone
+   and the agent is asked once more, with Detour's own reason sentence as feedback (for example why the target is
+   still not in the Tab order). Verified wording from section 10 is applied in the same run as plain text edits.
+5. **Layout check.** Every element's box is recorded before the first edit and compared after the last one,
+   outside the edited elements. An element that moved by more than 1 px is listed, so a fix that changes what
+   sighted users see is visible.
+6. **Patch.** The owner gets the before and after markup of every edited element, the CSS, and one sentence on
+   where the change likely belongs in their source.
+
+The seconds after a fix are still this model's seconds, computed on the patched page. They are reported as
+**re-checked on the fixed page**, never as measured. What the re-check adds is that the page they are computed
+on is the page after the edit really happened, not a simulation of it.
+
 ## 10. What the language model does
 
-**Two jobs, both about words: task grounding and proposed wording.** A user types a task in plain English; the
-model maps it to page elements. Separately, it proposes clearer text for vague headings and for unlabeled controls
-(see "Proposed wording" below). It never produces a time, a weight, a parameter, an explanation or a fix
+**Three jobs: task grounding, proposed wording, and writing the markup edit for a planned fix.** A user types a task
+in plain English; the model maps it to page elements. Separately, it proposes clearer text for vague headings and
+for unlabeled controls (see "Proposed wording" below), and it writes the concrete edit for each fix the planner
+chose (section 9a). It never produces a time, a weight, a parameter, an explanation or a fix
 *selection*: every number comes from the models in sections 4 to 9.
 
 1. The server builds a compact listing of the page, one line per reading stop or focusable element in document
@@ -410,7 +451,10 @@ State these when quoting a number.
 7. **Static pages.** No dynamic content, modals, focus traps, live regions, form validation errors, page loads
    or network delays. The mouse persona has no hover menus, dragging or visual search beyond one `M` per step.
 8. **Keyboard-only persona uses Tab only.** No access keys, caret browsing or find-in-page.
-9. **Fix gains are model gains.** They are exactly the seconds the model saves, not measured improvements.
+9. **Fix gains are model gains.** A plan's gains are the seconds the model saves on a simulated edit. After **Fix this
+   page** they are re-checked on the really patched page, but they are still the model's seconds, not measured
+   improvements. The fixed copy is the rendered page: the owner still makes the change in their own source, and the
+   patch shows the element-level change, not where it lives in their framework.
    The fix optimiser cannot be better than the model it optimises against.
 10. **Not yet validated end to end.** See section 12.
 11. **Grounding can be wrong.** A grounded task is checked structurally, not semantically.
