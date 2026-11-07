@@ -21,7 +21,7 @@ Live demo: **https://detour-ecru.vercel.app**.
 - **It does not cry wolf.** On the well-built control page (Alpine Co-op) Detour finds 0 candidate fixes and says "Nothing worth fixing".
 - **Consistent with field data.** Bigham et al. (2007, WebinSitu) measured blind users taking 1.5 to 4.5 times as long as sighted users on matched web tasks (2.2 times to issue a query, 4.5 times to click a result). For adding the jacket to the cart, the model's screen-reader to mouse ratio is **3.5×** (17.3 s against 5.0 s), inside that range. This is a sanity check, not a validation ([`docs/MODEL.md`](docs/MODEL.md) section 12).
 - **The search model is checked three ways.** The information-scent Markov chain matches a seeded 20,000-user simulation within 0.53% of mean time on 100 random pages (worst case), and an independent reference implementation to 1e-9.
-- **Engineering rigor.** 601 unit and property tests, brute-force oracles for the shortest paths, and Playwright end-to-end tests that include an axe scan of our own UI (0 violations) and a keyboard-only walkthrough ([details](#tests-and-verification)).
+- **Engineering rigor.** 652 unit and property tests, brute-force oracles for the shortest paths, a sanitiser and validator between every AI edit and the page, and Playwright end-to-end tests that include an axe scan of our own UI (0 violations), a keyboard-only walkthrough and the full fix run ([details](#tests-and-verification)).
 
 ### Northwind Outfitters, per persona, before and after the 3-fix plan
 
