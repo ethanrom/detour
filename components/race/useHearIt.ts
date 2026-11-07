@@ -70,3 +70,6 @@ export function useHearIt(events: readonly LaneEvent[], wpm: number) {
 
   return { supported, speaking, spokenIndex, start, stop, rate: speechRateFromWpm(wpm) };
 }
+
+/** What useHearIt returns: lets a parent own the "Hear it" button while the transcript follows the spoken line. */
+export type HearIt = ReturnType<typeof useHearIt>;

@@ -16,6 +16,8 @@ interface Props {
   elapsed: number;
   /** Prefix for DOM ids. */
   idBase: string;
+  /** One 64px row for a workspace column: name, track and time side by side, in the app's 14, 12 and 28 px sizes. */
+  compact?: boolean;
 }
 
 const pct = (t: number, max: number) => `${Math.min(100, Math.max(0, (t / max) * 100))}%`;
@@ -45,11 +47,13 @@ function Inspector({
   axisMax,
   idBase,
   activeIndex,
+  compact,
 }: {
   lane: Lane;
   axisMax: number;
   idBase: string;
   activeIndex: number;
+  compact?: boolean;
 }) {
   const meta = PERSONA_BY_ID[lane.persona];
   const [hover, setHover] = useState<number | null>(null);
@@ -115,10 +119,10 @@ function Inspector({
       {ev && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-full z-30 mb-1.5 w-max max-w-[19rem] rounded-md bg-ink px-2.5 py-1.5 text-[0.8125rem] leading-snug text-paper"
+          className={`pointer-events-none absolute bottom-full z-30 mb-1.5 w-max max-w-[19rem] rounded-md bg-ink px-2.5 py-1.5 leading-snug text-paper ${compact ? "text-xs" : "text-[0.8125rem]"}`}
           style={{ left: pct(ev.start, axisMax), transform: `translateX(${align})` }}
         >
-          <kbd className="mr-1.5 inline-block rounded bg-lime px-1.5 py-px font-mono text-[0.8125rem] font-semibold text-ink">
+          <kbd className={`mr-1.5 inline-block rounded bg-lime px-1.5 py-px font-mono font-semibold text-ink ${compact ? "text-xs" : "text-[0.8125rem]"}`}>
             {commandKey(ev.command)}
           </kbd>
           <span className="tnum text-[#b8c0cc]">{ev.start.toFixed(1)} s</span>
@@ -130,36 +134,51 @@ function Inspector({
   );
 }
 
-function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase }: Props) {
+function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase, compact }: Props) {
   const meta = PERSONA_BY_ID[lane.persona];
   const frame = laneFrame(lane, elapsed);
   const done = frame.state === "finished" || frame.state === "blocked";
   const weight = lane.weight !== undefined ? ` · ${Math.round(lane.weight * 100)}% of users` : "";
+  const small = compact ? "text-xs" : "text-[0.8125rem]";
 
   return (
     <div
       role="group"
       aria-label={`${meta.label} lane`}
-      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)_9.25rem] sm:gap-y-1"
+      className={
+        compact
+          ? "grid grid-cols-[7.75rem_minmax(0,1fr)_6rem] items-center gap-x-3 gap-y-1 py-2"
+          : "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)_9.25rem] sm:gap-y-1"
+      }
     >
       {/* Who: a plain 16px icon in the persona colour, no container */}
-      <div className="flex items-start gap-2 max-sm:col-start-1 max-sm:row-start-1">
-        <span className="mt-0.5 shrink-0" style={{ color: meta.color }}>
-          <PersonaIcon persona={lane.persona} size={16} />
-        </span>
-        <span className="min-w-0">
-          <span className="block font-semibold leading-tight" style={{ color: meta.color }}>
+      {compact ? (
+        <div className="min-w-0" title={`${meta.label}: ${STRATEGY_LABEL[lane.strategy]}${weight}`}>
+          <span className="flex items-center gap-1.5 text-sm font-semibold leading-5" style={{ color: meta.color }}>
+            <PersonaIcon persona={lane.persona} size={16} />
             {meta.label}
           </span>
-          <span className="block text-[0.8125rem] leading-snug text-muted">
-            {STRATEGY_LABEL[lane.strategy]}
-            {weight}
+          <span className="block pl-[22px] text-xs leading-4 text-muted">{STRATEGY_LABEL[lane.strategy]}</span>
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 max-sm:col-start-1 max-sm:row-start-1">
+          <span className="mt-0.5 shrink-0" style={{ color: meta.color }}>
+            <PersonaIcon persona={lane.persona} size={16} />
           </span>
-        </span>
-      </div>
+          <span className="min-w-0">
+            <span className="block font-semibold leading-tight" style={{ color: meta.color }}>
+              {meta.label}
+            </span>
+            <span className="block text-[0.8125rem] leading-snug text-muted">
+              {STRATEGY_LABEL[lane.strategy]}
+              {weight}
+            </span>
+          </span>
+        </div>
+      )}
 
       {/* Track */}
-      <div className="relative h-14 rounded-lg border border-rule bg-paper max-sm:col-span-2 max-sm:row-start-2">
+      <div className={`relative rounded-lg border border-rule bg-paper ${compact ? "h-12" : "h-14 max-sm:col-span-2 max-sm:row-start-2"}`}>
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg" aria-hidden="true">
           {axis.ticks.map((t) => (
             <span key={t} className="absolute inset-y-0 w-px bg-ink/10" style={{ left: pct(t, axis.max) }} />
@@ -183,7 +202,7 @@ function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase }: Props) {
         {ghost && (
           <span
             aria-hidden="true"
-            className="absolute top-0.5 text-[0.8125rem] leading-none text-muted"
+            className={`absolute top-0.5 leading-none text-muted ${small}`}
             style={{
               left: pct(ghost.duration, axis.max),
               transform: ghost.duration / axis.max > 0.85 ? "translateX(-110%)" : "translateX(-50%)",
@@ -200,7 +219,7 @@ function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase }: Props) {
             className="pointer-events-none absolute bottom-1 top-5 z-[5] w-0 border-l-2 border-dashed border-muted"
             style={{ left: pct(predicted, axis.max) }}
           >
-            <span className={`absolute bottom-0 whitespace-nowrap text-[0.8125rem] leading-none text-muted ${predicted / axis.max > 0.85 ? "right-1" : "left-1"}`}>
+            <span className={`absolute bottom-0 whitespace-nowrap leading-none text-muted ${small} ${predicted / axis.max > 0.85 ? "right-1" : "left-1"}`}>
               predicted
             </span>
           </span>
@@ -235,10 +254,49 @@ function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase }: Props) {
           axisMax={axis.max}
           idBase={`${idBase}-${lane.persona}`}
           activeIndex={frame.activeIndex}
+          compact={compact}
         />
       </div>
 
       {/* Result (decorative duplicate of the results table, so hidden from assistive tech) */}
+      {compact ? (
+        <div aria-hidden="true" className="tnum flex min-h-12 flex-col items-end justify-center text-right">
+          {!done ? (
+            <>
+              <span className="block text-xl font-semibold leading-8" style={{ color: meta.color }}>
+                {fmtElapsed(frame.clock)}
+              </span>
+              <span className="block text-xs leading-4 text-muted">{frame.state === "ready" ? "ready" : "elapsed"}</span>
+            </>
+          ) : frame.state === "blocked" ? (
+            <>
+              <span className="flex items-center gap-1 text-sm font-semibold leading-5 text-blocked">
+                <CrossIcon size={14} /> Can’t finish
+              </span>
+              <span className="block text-xs leading-4 text-muted">stopped at {fmtSeconds(lane.duration)}</span>
+              {ghost && !ghost.blocked && <span className="block text-xs leading-4 text-muted">was {fmtSeconds(ghost.seconds)}</span>}
+              {ghost?.blocked && <span className="block text-xs leading-4 text-muted">was can’t finish</span>}
+              {predicted !== undefined && (
+                <span className="block text-xs leading-4 text-muted">{predicted === null ? "predicted can’t finish" : `predicted ${fmtSeconds(predicted)}`}</span>
+              )}
+            </>
+          ) : (
+            <>
+              <span className="block text-[28px] font-semibold leading-8" style={{ color: meta.color }}>
+                {fmtSeconds(lane.seconds)}
+              </span>
+              <span className="block text-xs leading-4 text-muted" title="90% interval">
+                {fmtRange(lane.interval)} s
+              </span>
+              {ghost && !ghost.blocked && <span className="block text-xs leading-4 text-muted">was {fmtSeconds(ghost.seconds)}</span>}
+              {ghost?.blocked && <span className="block text-xs leading-4 text-muted">was can’t finish</span>}
+              {predicted !== undefined && (
+                <span className="block text-xs leading-4 text-muted">{predicted === null ? "predicted can’t finish" : `predicted ${fmtSeconds(predicted)}`}</span>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
       <div aria-hidden="true" className="tnum leading-tight max-sm:col-start-2 max-sm:row-start-1 max-sm:text-right">
         {!done ? (
           <>
@@ -289,15 +347,34 @@ function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase }: Props) {
           </>
         )}
       </div>
+      )}
 
       {/* Why it stopped */}
-      {frame.state === "blocked" && lane.blocked && (
-        <p className="rise-in col-span-full flex items-start gap-2 rounded-md border border-blocked/30 bg-del-bg px-3 py-2 text-sm text-del-fg sm:col-start-2 sm:col-end-4">
-          <CrossIcon size={16} className="mt-0.5 shrink-0" />
-          <span>
-            <span className="font-semibold">Can’t finish.</span> {lane.blocked.reason}
-          </span>
-        </p>
+      {compact ? (
+        // The space is held from the start (hidden, so not read out) and the sentence appears in it when the lane
+        // stops: nothing below the lanes jumps at the end of the race.
+        lane.blocked && (
+          <p
+            className={`col-span-full flex items-start gap-2 rounded-md border border-blocked/30 bg-del-bg px-3 py-2 text-sm leading-5 text-del-fg ${
+              frame.state === "blocked" ? "rise-in" : "invisible"
+            }`}
+          >
+            <CrossIcon size={16} className="mt-0.5 shrink-0" />
+            <span>
+              <span className="font-semibold">Can’t finish.</span> {lane.blocked.reason}
+            </span>
+          </p>
+        )
+      ) : (
+        frame.state === "blocked" &&
+        lane.blocked && (
+          <p className="rise-in col-span-full flex items-start gap-2 rounded-md border border-blocked/30 bg-del-bg px-3 py-2 text-sm text-del-fg sm:col-start-2 sm:col-end-4">
+            <CrossIcon size={16} className="mt-0.5 shrink-0" />
+            <span>
+              <span className="font-semibold">Can’t finish.</span> {lane.blocked.reason}
+            </span>
+          </p>
+        )
       )}
     </div>
   );
