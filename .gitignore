@@ -53,3 +53,4 @@ next-env.d.ts
 
 # taste-skill working files
 /.taste-skill/
+/.playwright-mcp/

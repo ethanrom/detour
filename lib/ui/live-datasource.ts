@@ -76,6 +76,23 @@ export interface LiveOptions {
   fetchImpl?: typeof fetch;
 }
 
+/** Records a User Timing measure named "detour:<stage>" around a stage of the loop, so its real duration can be
+ *  read from the browser (performance.getEntriesByName). Never affects the result. */
+async function timed<T>(stage: string, work: () => Promise<T> | T): Promise<T> {
+  const t0 = typeof performance !== "undefined" ? performance.now() : 0;
+  try {
+    return await work();
+  } finally {
+    if (typeof performance !== "undefined" && typeof performance.measure === "function") {
+      try {
+        performance.measure(`detour:${stage}`, { start: t0, end: performance.now() });
+      } catch {
+        // measure() is best effort
+      }
+    }
+  }
+}
+
 export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOptions = {}): DataSource {
   let client: EngineClient | undefined = engine;
   const eng = () => (client ??= createEngineClient());
@@ -91,8 +108,8 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
         const doc = await waitForFrameDocument(frame, site.path);
         // Extraction runs on the main thread and a big real page takes a moment: let "Reading the page…" paint first.
         if (site.kind === "url") await sleep(16);
-        const page: PageModel = extractPage(doc, { url: sourceUrl(site) });
-        const results = await eng().evaluate(page, site.tasks);
+        const page: PageModel = await timed("read", () => extractPage(doc, { url: sourceUrl(site) }));
+        const results = await timed("race", () => eng().evaluate(page, site.tasks));
         return { page, results, mode: "live" } satisfies Analysis;
       } catch (e) {
         // There are no sample numbers for a page the user typed in, so say what went wrong instead.
@@ -104,7 +121,7 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
 
     async plan(site, analysis, k) {
       if (analysis.mode === "sample" && fallback) return fallback.plan(site, analysis, k);
-      const { plan, page, results } = await eng().plan(analysis.page, site.tasks, k);
+      const { plan, page, results } = await timed("plan", () => eng().plan(analysis.page, site.tasks, k));
       return { plan, page, results } satisfies PlanOutcome;
     },
 
@@ -159,7 +176,7 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
 
     async fixPage(site, analysis, outcome, frame, opts) {
       if (analysis.mode === "sample") throw new Error("Fixing needs the live page.");
-      return runLiveFix({
+      return timed("fix", () => runLiveFix({
         frame,
         siteId: wireSiteId(site.id),
         url: sourceUrl(site),
@@ -172,7 +189,7 @@ export function createLiveDataSource({ engine, fallback, fetchImpl }: LiveOption
         engine: eng(),
         onEvent: opts.onEvent,
         signal: opts.signal,
-      });
+      }));
     },
 
     async suggestTasks(site, analysis) {
