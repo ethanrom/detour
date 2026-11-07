@@ -280,7 +280,7 @@ async function run(input: LiveFixInput, emit: (e: LiveFixEvent) => void): Promis
       await nextFrame(doc.defaultView);
       await nextFrame(doc.defaultView);
       const nextPage = extractPage(doc, { url: input.url });
-      const nextResults = await input.engine.evaluate(nextPage, input.tasks);
+      const nextResults = await input.engine.evaluate(nextPage, input.tasks, { samples: 0 });
       const checks = checksOf(input.tasks, before, checked, secondsOf(nextResults));
       const reason = shortfall(expected, checks, nextResults);
       return { verdict: reason === null ? "proven" : "partial", ...(reason === null ? {} : { reason }), checks, apply, page: nextPage, results: nextResults };
@@ -391,7 +391,7 @@ async function run(input: LiveFixInput, emit: (e: LiveFixEvent) => void): Promis
         await nextFrame(doc.defaultView);
         await nextFrame(doc.defaultView);
         const nextPage = extractPage(doc, { url: input.url });
-        const nextResults = await input.engine.evaluate(nextPage, input.tasks);
+        const nextResults = await input.engine.evaluate(nextPage, input.tasks, { samples: 0 });
         const checks = checksOf(input.tasks, before, (id) => finalPredicted.get(id) ?? {}, secondsOf(nextResults));
         const reason = shortfall((id) => wasAt.get(id) ?? {}, checks, nextResults);
         page = nextPage;
@@ -409,6 +409,12 @@ async function run(input: LiveFixInput, emit: (e: LiveFixEvent) => void): Promis
         }
       }
     }
+  }
+
+  // ---- the re-checks compared point estimates; the after race shows intervals, so time the final page once in full
+  if (page !== input.page) {
+    checkAbort();
+    results = await input.engine.evaluate(page, input.tasks);
   }
 
   // ---- layout, then the report

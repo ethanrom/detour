@@ -211,7 +211,8 @@ export interface LiveFixInput {
   before: TaskResult[];
   predicted: TaskResult[];
   wording?: WordingEdit[];
-  engine: { evaluate(page: PageModel, tasks: Task[]): Promise<TaskResult[]> };
+  /** opts.samples 0 = point estimates only: re-checks use that; the final results get the default intervals. */
+  engine: { evaluate(page: PageModel, tasks: Task[], opts?: { samples?: number }): Promise<TaskResult[]> };
   /** Test seam: the document to patch (defaults to frame.contentDocument). */
   doc?: Document;
   /** Test seam and offline switch: defaults to globalThis.fetch. */

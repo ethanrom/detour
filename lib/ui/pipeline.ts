@@ -90,9 +90,10 @@ export function attachSearch(page: PageModel, tasks: Task[], results: TaskResult
   });
 }
 
-export function evaluateAll(page: PageModel, tasks: Task[]): TaskResult[] {
+/** `samples` 0 skips the Monte Carlo intervals (point estimates only), which is all a re-check compares. */
+export function evaluateAll(page: PageModel, tasks: Task[], samples: number = MC_SAMPLES): TaskResult[] {
   const t = normalizeTasks(page, tasks);
-  return attachSearch(page, t, evaluate(page, t, { samples: MC_SAMPLES }));
+  return attachSearch(page, t, evaluate(page, t, { samples }));
 }
 
 export interface PlanResult {

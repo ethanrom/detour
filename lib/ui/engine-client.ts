@@ -5,7 +5,7 @@ import type { PageModel, Task, TaskResult } from "@/lib/contracts";
 import { evaluateAll, planAll, scanBarriers, type PlanResult } from "./pipeline";
 
 export type EngineRequest =
-  | { id: number; type: "evaluate"; page: PageModel; tasks: Task[] }
+  | { id: number; type: "evaluate"; page: PageModel; tasks: Task[]; samples?: number }
   | { id: number; type: "plan"; page: PageModel; tasks: Task[]; k: number }
   | { id: number; type: "scan"; page: PageModel; siteId: string };
 
@@ -14,7 +14,8 @@ type EngineValue = TaskResult[] | PlanResult | Task[];
 export type EngineResponse = { id: number; ok: true; value: EngineValue } | { id: number; ok: false; error: string };
 
 export interface EngineClient {
-  evaluate(page: PageModel, tasks: Task[]): Promise<TaskResult[]>;
+  /** opts.samples: Monte Carlo samples for the intervals (default 400; 0 = point estimates only). */
+  evaluate(page: PageModel, tasks: Task[], opts?: { samples?: number }): Promise<TaskResult[]>;
   plan(page: PageModel, tasks: Task[], k: number): Promise<PlanResult>;
   /** Suggested tasks: controls some people cannot use (see scanBarriers). */
   scan(page: PageModel, siteId: string): Promise<Task[]>;
@@ -30,9 +31,9 @@ const WORKER_FAILED = "worker-failed";
 export function createMainThreadEngine(): EngineClient {
   return {
     where: "main",
-    async evaluate(page, tasks) {
+    async evaluate(page, tasks, opts) {
       await yieldToUi();
-      return evaluateAll(page, tasks);
+      return evaluateAll(page, tasks, opts?.samples);
     },
     async plan(page, tasks, k) {
       await yieldToUi();
@@ -96,7 +97,7 @@ export function createEngineClient(): EngineClient {
     get where() {
       return dead ? "main" : "worker";
     },
-    evaluate: (page, tasks) => call((id) => ({ id, type: "evaluate", page, tasks }), () => fallback.evaluate(page, tasks)),
+    evaluate: (page, tasks, opts) => call((id) => ({ id, type: "evaluate", page, tasks, samples: opts?.samples }), () => fallback.evaluate(page, tasks, opts)),
     plan: (page, tasks, k) => call((id) => ({ id, type: "plan", page, tasks, k }), () => fallback.plan(page, tasks, k)),
     scan: (page, siteId) => call((id) => ({ id, type: "scan", page, siteId }), () => fallback.scan(page, siteId)),
   };

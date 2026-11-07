@@ -14,7 +14,7 @@ const scope = self as unknown as WorkerScope;
 scope.onmessage = (e) => {
   const req = e.data;
   try {
-    if (req.type === "evaluate") scope.postMessage({ id: req.id, ok: true, value: evaluateAll(req.page, req.tasks) });
+    if (req.type === "evaluate") scope.postMessage({ id: req.id, ok: true, value: evaluateAll(req.page, req.tasks, req.samples) });
     else if (req.type === "scan") scope.postMessage({ id: req.id, ok: true, value: scanBarriers(req.page, req.siteId) });
     else scope.postMessage({ id: req.id, ok: true, value: planAll(req.page, req.tasks, req.k) });
   } catch (err) {
