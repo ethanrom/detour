@@ -1,22 +1,68 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import "./home.css";
-import { Chip } from "@/components/home/Chip";
 import { HeroRace } from "@/components/home/HeroRace";
 import { LOOP, LOOP_SOURCE, durationText, loopIsMeasured } from "@/components/home/loop";
-import { ProofCycle } from "@/components/home/ProofCycle";
 import { RevealRoot } from "@/components/home/RevealRoot";
-import { Switches } from "@/components/home/Switches";
+import { UrlForm } from "@/components/home/UrlForm";
 
 const stagger = (i: number) => ({ "--i": i }) as CSSProperties;
+const delay = (ms: number) => ({ "--d": `${ms}ms` }) as CSSProperties;
 
-/** Segment colours: flat steps of the palette, light to dark, ending on the one accent. */
+const DEMOS = [
+  { name: "Northwind outdoor store", href: "/analyze?site=northwind" },
+  { name: "Riverside food assistance", href: "/analyze?site=riverside" },
+  { name: "Alpine (well built)", href: "/analyze?site=alpine" },
+] as const;
+
+interface Found {
+  name: string;
+  finding: ReactNode;
+  result: ReactNode;
+  href: string;
+}
+
+/** Facts only, from the README: what Detour found on three real runs. */
+const FOUND: readonly Found[] = [
+  {
+    name: "Northwind outdoor store",
+    finding: (
+      <>
+        The size picker is a clickable <code>&lt;div&gt;</code>.
+      </>
+    ),
+    result: (
+      <>
+        Keyboard: can’t finish → <span className="nb">4.4 s</span> after the fix
+      </>
+    ),
+    href: "/analyze?site=northwind",
+  },
+  {
+    name: "Hacker News",
+    finding: "The logo link has no name.",
+    result: "Claude labelled it “Hacker News”; proven",
+    href: `/analyze?url=${encodeURIComponent("https://news.ycombinator.com")}`,
+  },
+  {
+    name: "Riverside food assistance",
+    finding: "The income limits sit under “More information”.",
+    result: (
+      <>
+        Screen-reader search <span className="nb">160 s</span> → <span className="nb">42 s</span> with a clearer heading
+      </>
+    ),
+    href: "/analyze?site=riverside",
+  },
+];
+
+/** Segment colours: flat steps of the palette, light to dark. The page's one accent stays on the Analyze button. */
 const SEGMENT_FIELDS = [
   { bg: "var(--lime-deep)", fg: "var(--ink)" },
   { bg: "var(--rule-strong)", fg: "var(--ink)" },
   { bg: "var(--muted)", fg: "#ffffff" },
   { bg: "var(--ink-2)", fg: "#ffffff" },
-  { bg: "var(--accent)", fg: "#ffffff" },
+  { bg: "var(--ink)", fg: "#ffffff" },
 ] as const;
 
 export default function Home() {
@@ -24,7 +70,7 @@ export default function Home() {
 
   return (
     <div className="home">
-      {/* Hero: the sentence is the layout */}
+      {/* Hero: the sentence is the layout, then the one thing to do */}
       <section aria-labelledby="hero-h" className="hm-hero hm-wrap">
         <h1 id="hero-h" className="hm-display">
           <span className="hm-hl">Not everyone</span>{" "}
@@ -33,50 +79,57 @@ export default function Home() {
           </span>
         </h1>
         <div className="hm-hero-foot">
-          <p className="hm-lede hm-load" style={{ "--d": "520ms" } as CSSProperties}>
-            Detour times a mouse user, a keyboard-only user and a blind screen-reader user on any web page, then fixes
-            what stops them and re-checks the fix.
+          <p className="hm-lede hm-load" style={delay(480)}>
+            Detour times a mouse user, a keyboard-only user and a blind screen-reader user on any web page, then fixes what
+            stops them and re-checks the fix.
           </p>
-          <div className="hm-actions hm-load" style={{ "--d": "620ms" } as CSSProperties}>
-            <Link href="/analyze#url" className="btn btn-accent hm-btn-lg">
-              Try your own page
-            </Link>
-            <Link href="/analyze" className="hm-link">
-              See the demo store
-            </Link>
+          <div className="hm-load" style={delay(600)}>
+            <UrlForm />
+            <div className="hm-demos">
+              <span id="demos-l">Or open a demo:</span>
+              <ul aria-labelledby="demos-l">
+                {DEMOS.map((d) => (
+                  <li key={d.href}>
+                    <Link href={d.href} className="hm-link">
+                      {d.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Intro: a statement with inline frames */}
-      <section aria-labelledby="cost-h" className="hm-sec">
-        <h2 id="cost-h" className="sr-only">
-          Why it matters
-        </h2>
+      {/* Strip one: three results as rows */}
+      <section aria-labelledby="found-h" className="hm-sec">
         <div className="hm-wrap">
-          <p className="hm-stmt" data-reveal>
-            95.9% of home pages fail an accessibility check. Detour counts what that costs people:{" "}
-            <span className="nb">
-              <Chip persona="mouse" order={0} /> 5 s
-            </span>{" "}
-            by{" "}
-            <span className="nb">
-              mouse, <Chip persona="keyboard" order={1} /> no
-            </span>{" "}
-            way through by{" "}
-            <span className="nb">
-              keyboard, <Chip persona="screenreader" order={2} /> 17 s
-            </span>{" "}
-            by&nbsp;screen&nbsp;reader.
-          </p>
-          <p className="hm-note" data-reveal style={stagger(1)}>
-            WebAIM Million, 2026. Times are Detour’s predictions for the demo store task “Add the Trail Jacket in size M to
-            the cart”.
-          </p>
+          <h2 id="found-h" className="hm-h" data-reveal>
+            What it found
+          </h2>
+          <ul className="found">
+            {FOUND.map((f, i) => (
+              <li key={f.name} className="found-row" data-reveal style={stagger(i + 1)}>
+                <h3 className="found-name">{f.name}</h3>
+                <p className="found-text">{f.finding}</p>
+                <div className="found-side">
+                  <p className="found-result tnum">{f.result}</p>
+                  <Link href={f.href} className="hm-link">
+                    <span>
+                      Open in Analyze<span className="sr-only"> for {f.name}</span>
+                    </span>
+                    <span aria-hidden="true" className="hm-link-arrow">
+                      →
+                    </span>
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      {/* How it works: stages as one bar */}
+      {/* Strip two: the loop, with its measured seconds */}
       <section aria-labelledby="loop-h" className="hm-sec">
         <div className="hm-wrap">
           <h2 id="loop-h" className="hm-h" data-reveal>
@@ -95,7 +148,7 @@ export default function Home() {
                 >
                   <div className="loop-seg">
                     <span className="loop-label">{s.label}</span>
-                    {duration && <span className="loop-time">{duration}</span>}
+                    {duration && <span className="loop-time tnum">{duration}</span>}
                   </div>
                   <p className="loop-clause">{s.clause}</p>
                 </li>
@@ -103,56 +156,22 @@ export default function Home() {
             })}
           </ol>
           {measured && (
-            <p className="hm-note hm-caption" data-reveal>
+            <p className="hm-caption" data-reveal>
               {LOOP_SOURCE}
             </p>
           )}
-        </div>
-      </section>
-
-      {/* Proof: names as one sentence */}
-      <section aria-labelledby="proof-h" className="hm-sec hm-field">
-        <div className="hm-wrap">
-          <div data-reveal>
-            <ProofCycle headingId="proof-h" />
-          </div>
-        </div>
-      </section>
-
-      {/* Features: sentences with switches */}
-      <section aria-labelledby="switch-h" className="hm-sec hm-sec-switch">
-        <div className="hm-wrap">
-          <h2 id="switch-h" className="hm-h" data-reveal>
-            Flip a fix, see the seconds
-          </h2>
-        </div>
-        <Switches labelledBy="switch-h" />
-        <div className="hm-wrap">
-          <p className="hm-note hm-caption" data-reveal>
-            Northwind demo store, predicted seconds. Fixes that only pay off together are why Detour plans them as a set.
+          <p className="hm-method" data-reveal>
+            AI writes the edits. Every second comes from published human-performance models: KLM, Fitts’s law and shortest
+            paths over the accessibility tree.
           </p>
-        </div>
-      </section>
-
-      {/* Call to action: a question at both edges */}
-      <section aria-labelledby="cta-h" className="cta on-ink">
-        <h2 id="cta-h" className="cta-h">
-          <span data-reveal>Your page,</span>
-          <span data-reveal style={stagger(1)}>
-            or ours?
-          </span>
-        </h2>
-        <div className="cta-row" data-reveal style={stagger(2)}>
-          <div className="cta-buttons">
-            <Link href="/analyze#url" className="btn hm-btn-xl hm-btn-light">
-              Try your own page
-            </Link>
-            <span className="cta-or">or</span>
-            <Link href="/analyze" className="btn hm-btn-xl hm-btn-line">
-              Open the demo store
+          <div data-reveal className="hm-method-link">
+            <Link href="/method" className="hm-link">
+              <span>Read the method</span>
+              <span aria-hidden="true" className="hm-link-arrow">
+                →
+              </span>
             </Link>
           </div>
-          <p className="cta-note">Either way, every number is worked out in your browser, and the AI never writes one.</p>
         </div>
       </section>
 

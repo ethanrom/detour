@@ -111,7 +111,7 @@ export default function MethodPage() {
           </div>
         </nav>
 
-        <div className="max-w-3xl">
+        <div className="min-w-0 max-w-3xl">
           <Section id="overview" title="What Detour predicts">
             <p>
               For a page and a task (“add the Trail Jacket in size M to the cart”), Detour predicts how many <strong>seconds</strong> the task takes
