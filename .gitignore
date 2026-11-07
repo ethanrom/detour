@@ -50,3 +50,6 @@ next-env.d.ts
 
 # internal: plans, research notes, drafts, video scripts (never committed)
 /internal/
+
+# taste-skill working files
+/.taste-skill/
