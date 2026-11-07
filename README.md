@@ -21,7 +21,7 @@ Live demo: **https://detour-ecru.vercel.app**.
 - **It does not cry wolf.** On the well-built control page (Alpine Co-op) Detour finds 0 candidate fixes and says "Nothing worth fixing".
 - **Consistent with field data.** Bigham et al. (2007, WebinSitu) measured blind users taking 1.5 to 4.5 times as long as sighted users on matched web tasks (2.2 times to issue a query, 4.5 times to click a result). For adding the jacket to the cart, the model's screen-reader to mouse ratio is **3.5×** (17.3 s against 5.0 s), inside that range. This is a sanity check, not a validation ([`docs/MODEL.md`](docs/MODEL.md) section 12).
 - **The search model is checked three ways.** The information-scent Markov chain matches a seeded 20,000-user simulation within 0.53% of mean time on 100 random pages (worst case), and an independent reference implementation to 1e-9.
-- **Engineering rigor.** 652 unit and property tests, brute-force oracles for the shortest paths, a sanitiser and validator between every AI edit and the page, and Playwright end-to-end tests that include an axe scan of our own UI (0 violations), a keyboard-only walkthrough and the full fix run ([details](#tests-and-verification)).
+- **Engineering rigor.** 667 unit and property tests, brute-force oracles for the shortest paths, a sanitiser and validator between every AI edit and the page, and Playwright end-to-end tests that include an axe scan of our own UI (0 violations), a keyboard-only walkthrough and the full fix run ([details](#tests-and-verification)).
 
 ### Northwind Outfitters, per persona, before and after the 3-fix plan
 
@@ -187,7 +187,7 @@ npm run dev        # http://localhost:3000
 
 No model id appears in the code.
 
-Then try it: open **Analyze**, choose **Northwind Outfitters**, press **Run** on "Add the Trail Jacket in size M to the cart", press **Hear it**, then **Plan fixes** and **Fix this page**. Or press **Change page**, paste any public address into **Any public page**, and run one of the suggested tasks.
+Then try it: open **Analyze** (Northwind Outfitters is the default page), press **Run** on "Add the Trail Jacket in size M to the cart", press **Hear it**, then **Plan fixes** and **Fix this page**. Or press **Change page**, paste any public address into **Any public page**, and run one of the suggested tasks.
 
 ```bash
 npm run typecheck   # next typegen + tsc
@@ -198,7 +198,7 @@ npx playwright test # end-to-end in the installed Chrome; builds and serves the 
 
 ## Tests and verification
 
-`npm test` runs 652 tests in 69 files. The checks behind the claims above:
+`npm test` runs 667 tests in 73 files. The checks behind the claims above:
 
 - **Shortest paths are exact.** `lib/engine/dijkstra.test.ts` compares Dijkstra with Bellman-Ford on random graphs, and checks that adding an edge never increases a cost and that ties break deterministically. `lib/engine/oracle.test.ts` compares every screen-reader strategy, and the keyboard Tab, Shift+Tab and skip-link path, with a brute-force shortest path on random pages, and checks that every emitted move is a legal command and that totals add up.
 - **The Monte Carlo shortcut is checked.** Intervals re-cost each strategy's nominal-optimal path rather than re-searching per sample. `lib/engine/montecarlo.test.ts` re-runs the shortest-path search per sample and shows the median differs by less than 10% (and that re-optimising never costs more on average), that every interval contains its point estimate on random pages, and that a blocked strategy is never drawn.
