@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { DataSourceProvider } from "@/components/DataSourceProvider";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: {
@@ -35,13 +33,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to main content
         </a>
-        <SiteHeader />
-        <DataSourceProvider>
-          <main id="main" tabIndex={-1} className="flex-1 outline-none">
-            {children}
-          </main>
-        </DataSourceProvider>
-        <SiteFooter />
+        {/* Each route group brings its own chrome and its own <main id="main">: (site) for Home and Method, analyze for the workspace. */}
+        <DataSourceProvider>{children}</DataSourceProvider>
       </body>
     </html>
   );
