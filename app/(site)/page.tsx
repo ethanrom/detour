@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import "./home.css";
 import { HeroRace } from "@/components/home/HeroRace";
@@ -20,6 +21,8 @@ interface Found {
   finding: ReactNode;
   result: ReactNode;
   href: string;
+  /** A real crop of the Analyze workspace showing this finding. */
+  shot: { src: string; width: number; height: number; alt: string };
 }
 
 /** Facts only, from the README: what Detour found on three real runs. */
@@ -37,12 +40,14 @@ const FOUND: readonly Found[] = [
       </>
     ),
     href: "/analyze?site=northwind",
+    shot: { src: "/img/found-northwind.png", width: 2168, height: 720, alt: "Detour's race on the Northwind store: the mouse user finishes in 5 s, the keyboard user can't finish because the size option M is a clickable div that cannot receive focus, and the screen-reader user needs 17 s." },
   },
   {
     name: "Hacker News",
     finding: "The logo link has no name.",
     result: "Claude labelled it “Hacker News”; proven",
     href: `/analyze?url=${encodeURIComponent("https://news.ycombinator.com")}`,
+    shot: { src: "/img/found-hacker-news.png", width: 1120, height: 640, alt: "The change Claude wrote on Hacker News, proven on the page: the logo link gains aria-label=\"Hacker News\"." },
   },
   {
     name: "Riverside food assistance",
@@ -53,6 +58,7 @@ const FOUND: readonly Found[] = [
       </>
     ),
     href: "/analyze?site=riverside",
+    shot: { src: "/img/found-riverside.png", width: 1280, height: 500, alt: "Verified wording on the Riverside page: the heading More information becomes Monthly income limits by household size, and the screen-reader search falls from 160 s to 42 s." },
   },
 ];
 
@@ -110,6 +116,7 @@ export default function Home() {
           <ul className="found">
             {FOUND.map((f, i) => (
               <li key={f.name} className="found-row" data-reveal style={stagger(i + 1)}>
+                <div className="found-copy">
                 <h3 className="found-name">{f.name}</h3>
                 <p className="found-text">{f.finding}</p>
                 <div className="found-side">
@@ -123,6 +130,10 @@ export default function Home() {
                     </span>
                   </Link>
                 </div>
+                </div>
+                <figure className="found-shot">
+                  <Image src={f.shot.src} width={f.shot.width} height={f.shot.height} alt={f.shot.alt} sizes="(min-width: 56rem) 46rem, 100vw" />
+                </figure>
               </li>
             ))}
           </ul>

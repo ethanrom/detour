@@ -369,7 +369,24 @@
 
 .found-row {
   display: grid;
+  gap: 1rem;
+}
+
+.found-copy {
+  display: grid;
   gap: 0.5rem;
+  align-content: start;
+}
+
+.found-shot {
+  margin: 0;
+}
+
+.found-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
 }
 
 .found-name {
@@ -410,9 +427,9 @@
 
 @media (min-width: 56rem) {
   .found-row {
-    grid-template-columns: 14rem minmax(0, 1fr) minmax(0, 20rem);
-    gap: 2rem;
-    align-items: start;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 3rem;
+    align-items: center;
   }
   .found {
     gap: 2.5rem;
@@ -422,10 +439,10 @@
   }
 }
 
-/* Wide enough: the result starts on the same edge as the address form above (the hero's second column). */
+/* Wide enough: the screenshot starts on the same edge as the address form above (the hero's second column). */
 @media (min-width: 75rem) {
   .found-row {
-    grid-template-columns: 14rem minmax(0, 1fr) calc(50% - 1.5rem);
+    grid-template-columns: minmax(0, 1fr) calc(50% - 1.5rem);
   }
 }
 
