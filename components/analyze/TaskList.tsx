@@ -12,6 +12,10 @@ interface Props {
   /** Task whose Run is waiting on the analysis. */
   busyId: string | null;
   onRun: (taskId: string) => void;
+  /** Label of the list for assistive technology, when the page has more than one (for example the suggested tasks). */
+  label?: string;
+  /** The first task is the page's one primary action until a task has been run. False for a second list. */
+  primaryFirst?: boolean;
 }
 
 /** A small status chip: a pale persona tint with the persona's colour as text. 24px tall. */
@@ -30,16 +34,16 @@ function Chip({ result, persona }: { result: TaskResult; persona: PersonaId }) {
   );
 }
 
-export function TaskList({ tasks, results, selectedId, busyId, onRun }: Props) {
+export function TaskList({ tasks, results, selectedId, busyId, onRun, label, primaryFirst = true }: Props) {
   return (
-    <ul className="divide-y divide-rule overflow-hidden rounded-lg border border-rule bg-surface">
+    <ul aria-label={label} className="divide-y divide-rule overflow-hidden rounded-lg border border-rule bg-surface">
       {tasks.map((t, i) => {
         const selected = t.id === selectedId;
         const busy = t.id === busyId;
         const result = results?.find((r) => r.taskId === t.id);
         const verb = busy ? "Analyzing…" : selected && result ? "Run again" : "Run";
         // The one primary: the first task until a task has been run; after that the next step (planning) is primary.
-        const primary = selectedId === null && i === 0;
+        const primary = primaryFirst && selectedId === null && i === 0;
         return (
           <li
             key={t.id}

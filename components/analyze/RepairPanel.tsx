@@ -56,6 +56,7 @@ export function RepairPanel({ status, report, page, story, task }: Props) {
         The language model proposes wording. The scent model then re-runs the heading search with that wording and keeps the change only if it saves time.
         {report.promoted && " Verified on the page with its styled-as-heading text already promoted to real headings."}
       </p>
+      {(accepted.length > 0 || report.labels.length > 0) && <p className="mt-1 text-sm text-muted">Verified wording is applied when you fix the page.</p>}
 
       {accepted.length > 0 && (
         <>

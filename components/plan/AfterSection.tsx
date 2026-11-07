@@ -5,7 +5,7 @@ import { SearchInsight } from "@/components/analyze/SearchInsight";
 import { CheckIcon, PersonaIcon } from "@/components/icons";
 import { Race, raceDuration } from "@/components/race/Race";
 import { useRaceClock } from "@/components/race/useRaceClock";
-import type { PersonaId, SearchEstimate, Task, TaskResult } from "@/lib/contracts";
+import type { PersonaId, PersonaResult, SearchEstimate, Task, TaskResult } from "@/lib/contracts";
 import { compareTask, describeComparison, type Change, type PersonaDelta } from "@/lib/ui/compare";
 import { fmtPercentLess, fmtSeconds } from "@/lib/ui/format";
 import { PERSONAS, PERSONA_BY_ID } from "@/lib/ui/personas";
@@ -15,10 +15,13 @@ import { buildLane, PERSONA_ORDER } from "@/lib/ui/timeline";
 interface Props {
   tasks: Task[];
   before: TaskResult[];
+  /** Re-checked on the fixed page (the model run on the really patched page). */
   after: TaskResult[];
+  /** What the plan predicted. Shown in grey beside each re-checked value. */
+  predicted?: TaskResult[];
   taskId: string;
   onTask: (id: string) => void;
-  /** Changes whenever a plan is (re)applied, to restart the race. */
+  /** Changes whenever a fix run finishes, to restart the race. */
   runKey: number;
   /** True when the separate realistic-search panel would contradict the Wording panel for this task. */
   hideInsight?: (taskId: string, search: SearchEstimate) => boolean;
@@ -35,6 +38,17 @@ function Headline({ d }: { d: PersonaDelta }) {
   return <>{fmtSeconds(b!)} <span aria-hidden="true">→</span><span className="sr-only"> became </span> {fmtSeconds(a!)}</>;
 }
 
+/** The plan's prediction for one person, as grey text: "predicted 4.4 s" / "predicted: can’t finish". */
+function predictedText(p: PersonaResult | undefined): string | null {
+  if (!p) return null;
+  return p.blocked ? "predicted: can’t finish" : `predicted ${fmtSeconds(p.seconds)}`;
+}
+
+function Predicted({ p, className = "" }: { p: PersonaResult | undefined; className?: string }) {
+  const text = predictedText(p);
+  return text ? <span className={`tnum text-sm font-normal text-muted ${className}`}>{text}</span> : null;
+}
+
 const sameLabel = (d: PersonaDelta) => (d.nearlySame ? "about the same" : CHANGE_LABEL.same);
 
 const CHANGE_LABEL: Record<Change, string> = {
@@ -47,7 +61,7 @@ const CHANGE_LABEL: Record<Change, string> = {
 };
 
 
-function Tile({ d }: { d: PersonaDelta }) {
+function Tile({ d, pred }: { d: PersonaDelta; pred?: PersonaResult }) {
   const meta = PERSONA_BY_ID[d.persona];
   return (
     <div className="p-4 sm:p-5">
@@ -55,8 +69,11 @@ function Tile({ d }: { d: PersonaDelta }) {
         <PersonaIcon persona={d.persona} size={16} />
         {meta.label}
       </p>
-      <p className="tnum mt-2 text-2xl font-semibold leading-tight">
-        <Headline d={d} />
+      <p className="tnum mt-2 flex flex-wrap items-baseline gap-x-2.5 text-2xl font-semibold leading-tight">
+        <span>
+          <Headline d={d} />
+        </span>
+        <Predicted p={pred} />
       </p>
       <p className="mt-2.5">
         {d.change === "faster" && (
@@ -80,11 +97,12 @@ function Tile({ d }: { d: PersonaDelta }) {
 }
 
 export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function AfterSection(
-  { tasks, before, after, taskId, onTask, runKey, hideInsight },
+  { tasks, before, after, predicted, taskId, onTask, runKey, hideInsight },
   headingRef,
 ) {
   const beforeTask = before.find((r) => r.taskId === taskId) ?? before[0];
   const afterTask = after.find((r) => r.taskId === beforeTask?.taskId) ?? after[0];
+  const predictedTask = predicted?.find((r) => r.taskId === afterTask?.taskId);
   const task = tasks.find((t) => t.id === beforeTask?.taskId);
 
   const lanes = useMemo(() => PERSONA_ORDER.map((p) => buildLane(afterTask.personas[p])), [afterTask]);
@@ -101,6 +119,7 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
         <h2 id="after-h" ref={headingRef} tabIndex={-1} className="h-card outline-none">
           Same task, same three people, fewer seconds
         </h2>
+        <p className="mt-1 text-sm text-muted">Re-checked on the fixed page. Predicted seconds are shown in grey.</p>
 
         <div role="group" aria-label="Task to race" className="mt-4 flex flex-wrap gap-2">
           {tasks.map((t) => (
@@ -120,7 +139,7 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
 
         <div className="mt-5 grid divide-y divide-rule overflow-hidden rounded-lg border border-rule md:grid-cols-3 md:divide-x md:divide-y-0">
           {deltas.map((d) => (
-            <Tile key={d.persona} d={d} />
+            <Tile key={d.persona} d={d} pred={predictedTask?.personas[d.persona]} />
           ))}
         </div>
         <p className="sr-only">{describeComparison(task?.label ?? "", deltas)}</p>
@@ -131,6 +150,7 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
             taskLabel={task?.label ?? ""}
             lanes={lanes}
             ghost={ghost}
+            predicted={predictedTask}
             duration={duration}
           />
         </div>
@@ -152,7 +172,7 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
         {openTable && (
           <div className="relative mt-4 overflow-x-auto">
             <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
-              <caption className="sr-only">Predicted time for each task and persona, before and after the fixes</caption>
+              <caption className="sr-only">Time for each task and persona before the fixes and re-checked on the fixed page, with the predicted time</caption>
               <thead>
                 <tr className="border-b border-rule-strong text-[0.8125rem]">
                   <th scope="col" className="py-2 pr-3 font-medium text-muted">Task</th>
@@ -169,6 +189,7 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
                   const a = after.find((r) => r.taskId === t.id);
                   if (!b || !a) return null;
                   const ds = compareTask(b, a);
+                  const pr = predicted?.find((r) => r.taskId === t.id);
                   return (
                     <tr key={t.id} className="border-b border-rule align-top">
                       <th scope="row" className="py-3 pr-3 font-medium">{t.label}</th>
@@ -177,6 +198,7 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
                         return (
                           <td key={pid} className="tnum py-3 pl-3 text-right">
                             <span className="font-medium"><Headline d={d} /></span>
+                            {pr && <Predicted p={pr.personas[pid]} className="block text-[0.8125rem]" />}
                             <span className="block text-[0.8125rem] text-muted">
                               {d.change === "faster" ? fmtPercentLess(d.before.seconds!, d.after.seconds!) : d.change === "slower" ? `▲ ${fmtPercentLess(d.before.seconds!, d.after.seconds!)}` : d.change === "same" ? sameLabel(d) : CHANGE_LABEL[d.change]}
                             </span>
@@ -195,12 +217,24 @@ export const AfterSection = forwardRef<HTMLHeadingElement, Props>(function After
   );
 });
 
-function AfterRace({ taskLabel, lanes, ghost, duration }: { taskLabel: string; lanes: ReturnType<typeof buildLane>[]; ghost: ReturnType<typeof buildLane>[]; duration: number }) {
+function AfterRace({
+  taskLabel,
+  lanes,
+  ghost,
+  predicted,
+  duration,
+}: {
+  taskLabel: string;
+  lanes: ReturnType<typeof buildLane>[];
+  ghost: ReturnType<typeof buildLane>[];
+  predicted?: TaskResult;
+  duration: number;
+}) {
   const clock = useRaceClock(duration);
   return (
     <>
-      <h3 className="h-card mb-3">Before (ghost) and after (solid)</h3>
-      <Race idBase="after" taskLabel={taskLabel} lanes={lanes} ghost={ghost} clock={clock} announcePrefix="After the fixes." />
+      <h3 className="h-card mb-3">Before (ghost), re-checked (solid), predicted (mark)</h3>
+      <Race idBase="after" taskLabel={taskLabel} lanes={lanes} ghost={ghost} predicted={predicted} clock={clock} announcePrefix="After the fixes." />
     </>
   );
 }

@@ -4,7 +4,7 @@ import {
   chooseSite,
   expectNoAxeViolations,
   openAnalyze,
-  planAndApplyWithMouse,
+  planAndFixWithMouse,
   runTaskWithMouse,
 } from "./helpers";
 
@@ -25,7 +25,7 @@ test("axe: method page", async ({ page }) => {
   await expectNoAxeViolations(page, "/method");
 });
 
-test("axe: analyze page, empty / after a race / after a plan is applied", async ({ page }) => {
+test("axe: analyze page, empty / after a race / after the page is fixed", async ({ page }) => {
   await openAnalyze(page);
   await chooseSite(page, /Northwind/);
   // The preview iframe is excluded from the scan but must have settled, or the layout would still be moving.
@@ -36,7 +36,7 @@ test("axe: analyze page, empty / after a race / after a plan is applied", async 
   await expect(page.getByRole("status").filter({ hasText: /Race finished/ })).toHaveCount(1);
   await expectNoAxeViolations(page, "/analyze (after a race)");
 
-  await planAndApplyWithMouse(page);
+  await planAndFixWithMouse(page);
   await expect(page.getByRole("status").filter({ hasText: /After the fixes\./ })).toHaveCount(1);
-  await expectNoAxeViolations(page, "/analyze (after a plan is applied)");
+  await expectNoAxeViolations(page, "/analyze (after the page is fixed)");
 });

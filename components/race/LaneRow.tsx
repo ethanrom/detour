@@ -10,6 +10,8 @@ interface Props {
   lane: Lane;
   /** "Before" lane drawn behind the solid one (after-fix view). */
   ghost?: Lane;
+  /** What a plan predicted for this person: seconds (a grey mark on the track), null when they could not finish. */
+  predicted?: number | null;
   axis: Axis;
   elapsed: number;
   /** Prefix for DOM ids. */
@@ -128,7 +130,7 @@ function Inspector({
   );
 }
 
-function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
+function LaneRowImpl({ lane, ghost, predicted, axis, elapsed, idBase }: Props) {
   const meta = PERSONA_BY_ID[lane.persona];
   const frame = laneFrame(lane, elapsed);
   const done = frame.state === "finished" || frame.state === "blocked";
@@ -188,6 +190,17 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
             }}
           >
             before
+          </span>
+        )}
+
+        {/* The plan's prediction: a grey mark, no motion. */}
+        {typeof predicted === "number" && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-1 top-5 z-[5] w-0 border-l-2 border-dashed border-muted"
+            style={{ left: pct(predicted, axis.max) }}
+          >
+            <span className="absolute bottom-0 left-1 whitespace-nowrap text-[0.8125rem] leading-none text-muted">predicted</span>
           </span>
         )}
 
@@ -262,6 +275,12 @@ function LaneRowImpl({ lane, ghost, axis, elapsed, idBase }: Props) {
                 <>
                   <br />
                   was can’t finish
+                </>
+              ) : null}
+              {predicted !== undefined ? (
+                <>
+                  <br />
+                  {predicted === null ? "predicted can’t finish" : `predicted ${fmtSeconds(predicted)}`}
                 </>
               ) : null}
             </span>

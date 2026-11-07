@@ -37,7 +37,9 @@ export const runButton = (page: Page, task: string) =>
 export const raceRegion = (page: Page) => page.getByRole("region", { name: /The race/ });
 export const afterRegion = (page: Page) => page.getByRole("region", { name: /Same task, same three people/ });
 export const planButton = (page: Page) => page.getByRole("button", { name: /^(Plan fixes|Plan again)$/ });
-export const applyButton = (page: Page) => page.getByRole("button", { name: /^(Apply plan|Replay before and after)$/ });
+export const applyButton = (page: Page) => page.getByRole("button", { name: /^(Fix this page|Fix again)$/ });
+/** The summary row of a finished fix run: "3 of 3 proven". It only exists once the run is over. */
+export const proofSummary = (page: Page) => page.getByText(/\d+ of \d+ proven/);
 
 /** The text alternative of a race: one row per person. */
 export const resultsTable = (scope: Locator, task: string) =>
@@ -90,14 +92,25 @@ export async function waitForRace(page: Page, task: string): Promise<Record<Pers
   return readRace(table, "Prediction");
 }
 
-/** Chooses 3 fixes, plans, applies (mouse) and waits for the before/after section. */
-export async function planAndApplyWithMouse(page: Page) {
+/** Waits for the fix run to finish: the summary row shows "N of M proven" and the after section is on screen. */
+export async function waitForFixRun(page: Page) {
+  await expect(proofSummary(page)).toBeVisible({ timeout: PIPELINE_MS });
+  await expect(afterRegion(page)).toBeVisible({ timeout: PIPELINE_MS });
+}
+
+/** Chooses 3 fixes and plans (mouse). Resolves once the chosen fixes are listed. */
+export async function planWithMouse(page: Page) {
   await page.locator("label").filter({ has: page.getByRole("radio", { name: "3", exact: true }) }).click();
   await expect(page.getByRole("radio", { name: "3", exact: true })).toBeChecked();
   await planButton(page).click();
   await expect(page.getByRole("list", { name: "Chosen fixes, best first" })).toBeVisible({ timeout: PIPELINE_MS });
+}
+
+/** Chooses 3 fixes, plans, fixes the page (mouse) and waits for the before/after section. */
+export async function planAndFixWithMouse(page: Page) {
+  await planWithMouse(page);
   await applyButton(page).click();
-  await expect(afterRegion(page)).toBeVisible();
+  await waitForFixRun(page);
 }
 
 /** The results of the applied plan for one task: the "Before" and "After" columns of the after-section race. */

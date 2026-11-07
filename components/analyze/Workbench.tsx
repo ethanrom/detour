@@ -5,11 +5,14 @@ import { useDataSource, useDataSourceMode } from "@/components/DataSourceProvide
 import { PersonaIcon } from "@/components/icons";
 import { AfterSection } from "@/components/plan/AfterSection";
 import { FixPlanPanel, type PlanStatus } from "@/components/plan/FixPlanPanel";
+import type { ExportMeta } from "@/lib/livefix/export";
+import type { WordingEdit } from "@/lib/livefix/types";
 import { Race, raceDuration } from "@/components/race/Race";
 import { Transcript } from "@/components/race/Transcript";
 import { useRaceClock } from "@/components/race/useRaceClock";
 import type { A11yNode, SearchEstimate, Task, TaskResult } from "@/lib/contracts";
 import { LlmUnavailableError, type Analysis, type PlanOutcome, type RepairReport, type SiteInfo } from "@/lib/ui/datasource";
+import { buildWordingEdits, taskLabels, wordingWcag } from "@/lib/ui/fix-run";
 import { nodeLabel, roleWord, taskForNode } from "@/lib/ui/pick";
 import { buildRenameStory, hideSearchInsight } from "@/lib/ui/rename-story";
 import { searchInsight } from "@/lib/ui/search-insight";
@@ -24,7 +27,9 @@ import { SiteCards } from "./SiteCards";
 import { SitePreview } from "./SitePreview";
 import { TargetPicker } from "./TargetPicker";
 import { TaskList } from "./TaskList";
+import { useFixRun } from "./useFixRun";
 import { WhyPanel } from "./WhyPanel";
+import { sourceUrl } from "@/lib/ui/any-url";
 
 /** Fewer reading stops than this and the page, without its JavaScript, is mostly empty. */
 const MIN_READING_STOPS = 5;
@@ -63,9 +68,10 @@ export function Workbench() {
   const [runKey, setRunKey] = useState(0);
   const [k, setK] = useState(3);
   const [plan, setPlan] = useState<PlanState>({ siteId: "", status: "idle" });
-  const [applied, setApplied] = useState(false);
-  const [applyKey, setApplyKey] = useState(0);
   const [afterTaskId, setAfterTaskId] = useState<string | null>(null);
+  // Tasks found on a typed-in page by the barrier scan, and whether that scan is running.
+  const [suggestedIds, setSuggestedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [suggesting, setSuggesting] = useState(false);
   const [custom, setCustom] = useState<CustomState>({ siteId: "", status: "idle" });
   const [repair, setRepair] = useState<RepairState | null>(null);
   // "Click to choose a target" (pages from a typed-in address start with no tasks).
@@ -105,21 +111,38 @@ export function Workbench() {
   const result: TaskResult | undefined = ready?.results.find((r) => r.taskId === taskId);
   const isUrl = site?.kind === "url";
   const reading = analysis?.status === "loading" && analysis.siteId === siteId;
-  /** Something is being worked on: the task waiting for its analysis, or the page being read. */
-  const busyId = pending ?? (reading ? "page" : null);
+  /** Something is being worked on: the task waiting for its analysis, the page being read, or the scan for suggestions. */
+  const busyId = pending ?? (reading ? "page" : suggesting ? "suggest" : null);
 
-  const chooseSite = useCallback((id: string) => {
-    setSiteId(id);
-    setTaskId(null);
-    setAnalysis(null);
-    setPending(null);
-    setApplied(false);
-    setPlan({ siteId: id, status: "idle" });
-    setPicking(false);
-    setHovered(null);
-    setHighlightId(null);
-    setPickMsg("");
-  }, []);
+  // Heading and label suggestions come from the server (LLM, verified by the scent model). What they accept is
+  // applied in the same run as the plan's fixes.
+  const readyPage = ready?.page;
+  const taskKey = site?.tasks.map((t) => t.id).join("|") ?? "";
+  const repairKey = site && readyPage && site.tasks.length > 0 ? `${site.id}|${taskKey}` : "";
+  const repairReport = repair?.key === repairKey ? repair.report : undefined;
+  const wording = useMemo(() => buildWordingEdits(repairReport), [repairReport]);
+
+  // "Fix this page": the agents' edits go onto the live preview, then Detour re-reads and re-times it.
+  const fixer = useFixRun({ source, site, ready, outcome, frameRef, wording, onDone: () => setAfterTaskId(taskId) });
+  const resetFix = fixer.reset;
+  const fixAvailable = fixer.canFix && (ready?.mode ?? mode) === "live";
+
+  const chooseSite = useCallback(
+    (id: string) => {
+      resetFix();
+      setSiteId(id);
+      setTaskId(null);
+      setAnalysis(null);
+      setPending(null);
+      setSuggesting(false);
+      setPlan({ siteId: id, status: "idle" });
+      setPicking(false);
+      setHovered(null);
+      setHighlightId(null);
+      setPickMsg("");
+    },
+    [resetFix],
+  );
 
   /** The proxy accepted a typed-in address: add it as the (one) page of its kind and select it. */
   const addUrlSite = useCallback(
@@ -178,6 +201,38 @@ export function Workbench() {
     startAnalysis(site).catch(() => undefined); // the error is shown by the analysis state
   }, [site, analysis, startAnalysis]);
 
+  // ...and then offer tasks for the controls some people cannot use, so there is something to run without typing.
+  const suggestedFor = useRef<unknown>(null);
+  useEffect(() => {
+    if (!site || site.kind !== "url" || !ready || !source.suggestTasks || !source.addTask) return;
+    if (suggestedFor.current === ready.page) return;
+    suggestedFor.current = ready.page;
+    const sid = site.id;
+    const suggest = source.suggestTasks.bind(source);
+    const addTask = source.addTask.bind(source);
+    setSuggesting(true);
+    void (async () => {
+      try {
+        const found = await suggest(site, ready);
+        const fresh = found.filter((t) => !site.tasks.some((x) => x.id === t.id));
+        if (found.length === 0 || liveSite.current !== sid) return;
+        const next: SiteInfo = { ...site, tasks: [...site.tasks, ...fresh] };
+        let data = ready;
+        for (const t of fresh) data = await addTask(next, data, t);
+        if (liveSite.current !== sid) return;
+        setSuggestedIds((cur) => new Set([...cur, ...found.map((t) => t.id)]));
+        if (fresh.length > 0) {
+          setSites((list) => list?.map((s) => (s.id === sid ? next : s)) ?? list);
+          setAnalysis({ siteId: sid, status: "ready", data });
+        }
+      } catch {
+        /* suggestions are a convenience: without them the page still takes a picked target or a typed task */
+      } finally {
+        setSuggesting(false);
+      }
+    })();
+  }, [site, ready, source]);
+
   /** Add a task to the site (evaluated on the page that is already read) and run it. False if the user moved on meanwhile. */
   const adoptTask = useCallback(
     async (target: SiteInfo, data: Analysis, task: Task): Promise<boolean> => {
@@ -188,12 +243,12 @@ export function Workbench() {
       setSites((list) => list?.map((s) => (s.id === sid ? next : s)) ?? list);
       setAnalysis({ siteId: sid, status: "ready", data: withTask });
       setPlan({ siteId: sid, status: "idle" });
-      setApplied(false);
+      resetFix();
       setTaskId(task.id);
       setRunKey((n) => n + 1);
       return true;
     },
-    [source],
+    [source, resetFix],
   );
 
   /** A node chosen on the page or from the list: the deterministic task for it, added and run. No LLM. */
@@ -247,33 +302,26 @@ export function Workbench() {
 
   const doPlan = useCallback(() => {
     if (!site || !ready) return;
-    setApplied(false);
+    // A new plan is for the page as it was read: a page patched by an earlier run goes back first.
+    resetFix();
     setPlan({ siteId: site.id, status: "loading" });
     source
       .plan(site, ready, k)
       .then((o) => liveSite.current === site.id && setPlan({ siteId: site.id, status: "ready", outcome: o }))
       .catch((e) => liveSite.current === site.id && setPlan({ siteId: site.id, status: "error", error: errMsg(e) }));
-  }, [site, ready, source, k]);
+  }, [site, ready, source, k, resetFix]);
 
-  const apply = useCallback(() => {
-    setApplied(true);
-    setApplyKey((n) => n + 1);
-    setAfterTaskId(taskId);
-  }, [taskId]);
-
-  // Move to the before/after section when a plan is applied.
+  // Move to the before/after section when a fix run has finished.
+  const doneKey = fixer.doneKey;
   useEffect(() => {
-    if (applyKey === 0) return;
+    if (doneKey === 0) return;
     const h = afterHeading.current;
     if (!h) return;
     h.focus({ preventScroll: true });
     (h.closest("section") ?? h).scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-  }, [applyKey, reduced]);
+  }, [doneKey, reduced]);
 
   // Heading and label suggestions: the server asks the LLM for wording and the scent model verifies it.
-  const readyPage = ready?.page;
-  const taskKey = site?.tasks.map((t) => t.id).join("|") ?? "";
-  const repairKey = site && readyPage && site.tasks.length > 0 ? `${site.id}|${taskKey}` : "";
   useEffect(() => {
     if (!repairKey || !site || !ready || !source.suggestRepairs) return;
     let alive = true;
@@ -290,7 +338,6 @@ export function Workbench() {
   }, [repairKey, source]);
 
   // The Wording panel tells the heading story per task; the separate realistic-search panel steps aside for it.
-  const repairReport = repair?.key === repairKey ? repair.report : undefined;
   const repairStatus: RepairStatus | undefined =
     source.suggestRepairs && repairKey ? (repair?.key === repairKey ? repair.status : "loading") : undefined;
   const story = useMemo(() => {
@@ -325,13 +372,43 @@ export function Workbench() {
   }
 
   // The tasks are the screen's main job, so on the fixed demo pages they sit above the preview, in view on the first screen.
+  const ownTasks = site.tasks.filter((t) => !suggestedIds.has(t.id));
+  const suggestedTasks = isUrl ? site.tasks.filter((t) => suggestedIds.has(t.id)) : [];
   const taskList =
     site.tasks.length > 0 ? (
-      <TaskList tasks={site.tasks} results={ready?.results} selectedId={taskId} busyId={busyId} onRun={run} />
+      <div className="space-y-5">
+        {(ownTasks.length > 0 || suggestedTasks.length === 0) && (
+          <TaskList tasks={ownTasks.length > 0 ? ownTasks : site.tasks} results={ready?.results} selectedId={taskId} busyId={busyId} onRun={run} />
+        )}
+        {suggestedTasks.length > 0 && (
+          <div>
+            <h3 id="suggested-h" className="mb-2 text-[0.9375rem] font-semibold">
+              Suggested: controls some people can’t use
+            </h3>
+            <TaskList
+              tasks={suggestedTasks}
+              results={ready?.results}
+              selectedId={taskId}
+              busyId={busyId}
+              onRun={run}
+              label="Suggested tasks"
+              primaryFirst={ownTasks.length === 0}
+            />
+          </div>
+        )}
+      </div>
     ) : (
       isUrl && (
         <p className="rounded-lg border border-dashed border-rule-strong bg-surface p-4 text-sm text-muted">
-          <span className="font-medium text-ink">No tasks yet.</span> Choose a target on the page above, or describe a task below. It shows up here and the race starts.
+          {suggesting ? (
+            <>
+              <span className="font-medium text-ink">Looking for controls some people can’t use…</span> Suggested tasks show up here.
+            </>
+          ) : (
+            <>
+              <span className="font-medium text-ink">No tasks yet.</span> Choose a target on the page above, or describe a task below. It shows up here and the race starts.
+            </>
+          )}
         </p>
       )
     );
@@ -347,6 +424,11 @@ export function Workbench() {
         key={site.id}
         site={site}
         frameRef={frameRef}
+        fixed={
+          fixer.run && fixer.run.status !== "error"
+            ? { shown: fixer.shown, busy: fixer.run.status === "running", onToggle: fixer.toggle }
+            : undefined
+        }
         pick={
           isUrl
             ? {
@@ -416,7 +498,7 @@ export function Workbench() {
         ) : (
           ready && (
             <p className="mt-3 text-[0.8125rem] text-muted">
-              <span className="font-medium text-ink">Measured live.</span> Read <span className="tnum">{Object.keys(ready.page.nodes).length}</span> elements from the rendered page, with their real positions
+              <span className="font-medium text-ink">Live page.</span> Read <span className="tnum">{Object.keys(ready.page.nodes).length}</span> elements from the rendered page, with their real positions
               and sizes.
             </p>
           )
@@ -441,30 +523,49 @@ export function Workbench() {
         <FixPlanPanel
           baseline={ready.results}
           k={k}
-          onK={setK}
+          onK={(n) => {
+            // Another number of fixes is another plan: the fix state starts over.
+            setK(n);
+            resetFix();
+          }}
           status={planForSite.status}
           outcome={outcome}
           error={planForSite.error}
-          applied={applied}
           onPlan={doPlan}
-          onApply={apply}
+          fix={{
+            available: fixAvailable,
+            run: fixer.run,
+            page: ready.page,
+            tasks: site.tasks,
+            meta: exportMeta(site, ready.page.title, outcome, fixer.run?.wording ?? wording),
+            onFix: () => void fixer.fix(),
+          }}
         />
       )}
 
-      {ready && outcome && applied && (
+      {ready && outcome && fixer.run?.status === "done" && fixer.run.report && (
         <AfterSection
           ref={afterHeading}
           tasks={site.tasks}
           before={ready.results}
-          after={outcome.results}
+          after={fixer.run.report.results}
+          predicted={outcome.results}
           taskId={afterTaskId ?? taskId ?? site.tasks[0].id}
           onTask={setAfterTaskId}
-          runKey={applyKey}
+          runKey={fixer.doneKey}
           hideInsight={hideInsight}
         />
       )}
     </div>
   );
+}
+
+/** What the patch and the report need beyond the run itself: the page's address and title, WCAG numbers, task names. */
+function exportMeta(site: SiteInfo, title: string, outcome: PlanOutcome | undefined, wording: WordingEdit[]): ExportMeta {
+  const wcag: Record<string, string[]> = {};
+  for (const f of outcome?.plan.chosen ?? []) wcag[f.id] = f.wcag;
+  for (const w of wording) wcag[w.fixId] = wordingWcag(w);
+  return { url: sourceUrl(site), title, wcag, taskLabels: taskLabels(site.tasks) };
 }
 
 /** The race, the transcript and the explanation share one clock, so they live under one component. */

@@ -6,7 +6,7 @@ import {
   afterRegion,
   chooseSite,
   openAnalyze,
-  planAndApplyWithMouse,
+  planAndFixWithMouse,
   raceRegion,
   readAfter,
   runTaskWithMouse,
@@ -30,12 +30,12 @@ test("Northwind: keyboard is blocked, a 3-fix plan lets it finish and does not s
   await expect(raceRegion(page).getByRole("group", { name: "Mouse lane" })).toContainText(/\d(\.\d)? s/);
   await expect(raceRegion(page).getByRole("group", { name: "Screen reader lane" })).toContainText(/\d(\.\d)? s/);
 
-  // Plan with k = 3, apply, and compare against the "before" numbers.
-  await planAndApplyWithMouse(page);
+  // Plan with k = 3, fix the page, and compare the re-checked seconds against the "before" numbers.
+  await planAndFixWithMouse(page);
   await expect(afterRegion(page).getByRole("heading", { level: 2, name: /Same task, same three people/ })).toBeFocused();
   const result = await readAfter(page, NORTHWIND_TASK);
   expect(secondsOf(result.before), "the after view repeats the same 'before' numbers").toEqual(secondsOf(before));
-  expect(result.after.Keyboard.seconds, "keyboard can finish after the fixes").toBeGreaterThan(0);
+  expect(result.after.Keyboard.seconds, "keyboard can finish on the fixed page").toBeGreaterThan(0);
   expect(result.after["Screen reader"].seconds!, "screen reader is not slower after the fixes").toBeLessThanOrEqual(before["Screen reader"].seconds!);
   await expect(afterRegion(page).getByText("Unblocked").first()).toBeVisible();
 });

@@ -29,6 +29,8 @@ interface Props {
   /** Handed to DataSource.analyze() so the extractor can read the rendered DOM. */
   frameRef: RefObject<HTMLIFrameElement | null>;
   pick?: PickProps;
+  /** Present once the page has been fixed: flip the preview between the original page and the fixed one. */
+  fixed?: { shown: "fixed" | "original"; busy: boolean; onToggle: () => void };
 }
 
 function frameDocument(frame: HTMLIFrameElement | null): Document | null {
@@ -40,7 +42,7 @@ function frameDocument(frame: HTMLIFrameElement | null): Document | null {
   }
 }
 
-export function SitePreview({ site, frameRef, pick }: Props) {
+export function SitePreview({ site, frameRef, pick, fixed }: Props) {
   const isUrl = site.kind === "url";
   const [status, setStatus] = useState<{ path: string; value: Status }>({ path: "", value: "checking" });
   const [scale, setScale] = useState(0.4);
@@ -162,6 +164,16 @@ export function SitePreview({ site, frameRef, pick }: Props) {
           </a>
         )}
       </figcaption>
+      {fixed && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-rule bg-paper px-3 py-2 text-sm">
+          <button type="button" className="btn btn-sm max-sm:min-h-11" onClick={fixed.onToggle} disabled={fixed.busy}>
+            {fixed.shown === "fixed" ? "Show original" : "Show fixed"}
+          </button>
+          <span role="status" className="text-muted">
+            {fixed.busy ? "Fixing the page…" : fixed.shown === "fixed" ? "Showing the fixed page." : "Showing the original page."}
+          </span>
+        </div>
+      )}
     </figure>
   );
 }
