@@ -1,34 +1,37 @@
 @import "tailwindcss";
 
 /*
- * Detour design tokens.
+ * Detour design tokens (taste-skill direction "The sentence is the layout", palette "Frost and slate",
+ * type Switzer; Analyze follows the app style "Achromatic ledger": no colour in the chrome, colour only on data).
  *
- * Palette: warm paper, deep ink, one acid-lime accent used as a "highlighter".
- * Persona colours are Okabe-Ito derived (colour-blind safe) and are always paired with a
- * distinct shape and fill pattern, so colour is never the only channel.
+ * Persona colours are Okabe-Ito derived (colour-blind safe) and are always paired with a distinct shape and
+ * fill pattern, so colour is never the only channel. They are the data hues; the chrome stays ink and grey.
+ * The teal accent appears once per page screen, on the main action. App screens use a near-black primary.
  *
- * Contrast (WCAG 2.2 relative luminance):
- *   ink #0D1522 on paper #F6F3EC ............ 16.5:1
- *   muted #4A5565 on paper .................. 6.8:1
- *   ink on lime #D2F84A ..................... 15.1:1   (lime on ink 15.1:1)
- *   mouse #0072B2 on paper / white .......... 4.7:1 / 5.2:1
- *   keyboard #B54800 on paper / white ....... 4.9:1 / 5.4:1
- *   screen reader #007A5E on paper / white .. 4.8:1 / 5.3:1
- *   persona colour on its own tint .......... 4.6:1 / 4.7:1 / 4.7:1
- *   blocked #A4161A on paper ................ 7.0:1
+ * Contrast (WCAG 2.2 relative luminance), on ground #F7F9FA:
+ *   ink #1F3038 ............................. 12.9:1
+ *   muted #55636A ........................... 5.9:1 (5.4:1 on surface step #ECF0F2)
+ *   white on accent #0D7480 ................. 5.5:1
+ *   ink on active grey #E2E9ED .............. 11:1
+ *   mouse #0072B2 / keyboard #B54800 / screen reader #007A5E: at least 4.5:1 on the ground and on white
+ *   blocked #A4161A ......................... 7:1
  */
 :root {
   color-scheme: light;
-  --paper: #f6f3ec;
-  --paper-2: #eeeae0;
+  --paper: #f7f9fa;
+  --paper-2: #ecf0f2;
   --surface: #ffffff;
-  --ink: #0d1522;
-  --ink-2: #1c2638;
-  --muted: #4a5565;
-  --rule: #d9d3c4;
-  --rule-strong: #8c8670;
-  --lime: #d2f84a;
-  --lime-deep: #b9e12a;
+  --ink: #1f3038;
+  --ink-2: #2c414b;
+  --muted: #55636a;
+  --rule: #e2e7ea;
+  --rule-strong: #c3ccd1;
+  /* Former highlighter, now the neutral "active / selected" fill of the ledger style. */
+  --lime: #e2e9ed;
+  --lime-deep: #d3dde2;
+  --accent: #0d7480;
+  --accent-deep: #0a5e68;
+  --accent-ink: #ffffff;
   --mouse: #0072b2;
   --keyboard: #b54800;
   --screenreader: #007a5e;
@@ -40,7 +43,13 @@
   --mouse-tint: #e9f3fa;
   --keyboard-tint: #fbeee3;
   --screenreader-tint: #e6f5ef;
-  --radius: 14px;
+  --radius: 8px;
+  --radius-control: 6px;
+
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
 }
 
 @theme inline {
@@ -54,6 +63,8 @@
   --color-rule-strong: var(--rule-strong);
   --color-lime: var(--lime);
   --color-lime-deep: var(--lime-deep);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
   --color-mouse: var(--mouse);
   --color-keyboard: var(--keyboard);
   --color-screenreader: var(--screenreader);
@@ -62,8 +73,10 @@
   --color-add-fg: var(--add-fg);
   --color-del-bg: var(--del-bg);
   --color-del-fg: var(--del-fg);
-  --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-sans: "Switzer", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  /* One family: the old serif role now uses the text face too. */
+  --font-serif: var(--font-sans);
+  /* Monospace only for real code (diffs) and key names. */
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
 }
 
@@ -82,28 +95,27 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 1rem;
-  line-height: 1.55;
+  font-size: var(--step-body);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
   font-feature-settings: "kern", "liga";
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: var(--lime);
+  background: #cfe5e8;
   color: var(--ink);
 }
 
-/* Visible focus on every control: ink ring with a lime halo, readable on paper and on ink. */
+/* Visible focus on every control: a solid accent ring with an offset, readable on the ground and on white. */
 :focus-visible {
-  outline: 3px solid var(--ink);
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
-  box-shadow: 0 0 0 6px var(--lime);
 }
 
 .on-ink :focus-visible {
-  outline-color: var(--lime);
-  box-shadow: 0 0 0 6px var(--ink);
+  outline-color: #ffffff;
 }
 
 a {
@@ -113,36 +125,38 @@ a {
 
 /* ---------- Typography helpers ---------- */
 .display {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.02;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
   text-wrap: balance;
 }
 
 .h-section {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-size: var(--step-head);
   text-wrap: balance;
 }
 
 .h-card {
-  font-family: var(--font-serif);
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.2;
-  font-size: 1.25rem;
+  line-height: 1.25;
+  font-size: 1.125rem;
 }
 
+/* Formerly a tracked uppercase eyebrow. Kept as a quiet sentence-case note so old markup stays legible;
+   screens the video shows drop these labels altogether. */
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: var(--step-small);
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--muted);
 }
 
@@ -151,24 +165,15 @@ a {
 }
 
 .lede {
-  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.3125rem);
-  line-height: 1.5;
-  color: var(--muted);
+  font-size: var(--step-lead);
+  line-height: 1.4;
+  color: var(--ink);
   text-wrap: pretty;
 }
 
-/* The "highlighter" mark: lime band behind the lower 60% of the text. */
+/* The old highlighter. No styled accent words: the words carry the emphasis. */
 .mark {
-  background: linear-gradient(transparent 52%, var(--lime) 52%, var(--lime) 92%, transparent 92%);
-  padding: 0 0.08em;
-  margin: 0 -0.08em;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-
-.on-ink .mark {
   background: none;
-  color: var(--lime);
 }
 
 /* ---------- Surfaces ---------- */
@@ -182,28 +187,29 @@ a {
   border-top: 1px solid var(--rule);
 }
 
+/* Shadows only on what floats. */
 .hard-shadow {
-  box-shadow: 4px 4px 0 var(--ink);
+  box-shadow: none;
 }
 
-/* ---------- Buttons ---------- */
+/* ---------- Buttons: flat, one fill, a tight 6px radius ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   min-height: 2.75rem;
-  padding: 0.5rem 1.15rem;
-  border-radius: 999px;
-  border: 2px solid var(--ink);
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--rule-strong);
   background: var(--surface);
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 500;
   font-size: 0.9375rem;
   line-height: 1.2;
   cursor: pointer;
   text-decoration: none;
-  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
 .btn:hover:not(:disabled):not([aria-disabled="true"]) {
@@ -211,38 +217,39 @@ a {
 }
 
 .btn:active:not(:disabled) {
-  transform: translate(1px, 1px);
+  transform: scale(0.98);
 }
 
 .btn:disabled,
 .btn[aria-disabled="true"] {
   cursor: not-allowed;
-  opacity: 1;
-  color: #5b6472;
-  border-color: #8c8670;
+  color: #5b6870;
+  border-color: var(--rule-strong);
   background: var(--paper-2);
 }
 
-.btn-primary {
-  background: var(--lime);
-  box-shadow: 3px 3px 0 var(--ink);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--lime-deep);
-}
-
-.btn-primary:active:not(:disabled) {
-  box-shadow: 1px 1px 0 var(--ink);
-}
-
+/* The app screens' one primary: near-black fill, white label. */
+.btn-primary,
 .btn-ink {
   background: var(--ink);
-  color: var(--paper);
+  border-color: var(--ink);
+  color: #ffffff;
 }
 
+.btn-primary:hover:not(:disabled),
 .btn-ink:hover:not(:disabled) {
   background: var(--ink-2);
+}
+
+/* The page's one accent action. */
+.btn-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn-accent:hover:not(:disabled) {
+  background: var(--accent-deep);
 }
 
 .btn-sm {
@@ -252,16 +259,14 @@ a {
 }
 
 .on-ink .btn {
-  border-color: var(--lime);
+  border-color: #ffffff;
 }
 
-/* A light card nested inside an ink section restores the light-surface styling. */
 .on-ink .on-paper .btn {
-  border-color: var(--ink);
+  border-color: var(--rule-strong);
 }
 .on-ink .on-paper :focus-visible {
-  outline-color: var(--ink);
-  box-shadow: 0 0 0 6px var(--lime);
+  outline-color: var(--accent);
 }
 
 /* ---------- Race ---------- */
