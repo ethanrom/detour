@@ -21,6 +21,7 @@ const TOC = [
   ["scent", "Realistic heading search"],
   ["montecarlo", "Monte Carlo intervals"],
   ["optimiser", "The optimiser"],
+  ["fix", "Fix and re-check"],
   ["llm", "What the LLM does"],
   ["parameters", "Parameters"],
   ["limits", "Limitations"],
@@ -86,7 +87,7 @@ export default function MethodPage() {
     <div className="mx-auto w-full max-w-[1360px] px-5 pb-8 pt-10 sm:px-8 sm:pt-14">
       <header className="mb-12 max-w-3xl">
         <h1 className="display text-4xl sm:text-6xl">
-          Every second has <span className="mark">a source</span>
+          Every second has a source
         </h1>
         <p className="lede mt-5">
           Detour is a simulation, not a score. Times come from published human-performance models run over the page’s accessibility tree. This page is
@@ -325,6 +326,28 @@ export default function MethodPage() {
             </p>
           </Section>
 
+          <Section id="fix" title="Fix the page, then re-check it">
+            <p>
+              The plan is a prediction on the page model. <strong>Fix this page</strong> makes it real on the page you chose. One AI agent per planned fix
+              runs in parallel on the fast Claude tier. Each agent sees the target element’s actual markup, its parent, what a screen reader hears around
+              it and a few computed styles, and writes the edit as a short list of operations. It keeps the original element where it can (a real
+              button goes inside a clickable div, so the page’s own click handler still fires) and adds scoped CSS so the page looks the same.
+            </p>
+            <p>
+              Every edit is validated twice, on the server and again in the browser. Selectors must point at the fix’s own targets. Scripts, frames,
+              event handlers, dangerous links and CSS that loads anything are refused. Attributes come from an allow-list. A rejected edit is tried once
+              more with the reasons; without keys, or after a second failure, a deterministic template edit for the same fix is used and labelled as
+              such.
+            </p>
+            <p>
+              Detour then applies the edits in plan order, reads the patched page again and times every person again. A fix is proven when everyone
+              the plan unblocked can finish and every time is within half a second of the prediction or better. If not, its edit is undone and the agent
+              gets one retry, with Detour’s own sentence on what is still wrong. Finally every element’s box is compared before and after, so a fix that
+              moves anything for sighted users is listed. The times after a fix are still this model’s times, now computed on the patched page: they are
+              re-checked on the fixed page, not measured.
+            </p>
+          </Section>
+
           <Section id="llm" title="What the language model does, and does not do">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="card p-5">
@@ -332,7 +355,8 @@ export default function MethodPage() {
                 <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[0.9375rem]">
                   <li>Maps a free-text task to elements on the page.</li>
                   <li>Proposes clearer wording for vague headings and names for unlabeled controls.</li>
-                  <li>Every output is validated: task targets must exist and be actionable (one retry), and a heading rename is kept only if the scent model says it saves time.</li>
+                  <li>Writes the markup edit for each fix the optimiser chose, against the element’s real markup.</li>
+                  <li>Every output is validated: task targets must exist and be actionable (one retry), a heading rename is kept only if the scent model says it saves time, and an edit is sanitised and then re-checked on the fixed page.</li>
                   <li>Falls back to hand-pinned fixture tasks and rule-based wording when there is no key, so the demo never depends on it.</li>
                 </ul>
               </div>
@@ -341,7 +365,7 @@ export default function MethodPage() {
                 <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[0.9375rem]">
                   <li>Produce any time, interval or percentage.</li>
                   <li>Choose or rank the fixes in the plan: the optimiser does.</li>
-                  <li>Decide whether its own suggestion is good: the scent model does.</li>
+                  <li>Decide whether its own suggestion or edit is good: the scent model and the re-check do.</li>
                   <li>Write the explanations: those sentences come from a deterministic printer.</li>
                 </ul>
               </div>
@@ -427,8 +451,9 @@ export default function MethodPage() {
                 single-page routing, form validation), content that loads later and exploratory behaviour are out of scope.
               </li>
               <li>
-                <strong>Fixes are patches, not guarantees.</strong> Gains are measured on the page model. A real code change still needs review and
-                testing, and some fixes can slow another task slightly. The per-task table shows this when it happens.
+                <strong>Fixes are patches, not guarantees.</strong> Gains are the model’s seconds. After Fix this page they are re-checked on the
+                patched page, but they are still model seconds, and the fixed copy is the rendered page: the owner still makes the change in their
+                own source and should review and test it. Some fixes can slow another task slightly; the per-task table shows this when it happens.
               </li>
               <li>
                 <strong>Validation is incomplete.</strong> The model is checked against known properties and hand-computed cases. Comparison with
