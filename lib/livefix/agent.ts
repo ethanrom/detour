@@ -144,7 +144,7 @@ export async function writeEdits(item: FixRequestItem, opts: FixAgentOptions = {
         inputSchema: FIX_INPUT_SCHEMA,
         parse: (x) => rawEditsSchema.parse(x),
         maxTokens: FIX_MAX_TOKENS,
-        temperature: 0,
+        // No temperature: the fast-tier model rejects sampling parameters ("temperature is deprecated for this model").
         timeoutMs: FIX_TIMEOUT_MS,
         send: opts.send,
         env: opts.env,
