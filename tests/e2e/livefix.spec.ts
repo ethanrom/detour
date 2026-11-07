@@ -31,7 +31,8 @@ test("Northwind: Fix this page proves all three fixes and the keyboard lane fini
 
   await expect(proofSummary(page)).toHaveText("3 of 3 proven");
   await expect(page.getByText(/elements? kept their place|elements? moved/)).toBeVisible();
-  await expect(fixes.getByText("Template edit (no AI)")).toHaveCount(3);
+  // The demo store replays the one recorded Claude run (fixtures/fix/northwind.json); without it, template edits.
+  await expect(fixes.getByText(/^(Recorded Claude run|Template edit \(no AI\))$/)).toHaveCount(3);
   await expect(fixes.getByText("Proven", { exact: true })).toHaveCount(3);
   // The real diff, per edited element, and the re-checked chips.
   await expect(fixes.getByRole("group", { name: /Code change for/ }).first()).toBeVisible();
