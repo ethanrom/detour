@@ -13,7 +13,8 @@ import { LlmUnavailableError, type Analysis, type PlanOutcome, type RepairReport
 import { nodeLabel, roleWord, taskForNode } from "@/lib/ui/pick";
 import { buildRenameStory, hideSearchInsight } from "@/lib/ui/rename-story";
 import { searchInsight } from "@/lib/ui/search-insight";
-import { PERSONAS } from "@/lib/ui/personas";
+import { fmtSeconds } from "@/lib/ui/format";
+import { PERSONAS, PERSONA_BY_ID } from "@/lib/ui/personas";
 import { PERSONA_ORDER, buildLane, type Lane } from "@/lib/ui/timeline";
 import { useReducedMotion } from "@/lib/ui/use-reduced-motion";
 import { CustomTaskBox, type CustomState } from "./CustomTaskBox";
@@ -323,12 +324,25 @@ export function Workbench() {
     );
   }
 
+  // The tasks are the screen's main job, so on the fixed demo pages they sit above the preview, in view on the first screen.
+  const taskList =
+    site.tasks.length > 0 ? (
+      <TaskList tasks={site.tasks} results={ready?.results} selectedId={taskId} busyId={busyId} onRun={run} />
+    ) : (
+      isUrl && (
+        <p className="rounded-lg border border-dashed border-rule-strong bg-surface p-4 text-sm text-muted">
+          <span className="font-medium text-ink">No tasks yet.</span> Choose a target on the page above, or describe a task below. It shows up here and the race starts.
+        </p>
+      )
+    );
+
   const left = (
     <div className="space-y-5">
       <div>
-        <h2 className="h-card">2 · Pick a task</h2>
+        <h2 className="h-card">Pick a task</h2>
         <p className="mt-1 text-sm text-muted">Each task is a short chain of steps on the page.</p>
       </div>
+      {!isUrl && taskList}
       <SitePreview
         key={site.id}
         site={site}
@@ -347,7 +361,7 @@ export function Workbench() {
         }
       />
       {isUrl && ready && ready.page.readingOrder.length < MIN_READING_STOPS && (
-        <p role="status" className="rounded-lg border-2 border-blocked bg-surface p-3 text-sm">
+        <p role="status" className="rounded-lg border border-blocked bg-surface p-3 text-sm">
           <strong>This page renders almost nothing without JavaScript; try a server-rendered page.</strong> Detour found only{" "}
           {ready.page.readingOrder.length} thing{ready.page.readingOrder.length === 1 ? "" : "s"} to read or press, so any time it predicts here says little about
           the real page.
@@ -368,15 +382,7 @@ export function Workbench() {
           busy={busyId !== null}
         />
       )}
-      {site.tasks.length > 0 ? (
-        <TaskList tasks={site.tasks} results={ready?.results} selectedId={taskId} busyId={busyId} onRun={run} />
-      ) : (
-        isUrl && (
-          <p className="rounded-xl border border-dashed border-rule-strong bg-surface p-4 text-sm text-muted">
-            <strong className="text-ink">No tasks yet.</strong> Choose a target on the page above, or describe a task below. It shows up here and the race starts.
-          </p>
-        )
-      )}
+      {isUrl && taskList}
       {source.groundTask && (
         <CustomTaskBox
           key={`custom-${site.id}`}
@@ -399,18 +405,18 @@ export function Workbench() {
     <div className="space-y-8">
       <section aria-labelledby="pick-h">
         <h2 id="pick-h" className="h-card mb-3">
-          1 · Choose a page
+          Choose a page
         </h2>
         <SiteCards sites={sites} value={siteId} onChange={chooseSite} onAddUrl={addUrlSite} />
         {(ready?.mode ?? mode) === "sample" ? (
-          <p className="mt-3 text-sm text-muted">
-            <strong className="text-ink">Sample data.</strong> Times on this screen come from hand-calibrated fixtures
+          <p className="mt-3 text-[0.8125rem] text-muted">
+            <span className="font-medium text-ink">Sample data.</span> Times on this screen come from hand-calibrated fixtures
             {ready?.fallbackReason ? ` because the live page could not be read (${ready.fallbackReason})` : ", not the live engine"}.
           </p>
         ) : (
           ready && (
-            <p className="mt-3 text-sm text-muted">
-              <strong className="text-ink">Measured live.</strong> Read {Object.keys(ready.page.nodes).length} elements from the rendered page, with their real positions
+            <p className="mt-3 text-[0.8125rem] text-muted">
+              <span className="font-medium text-ink">Measured live.</span> Read <span className="tnum">{Object.keys(ready.page.nodes).length}</span> elements from the rendered page, with their real positions
               and sizes.
             </p>
           )
@@ -497,17 +503,16 @@ function Stage({
         {left}
         <section aria-labelledby="race-h" className="card p-5 sm:p-6 lg:sticky lg:top-24">
           <h2 id="race-h" className="h-card">
-            3 · The race
+            The race
           </h2>
-          <p className="mb-4 mt-1 text-sm text-muted">
-            {lanes ? (
-              <>
-                <span className="font-semibold text-ink">{taskLabel}</span>. Time is on the shared axis; each lane follows its most likely strategy.
-              </>
-            ) : (
-              "Three people, one task, one clock."
-            )}
-          </p>
+          {lanes ? (
+            <p className="mb-4 mt-1">
+              <span className={`block text-base font-medium ${lanes.some((l) => l.blocked) ? "text-blocked" : "text-ink"}`}>{raceFinding(lanes)}</span>
+              <span className="block text-sm text-muted">{taskLabel}</span>
+            </p>
+          ) : (
+            <p className="mb-4 mt-1 text-sm text-muted">Three people, one task, one clock.</p>
+          )}
           {lanes ? (
             <Race idBase="race" taskLabel={taskLabel} lanes={lanes} clock={clock} announcePrefix="Race finished." />
           ) : (
@@ -530,20 +535,31 @@ function Stage({
   );
 }
 
+/** The finding the race answers first: who cannot finish, or who is slowest. Built from the lanes, no model involved. */
+function raceFinding(lanes: Lane[]): string {
+  const name = (l: Lane) => PERSONA_BY_ID[l.persona].label;
+  const blocked = lanes.filter((l) => l.blocked);
+  if (blocked.length > 0) {
+    const names = blocked.map(name);
+    const who = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+    return `${who} can’t finish this task.`;
+  }
+  const slowest = lanes.reduce((a, b) => (b.seconds > a.seconds ? b : a));
+  return `Everyone finishes. ${name(slowest)} takes longest, ${fmtSeconds(slowest.seconds)}.`;
+}
+
 function EmptyRace({ loading, url }: { loading: boolean; url: boolean }) {
   const reading = url ? "Reading the page…" : "Reading the page’s accessibility tree…";
   return (
     <div>
       <div role={loading ? "status" : undefined} className="space-y-3" aria-busy={loading}>
         {PERSONAS.map((p) => (
-          <div key={p.id} className="grid items-center gap-x-4 sm:grid-cols-[9.75rem_minmax(0,1fr)]">
-            <div className="flex items-center gap-2.5">
-              <span className="grid size-10 place-items-center rounded-xl" style={{ background: p.tint, color: p.color }}>
-                <PersonaIcon persona={p.id} size={22} />
-              </span>
+          <div key={p.id} className="grid items-center gap-x-4 gap-y-1.5 sm:grid-cols-[9.5rem_minmax(0,1fr)]">
+            <div className="flex items-center gap-2" style={{ color: p.color }}>
+              <PersonaIcon persona={p.id} size={16} />
               <span className="font-semibold">{p.label}</span>
             </div>
-            <div className={`relative h-14 overflow-hidden rounded-xl border border-dashed border-rule-strong ${loading ? "animate-pulse" : ""}`} style={{ background: p.tint }}>
+            <div className="relative h-14 overflow-hidden rounded-lg border border-dashed border-rule-strong bg-paper">
               <span className="absolute inset-x-3 top-1/2 h-px bg-ink/20" />
             </div>
           </div>
@@ -554,7 +570,7 @@ function EmptyRace({ loading, url }: { loading: boolean; url: boolean }) {
         {loading ? (
           url ? (
             <>
-              <strong className="text-ink">Reading the page…</strong> Detour is reading its accessibility tree from the rendered page. A large page can take a few seconds.
+              <span className="font-medium text-ink">Reading the page…</span> Detour is reading its accessibility tree from the rendered page. A large page can take a few seconds.
             </>
           ) : (
             "Reading the page’s accessibility tree and modelling each person…"

@@ -43,8 +43,7 @@ export function Transcript({ lane, clock }: Props) {
     <section aria-labelledby="transcript-h" className="card p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="eyebrow">Screen reader</p>
-          <h2 id="transcript-h" className="h-card mt-1.5">
+          <h2 id="transcript-h" className="h-card">
             What the listener hears
           </h2>
           <p className="mt-1 max-w-md text-sm text-muted">
@@ -54,14 +53,14 @@ export function Transcript({ lane, clock }: Props) {
         <div className="flex flex-col items-start gap-1 sm:items-end">
           <button
             type="button"
-            className={`btn btn-sm ${hear.speaking ? "btn-ink" : "btn-primary"}`}
+            className={`btn btn-sm max-sm:min-h-11 ${hear.speaking ? "!border-ink !bg-lime" : ""}`}
             onClick={hear.speaking ? hear.stop : hear.start}
             disabled={!hear.supported || spoken === 0}
           >
             {hear.speaking ? <StopIcon size={16} /> : <SpeakerIcon size={16} />}
             {hear.speaking ? "Stop" : "Hear it"}
           </button>
-          <span className="text-xs text-muted">
+          <span className="text-[0.8125rem] text-muted">
             {hear.supported ? `Spoken at ${hear.rate.toFixed(2)}× (${wpm} words/min)` : "Speech is not available in this browser"}
           </span>
         </div>
@@ -72,12 +71,12 @@ export function Transcript({ lane, clock }: Props) {
         role="region"
         aria-label="Screen reader transcript"
         tabIndex={0}
-        className="relative mt-4 max-h-[22rem] overflow-y-auto rounded-xl border border-rule bg-paper"
+        className="relative mt-4 max-h-[22rem] overflow-y-auto rounded-lg border border-rule bg-paper"
       >
         {lane.events.length === 0 ? (
           <p className="p-4 text-sm text-muted">No events to show.</p>
         ) : (
-          <ol className="divide-y divide-rule/60">
+          <ol className="divide-y divide-rule">
             {lane.events.map((e) => {
               const isActive = e.index === active;
               const isFuture = e.index > active;
@@ -89,13 +88,13 @@ export function Transcript({ lane, clock }: Props) {
                     rows.current[e.index] = el;
                   }}
                   aria-current={isActive ? "step" : undefined}
-                  className={`grid grid-cols-[3.25rem_4.25rem_1fr] items-baseline gap-x-2 border-l-4 px-3 py-1.5 text-[0.9375rem] leading-snug ${
-                    isActive ? "border-ink bg-lime font-semibold" : "border-transparent"
+                  className={`grid grid-cols-[3.25rem_4.5rem_1fr] items-baseline gap-x-3 px-3 py-1.5 text-[0.9375rem] leading-snug ${
+                    isActive ? "bg-lime font-semibold" : ""
                   } ${isFuture && !isActive ? "text-muted" : "text-ink"}`}
                 >
-                  <span className="tnum text-xs text-muted">{isActive ? <span className="text-ink">{e.start.toFixed(1)} s</span> : `${e.start.toFixed(1)} s`}</span>
+                  <span className="tnum text-right text-[0.8125rem] text-muted">{isActive ? <span className="text-ink">{e.start.toFixed(1)} s</span> : `${e.start.toFixed(1)} s`}</span>
                   <span>
-                    <kbd className="rounded border border-rule-strong bg-surface px-1.5 py-px font-mono text-[0.6875rem] font-bold text-ink">
+                    <kbd className="rounded border border-rule-strong bg-surface px-1.5 py-px font-mono text-[0.8125rem] font-semibold text-ink">
                       {commandKey(e.command)}
                     </kbd>
                   </span>

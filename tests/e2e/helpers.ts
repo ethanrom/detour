@@ -17,7 +17,7 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export async function openAnalyze(page: Page) {
   await page.goto("/analyze");
-  await expect(page.getByRole("heading", { level: 1, name: /Race three people through one page/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Analyze a page" })).toBeVisible();
   // The radio group renders once the list of pages has loaded.
   await expect(page.getByRole("radio", { name: /Northwind/ })).toBeAttached();
 }

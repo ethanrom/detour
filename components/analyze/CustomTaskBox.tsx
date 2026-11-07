@@ -38,8 +38,8 @@ export function CustomTaskBox({ state, page, busy, onSubmit }: { state: CustomSt
   }
 
   return (
-    <section aria-labelledby={`${id}-h`} className="rounded-xl border border-rule bg-surface p-4">
-      <h3 id={`${id}-h`} className="text-sm font-bold">
+    <section aria-labelledby={`${id}-h`} className="card p-4">
+      <h3 id={`${id}-h`} className="text-[0.9375rem] font-semibold">
         Describe a task in your own words
       </h3>
       <form onSubmit={submit} className="mt-2 flex flex-wrap items-end gap-2">
@@ -56,7 +56,7 @@ export function CustomTaskBox({ state, page, busy, onSubmit }: { state: CustomSt
             placeholder="For example: find out how to contact the store"
             autoComplete="off"
             aria-describedby={`${id}-s`}
-            className="min-h-11 w-full rounded-lg border-2 border-ink bg-paper px-3 text-[0.9375rem] placeholder:text-muted"
+            className="min-h-11 w-full rounded-md border border-rule-strong bg-surface px-3 text-[0.9375rem] placeholder:text-muted"
           />
         </div>
         <button type="submit" className="btn btn-sm" disabled={busy || !text.trim()} aria-busy={working}>
@@ -66,24 +66,24 @@ export function CustomTaskBox({ state, page, busy, onSubmit }: { state: CustomSt
       </form>
 
       <div id={`${id}-s`} role="status" aria-live="polite" className="mt-3 text-sm">
-        {state.status === "working" && <p className="animate-pulse text-muted">Claude is matching your words to elements on this page…</p>}
+        {state.status === "working" && <p className="text-muted">Claude is matching your words to elements on this page…</p>}
         {state.status === "unavailable" && (
-          <p className="rounded-lg border border-rule-strong bg-paper-2 p-3">
+          <p className="rounded-md border border-rule-strong bg-paper-2 p-3">
             <strong>Custom tasks need the LLM (Bedrock) configured.</strong> The built-in tasks above run without it. The model only ever picks which
             elements a task touches; it never produces a number.
           </p>
         )}
-        {state.status === "error" && <p className="rounded-lg border border-blocked bg-surface p-3 text-blocked">{state.error}</p>}
+        {state.status === "error" && <p className="rounded-md border border-blocked bg-surface p-3 text-blocked">{state.error}</p>}
         {state.status === "done" && (
           <div>
-            <p className="inline-flex items-center gap-1.5 rounded-full bg-lime px-2.5 py-0.5 font-bold">
+            <p className="inline-flex items-center gap-1.5 rounded bg-lime px-2 py-0.5 font-medium">
               <CheckIcon size={14} /> Grounded by Claude (Bedrock), validated against the page
             </p>
             <p className="mt-2 font-semibold">{state.task.label}</p>
             <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-muted">
               {state.task.steps.map((s, i) => (
                 <li key={`${s.target}-${i}`}>
-                  {describeStep(page, s)} <code className="rounded bg-paper-2 px-1 font-mono text-xs">{s.target}</code>
+                  {describeStep(page, s)} <code className="rounded bg-paper-2 px-1 text-[0.8125rem]">{s.target}</code>
                 </li>
               ))}
             </ol>
