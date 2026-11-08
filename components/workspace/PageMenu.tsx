@@ -77,8 +77,10 @@ export function PageMenu({ id: menuId, sites, siteId, focus, address, onAddress,
             <label
               key={s.id}
               // A mouse or touch choice is done: close. Arrow keys also choose (the page changes at once) but keep the menu open.
+              // Close on the next task: a click on the label's text reaches the radio only after this handler, so
+              // closing at once unmounted the menu before the radio was chosen.
               onClick={(e) => {
-                if (e.detail > 0) onClose(true);
+                if (e.detail > 0) window.setTimeout(() => onClose(true), 0);
               }}
               className={`flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2 hover:bg-paper-2 ${selected ? "bg-lime hover:bg-lime" : ""}`}
             >

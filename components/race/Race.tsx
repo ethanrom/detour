@@ -103,9 +103,6 @@ export function Race({ idBase, taskLabel, lanes, ghost, predicted, clock, announ
           </label>
         )}
       </div>
-      {clock.reduced && (
-        <p className="mt-2 text-xs leading-4 text-muted">Animation is off because your system asks for reduced motion. Final results are shown; drag the position slider to step through the race.</p>
-      )}
     </div>
   );
 
@@ -155,11 +152,6 @@ export function Race({ idBase, taskLabel, lanes, ghost, predicted, clock, announ
               />
             </label>
           </div>
-          {clock.reduced && (
-            <p className="mt-2 text-sm text-muted">
-              Animation is off because your system asks for reduced motion. Final results are shown; drag the position slider to step through the race.
-            </p>
-          )}
         </>
       )}
 

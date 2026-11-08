@@ -26,8 +26,10 @@ const START_DELAY_MS = 450;
 const MAX_FRAME_S = 0.25;
 
 /**
- * Drives the shared race clock. Under `prefers-reduced-motion` nothing animates: the clock sits at
- * the end so every lane shows its final state, and the scrubber lets the user step through instead.
+ * Drives the shared race clock. A race only ever starts because the user asked for it (Run, See the re-check,
+ * Replay), so it plays even under `prefers-reduced-motion`: that setting is often on by default in Windows
+ * ("Show animations" off), and the race is the content, not decoration. Pause stops it at any time and the
+ * position slider steps through it. Decorative motion elsewhere (the Home hero) still respects the setting.
  */
 export function useRaceClock(duration: number, resetKey: string | number = 0): RaceClock {
   const reduced = useReducedMotion();
@@ -44,18 +46,13 @@ export function useRaceClock(duration: number, resetKey: string | number = 0): R
     durationRef.current = duration;
   }, [rate, duration]);
 
-  // (Re)start whenever the data, the run counter or the motion preference changes.
+  // (Re)start whenever the data or the run counter changes.
   useEffect(() => {
-    if (reduced) {
-      setPlaying(false);
-      setElapsed(duration);
-      return;
-    }
     setPlaying(false);
     setElapsed(0);
     const id = window.setTimeout(() => setPlaying(true), START_DELAY_MS);
     return () => window.clearTimeout(id);
-  }, [duration, reduced, run, resetKey]);
+  }, [duration, run, resetKey]);
 
   useEffect(() => {
     if (!playing) return;
